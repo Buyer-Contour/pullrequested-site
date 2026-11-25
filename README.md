@@ -20,7 +20,7 @@ Run `npm ci` and `npm test` with Node.js 22. To preview the static site, run `py
 
 ## Interim Surge deploy
 
-1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh QUOTE_RECIPIENT=pullrequested@agentmail.to npm run build:surge`. Use the actual Surge URL and the public, inbound-only agency inbox. Its address is published in the form and agent endpoint; never use a credential or a personal email address here.
+1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh npm run build:surge`. The quote form sends to the public, inbound-only agency inbox, `dane@phantompipe.com`, by default. If setting `QUOTE_RECIPIENT` for a different deployment, use only a public inbox address; it appears in the form and agent endpoint.
 2. Publish `dist/surge` to the same Surge hostname using the agency account. Set the account credential through Bot secrets, not in the repo.
 3. Submit a clearly marked request on `/quote/` to trigger FormSubmit registration. Open the activation email in the agency inbox and verify its source before activating. Submit another browser request and a JSON request using `/offer.json`; confirm both arrive in the inbox. An HTTP success response alone does not verify delivery.
 4. Verify `/`, `/quote/`, `/offer.json`, `/llms.txt`, `/.well-known/x402.json`, and `/thanks/` on the actual Surge URL. The temporary copy links to itself in the agent docs and sitemap; HTML canonicals and the offer's main URL still identify `pullrequested.com`.
