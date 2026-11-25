@@ -20,7 +20,7 @@ Run `npm ci` and `npm test` with Node.js 22. To preview the static site, run `py
 
 ## Deploy the site to Cloudflare
 
-The `phantompipe-site` Worker serves `public/`. It forwards browser and agent quote submissions unchanged to the existing Netlify Forms deployment (`phantompipe.netlify.app`), which still handles delivery. The legacy `/agent-pay-test` page also keeps that origin. The live payment routes remain on a separate Worker.
+The `phantompipe-site` Worker serves `public/`. Browser quote submissions still go to the existing Netlify Forms deployment (`phantompipe.netlify.app`), which also receives API submissions as form data with a request ID appended to the brief. POST JSON or request a JSON response on `/quote` to get a receipt. The site's `QuoteReceipts` Durable Object stores receipts for 30 days with no submission fields; status reads do not query Netlify. The legacy `/agent-pay-test` page also keeps the Netlify origin. The live payment routes remain on a separate Worker.
 
 Deploy from the repository root with Wrangler 4 and the zone's deploy credentials:
 
@@ -61,6 +61,6 @@ The [`phantompipe` Netlify site](https://app.netlify.com/sites/phantompipe/overv
    ```
 
    Check the stored submission in the dashboard; an HTTP success response alone is not proof of delivery. Confirm the JSON content type and wildcard CORS header on `/offer.json` and the plain-text content type on `/llms.txt`.
-4. Verify the deploy on [phantompipe.com](https://phantompipe.com/), including HTTPS and the quote form.
+4. Verify the deploy on [phantompipe.com](https://phantompipe.com/), including HTTPS and the quote form. Repeat the curl smoke test at the apex with `-H 'Accept: application/json'` and print the body. Expect HTTP 202, then GET the returned `status_url` and expect HTTP 200. Confirm the matching request ID appears in the dashboard submission.
 
 Keep hosting credentials in Bot secrets, not in the repository.

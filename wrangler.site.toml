@@ -14,3 +14,11 @@ directory = "public"
 binding = "ASSETS"
 html_handling = "none"
 run_worker_first = true
+
+[[durable_objects.bindings]]
+name = "QUOTE_RECEIPTS"
+class_name = "QuoteReceipts"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["QuoteReceipts"]

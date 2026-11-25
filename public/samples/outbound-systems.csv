@@ -1,0 +1,6 @@
+account_id,account,claim,source_url,source_date,segment,suggested_opener
+cloudflare,Cloudflare,The project published Wrangler 4.12.0.,https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.12.0,2025-04-17,developer-tooling,I saw your team published Wrangler 4.12.0. Is edge runtime tooling a focus for your team this quarter?
+fastly,Fastly,The project published Fastly CLI 10.18.0.,https://github.com/fastly/cli/releases/tag/v10.18.0,2025-01-29,developer-tooling,I saw your team published Fastly CLI 10.18.0. Is edge deployment tooling a focus for your team this quarter?
+datadog,Datadog,The project published Datadog Agent 7.64.1.,https://github.com/DataDog/datadog-agent/releases/tag/7.64.1,2025-03-20,observability,I saw your team published Datadog Agent 7.64.1. Is infrastructure monitoring a focus for your team this quarter?
+grafana-labs,Grafana Labs,The project published Grafana 11.6.0.,https://github.com/grafana/grafana/releases/tag/v11.6.0,2025-03-25,observability,I saw your team published Grafana 11.6.0. Is observability dashboards a focus for your team this quarter?
+elastic,Elastic,The project published Elasticsearch 9.0.0.,https://github.com/elastic/elasticsearch/releases/tag/v9.0.0,2025-04-08,search-infrastructure,I saw your team published Elasticsearch 9.0.0. Is search and analytics a focus for your team this quarter?
