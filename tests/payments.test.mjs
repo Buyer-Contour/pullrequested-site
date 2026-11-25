@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import Stripe from 'stripe';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
-import { makeAgentVerificationQuote } from '../lib/payments/live-verification.mjs';
+import { checkoutVerificationDescription, makeAgentVerificationQuote } from '../lib/payments/live-verification.mjs';
 import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
 import { paymentConfig } from '../lib/payments/runtime.mjs';
 
@@ -103,6 +103,7 @@ test('checkout displays an escaped quote, creates one session, and records a ver
   assert.equal(params.payment_intent_data.metadata.source, 'pullrequested');
   assert.equal(params.line_items[0].price_data.product_data.metadata.source, 'pullrequested');
   assert.equal(params.expires_at, quote.expires_at);
+  assert.equal(params.allowed_payment_method_types, undefined);
   assert.equal(params.line_items[0].price_data.unit_amount, quote.amount_cents);
   assert.equal(params.success_url, origin + '/payment/submitted');
   assert.equal(params.cancel_url, `${origin}/q/${token}`);
@@ -126,6 +127,15 @@ test('checkout displays an escaped quote, creates one session, and records a ver
   assert.equal((await handlers.webhook(webhookRequest(session))).status, 200);
   assert.equal(entries.get(`paid/${quote.id}`), paid);
   assert.equal((await checkout()).status, 409);
+});
+
+test('live $1 verification Checkout offers no delayed payment methods', async () => {
+  const { handlers, calls } = fixture({ testMode: false });
+  for (const [description, amount_cents] of [[checkoutVerificationDescription, 100], ['Consulting', 100], [checkoutVerificationDescription, 500]]) {
+    const { token } = makeQuote({ amount_cents, description }, signingSecret, testNow);
+    assert.equal((await handlers.checkout(new Request(to('/api/checkout', token)))).status, 303);
+  }
+  assert.deepEqual(calls.checkout.map(({ params }) => params.allowed_payment_method_types), [['card', 'link'], undefined, undefined]);
 });
 
 test('an expired quote cannot start a payment and near-expiry Checkout cannot outlive the quote', async () => {
