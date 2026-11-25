@@ -31,9 +31,9 @@ The service uses a per-quote Stripe idempotency key and limits quote validity to
 
 ## Cloudflare Workers
 
-Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only; the static site and quote intake stay on Netlify.
+Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only. When using the [Cloudflare site Worker](../README.md#deploy-the-site-to-cloudflare), retain more specific routes to `phantompipe-payments` for `/q/*`, `/payment/submitted*`, `/api/checkout*`, `/api/pay*`, `/api/mpp/pay*`, `/api/stripe-webhook*`, and `/agent-pay-test*`.
 
-- The production configuration in `wrangler.toml` uses `https://phantompipe.com` as `PAYMENTS_ORIGIN` and Tempo mainnet. Before deploying this configuration, verify the proxied apex still serves the Netlify site and that only the payment paths route to the Worker. Until then, keep issuing quotes at `https://phantompipe-payments.phantompipe.workers.dev`.
+- The production configuration in `wrangler.toml` uses `https://phantompipe.com` as `PAYMENTS_ORIGIN` and Tempo mainnet. Verify that only payment paths route to the payment Worker before issuing apex quotes.
 - After verifying the apex payment routes, update the dedicated live Stripe endpoint `we_1Ufl2FElm0HOkGFhYsy8X7TZ` from the `workers.dev` URL to `https://phantompipe.com/api/stripe-webhook`. Keep its signing secret bound as `STRIPE_WEBHOOK_SECRET`; do not reuse the older endpoint's secret. Set the remaining Stripe and Tempo secrets as described above.
 - Set `WORKER_QUOTE_SIGNING_SECRET` to a new secret of at least 32 random bytes, distinct from the Netlify signer. The Worker does not fall back to `QUOTE_SIGNING_SECRET`. When issuing Worker quotes, pass the Worker secret to the quote generator as `QUOTE_SIGNING_SECRET` and the Worker URL as `PAYMENTS_ORIGIN`. Use that origin for the dedicated Stripe webhook too.
 - Netlify Blobs records are not shared with the Worker. Before switching hosts, resolve in-flight payments on Netlify, stop issuing there, and issue fresh quote IDs for the Worker. Update the static site's payment discovery URLs when its next deployment is available.

@@ -1,0 +1,15 @@
+name = "phantompipe-site"
+account_id = "f125f290711526aa7f8f46232d9f4257"
+main = "workers/site.mjs"
+compatibility_date = "2026-11-25"
+workers_dev = true
+preview_urls = false
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+html_handling = "none"
+run_worker_first = true
+
+[vars]
+QUOTE_INBOX = "dane@phantompipe.com"
