@@ -1,0 +1,17 @@
+{
+  "quote_payment": {
+    "requires_issued_quote": true,
+    "human": {
+      "provider": "Stripe Checkout",
+      "methods": ["card", "Link when eligible"],
+      "url_template": "https://pullrequested.com/q/{signed_quote_token}"
+    },
+    "agent": {
+      "protocol": "quote-pay-v1",
+      "url_template": "https://pullrequested.com/api/pay?quote={signed_quote_token}",
+      "challenge": { "method": "GET", "status": 402 },
+      "payment": { "method": "POST", "content_type": "application/json", "fields": ["nonce", "shared_payment_token"] },
+      "redeem": { "method": "GET", "header": "X-PAYMENT", "value": "payment_intent_id from POST response", "replay_status": 409 }
+    }
+  }
+}

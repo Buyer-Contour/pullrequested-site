@@ -1,0 +1,5 @@
+## Paying an issued quote
+
+Use the signed quote link provided by pullrequested.com. For humans, open https://pullrequested.com/q/{signed_quote_token} and use Stripe Checkout (card or Link when eligible).
+
+For agents, GET https://pullrequested.com/api/pay?quote={signed_quote_token}. The HTTP 402 JSON challenge specifies amount, currency, quote ID, expiry and nonce. POST JSON with nonce and shared_payment_token (a Stripe SPT) to the same URL, then GET it with X-PAYMENT set to the returned payment_intent_id. HTTP 200 is a paid receipt; HTTP 409 means a duplicate payment or replay was rejected. This is quote-pay-v1, not native x402 or MPP.

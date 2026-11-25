@@ -1,6 +1,34 @@
 [build]
   publish = "public"
 
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/q/:token"
+  to = "/.netlify/functions/quote-page?quote=:token"
+  status = 200
+
+[[redirects]]
+  from = "/payment/submitted"
+  to = "/.netlify/functions/quote-page?result=submitted"
+  status = 200
+
+[[redirects]]
+  from = "/api/checkout"
+  to = "/.netlify/functions/checkout"
+  status = 200
+
+[[redirects]]
+  from = "/api/pay"
+  to = "/.netlify/functions/pay"
+  status = 200
+
+[[redirects]]
+  from = "/api/stripe-webhook"
+  to = "/.netlify/functions/stripe-webhook"
+  status = 200
+
 [[redirects]]
   from = "/quote"
   to = "/quote/index.html"

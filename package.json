@@ -2,7 +2,14 @@
   "name": "pullrequested-site",
   "private": true,
   "scripts": {
-    "test": "node --test",
-    "build:surge": "node scripts/build-surge.js"
+    "test": "node --test \"tests/*.test.*js\"",
+    "build:surge": "node scripts/build-surge.js",
+    "payments:quote": "node scripts/make-quote.js",
+    "payments:dev": "node scripts/payments-server.mjs",
+    "payments:e2e": "node scripts/e2e-test.js"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.7.13",
+    "stripe": "^23.2.0"
   }
 }
