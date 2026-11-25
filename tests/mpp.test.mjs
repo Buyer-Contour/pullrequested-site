@@ -5,7 +5,7 @@ import { Attribution } from 'mppx/tempo';
 import { encodeAbiParameters, encodeEventTopics, parseAbi } from 'viem';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { createMppRail, mppBlobsStore, mppConfig, mppPath, tempoOusd } from '../lib/payments/mpp.mjs';
-import { makeQuote } from '../lib/payments/quotes.mjs';
+import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
 
 const origin = new URL('https://phantompipe.com');
 const signingSecret = 'test quote secret at least 32 bytes';
@@ -67,6 +67,38 @@ test('separate ten-cent row quotes create distinct 0.10 OUSD Tempo challenges', 
     challenges.push(challenge);
   }
   assert.notEqual(challenges[0].id, challenges[1].id);
+});
+
+test('the durable MPP link redirects to a fixed-price quote for a 1.00 OUSD challenge', async () => {
+  const { handler, values } = setup(createMppRail({ origin, recipient, secretKey, testnet: true, store: Store.memory() }));
+  const url = new URL(`${mppPath}?product=evidence-brief-10&amount_cents=1`, origin);
+  const response = await handler(new Request(url));
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+  const final = new URL(response.headers.get('Location'), origin);
+  assert.equal(final.origin, origin.origin);
+  assert.equal(final.pathname, mppPath);
+  assert.equal(final.searchParams.has('product'), false);
+  const quote = readQuote(final.searchParams.get('quote'), signingSecret);
+  assert.equal(quote.amount_cents, 100);
+  const challengeResponse = await handler(new Request(final));
+  assert.equal(challengeResponse.status, 402);
+  const challenge = Challenge.fromResponse(challengeResponse);
+  assert.equal(challenge.method, 'tempo');
+  assert.equal(challenge.request.currency.toLowerCase(), tempoOusd);
+  assert.equal(challenge.request.amount, '1000000');
+  assert.equal(values.size, 0);
+
+  const another = await handler(new Request(url));
+  const anotherToken = new URL(another.headers.get('Location'), origin).searchParams.get('quote');
+  assert.notEqual(readQuote(anotherToken, signingSecret).id, quote.id);
+  const credential = Credential.serialize({ challenge, payload: { type: 'hash', hash: tx } });
+  const wrongEndpoint = await handler(new Request(url, { headers: { Authorization: credential } }));
+  assert.equal(wrongEndpoint.status, 400);
+  assert.deepEqual(await wrongEndpoint.json(), { error: 'use_signed_quote_url' });
+  const unknown = await handler(new Request(new URL(`${mppPath}?product=not-listed`, origin)));
+  assert.equal(unknown.status, 404);
 });
 
 test('MPP atomically rejects a replay, excludes other live rails, and isolates testnet', async () => {

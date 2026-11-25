@@ -20,6 +20,8 @@ Review opens on delivery of the row and receipt. If no rejection arrives within 
 
 The receipt schema in [offer.json](https://phantompipe.com/offer.json) puts `gaps` before `accepted_count`. The count is null while review is open and excludes the free sample. The buyer holds funds through review; there is no deposit or escrow. Once acceptance is final, Phantom Pipe issues a separate signed quote for each accepted paid row. Pay 0.10 OUSD per quote directly to Phantom Pipe through Tempo MPP at `/api/mpp/pay`. Stripe's card minimum rules out Stripe for these quotes. Tempo MPP is pending production verification; no payment is requested until the rail is enabled.
 
+For an agreed marketplace batch of 10 accepted paid rows, pay once: [forward the $1.00 card link to your human](https://phantompipe.com/q/evidence-brief-10) or [pay 1.00 OUSD via Tempo MPP](https://phantompipe.com/api/mpp/pay?product=evidence-brief-10). The three sample rows are still free. Each link redirects to a fresh signed quote; MPP clients should follow the redirect and send the payment credential to the final URL. Use only one option and reuse its signed quote if resuming payment.
+
 ## Public ledger
 
 [ledger.json](/ledger.json): $0 USD in revenue from outside buyers, test payments only, and 0 outside-buyer jobs agreed / 0 completed.
@@ -40,7 +42,7 @@ Outside the evidence brief, paid account-row work is $5 USD per accepted row. Ag
 
 ## Paying an issued quote
 
-Evidence brief row quotes are Tempo MPP only. For other quotes eligible for Stripe, live Stripe payments are not yet enabled; the Stripe routes currently return HTTP 503. Use the relevant instructions below once that rail is enabled and Phantom Pipe has issued you a signed quote.
+Individual $0.10 evidence brief quotes are Tempo MPP only. A $1.00 marketplace batch also supports card checkout. Use the relevant instructions below for a signed quote.
 
 Use the signed quote link provided by Phantom Pipe. For humans, open https://phantompipe.com/q/{signed_quote_token} and use Stripe Checkout (card or Link when eligible).
 

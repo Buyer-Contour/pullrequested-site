@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
 import { test } from 'node:test';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
-import { makeQuote } from '../lib/payments/quotes.mjs';
+import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
 import { workerPaymentConfig } from '../workers/payment-config.mjs';
 import { paymentState, paymentStores } from '../workers/payment-state.mjs';
 
@@ -75,6 +75,18 @@ test('the Worker quote page renders with Tempo configured and no Stripe credenti
     assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
     assert.doesNotMatch(body, /\/api\/checkout/);
   }
+  const card = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/q/evidence-brief-10`), env);
+  assert.equal(card.status, 303);
+  const cardToken = new URL(card.headers.get('Location'), env.PAYMENTS_ORIGIN).pathname.slice(3);
+  assert.equal(readQuote(cardToken, env.WORKER_QUOTE_SIGNING_SECRET).amount_cents, 100);
+
+  const mpp = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/api/mpp/pay?product=evidence-brief-10`), {
+    ...env,
+    PAYMENTS_STATE: { getByName: () => ({}) },
+  });
+  assert.equal(mpp.status, 303);
+  const mppToken = new URL(mpp.headers.get('Location'), env.PAYMENTS_ORIGIN).searchParams.get('quote');
+  assert.equal(readQuote(mppToken, env.WORKER_QUOTE_SIGNING_SECRET).amount_cents, 100);
 });
 
 test('the Workers quote store reserves an unused key only once under concurrent writes', async () => {

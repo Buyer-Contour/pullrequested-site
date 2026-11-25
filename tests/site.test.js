@@ -163,6 +163,17 @@ test('the linked public ledger separates test payments from outside-buyer work',
   assert.ok(read('public/llms.txt').includes(`(${url})`));
 });
 
+test('marketplace payment discovery publishes the durable routes and fixed batch price', () => {
+  const { evidence_brief: { marketplace_payment: batch, price }, url } = JSON.parse(read('public/offer.json'));
+  const llms = read('public/llms.txt');
+  assert.equal(batch.accepted_row_count, 10);
+  assert.deepEqual(batch.price, { amount_minor: 100, currency: 'USD' });
+  assert.equal(batch.price.amount_minor, batch.accepted_row_count * price.amount_minor_per_row);
+  assert.equal(batch.card_url, new URL(`/q/${batch.product_id}`, url).href);
+  assert.equal(batch.mpp_url, new URL(`/api/mpp/pay?product=${batch.product_id}`, url).href);
+  for (const link of [batch.card_url, batch.mpp_url]) assert.ok(llms.includes(`(${link})`));
+});
+
 test('site and agent docs expose the agency inbox and marketplace listings', () => {
   const { contact, listings } = JSON.parse(read('public/offer.json'));
   const home = read('public/index.html');
@@ -221,7 +232,7 @@ test('offer and llms document issued-quote payment rails without claiming live a
   assert.deepEqual(offer.quote_payment, quote_payment);
   assert.equal(offer.quote_payment.agent_mpp.status, 'pending');
   assert.ok(!('agent_usdc' in offer.quote_payment));
-  assert.match(llms, /Stripe routes currently return HTTP 503/);
+  assert.match(llms, /Individual \$0\.10 evidence brief quotes are Tempo MPP only/);
   assert.match(llms, /Tempo MPP is pending production verification/);
   for (const rail of ['human', 'agent', 'agent_mpp']) {
     assert.ok(llms.includes(quote_payment[rail].url_template));
