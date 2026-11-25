@@ -30,6 +30,18 @@ npx wrangler@4 deploy --config wrangler.site.toml
 
 Keep the more specific apex payment routes on the separate `phantompipe-payments` Worker (see [quote payments](docs/quote-payments.md)). Do not change its secret bindings or Durable Object. Compare browser and agent submission responses and payment responses before and after any routing change. Both the apex and `www` need proxied DNS records. The site Worker redirects `www` to the apex with HTTP 308, preserving the path, query, and request method.
 
+### Pitch variant counts
+
+Give each pitch a short, non-personal variant ID using lowercase letters, digits, and hyphens (1–40 characters). Example links for `media-1`:
+
+- Homepage and discovery: `/?v=media-1`, `/offer.json?v=media-1`, `/llms.txt?v=media-1`.
+- Payments: `/q/evidence-brief-10?v=media-1`, `/api/mpp/pay?product=evidence-brief-10&v=media-1`. Follow redirects without dropping their query string.
+- Quote intake: link to `/quote?v=media-1`, or POST directly to it for agent requests. The tagged homepage, discovery documents, and browser form preserve the tag on their quote links.
+
+`GET /api/stats/variants` on the site Worker returns `{ "counts": [{ "day": "YYYY-MM-DD", "event": "card_open", "variant": "media-1", "count": 1 }] }` with UTC daily totals. Discovery events count successful tagged GETs only. Payment events count durable card opens and issued MPP challenges, not completed payments. Intake counts requests accepted by the forwarding endpoint, not verified inbox delivery. Missing or invalid tags on payment or intake, and invalid tags on discovery, count as `_untagged`, distinct from the valid pitch ID `untagged`. Only the event, day, normalized variant, and count are stored. Repeat fetches, previews and bots can count; these are not unique visitors or proof of intent.
+
+Deploy `wrangler.toml` before `wrangler.site.toml` for changes to variant counters: the site Worker uses the payment Worker's existing Durable Object namespace.
+
 ## Interim Surge deploy
 
 1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh npm run build:surge`. The quote form sends to the public, inbound-only agency inbox, `dane@phantompipe.com`, by default. If setting `QUOTE_RECIPIENT` for a different deployment, use only a public inbox address; it appears in the form and agent endpoint.

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
+import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
@@ -53,18 +54,28 @@ test('the Worker quote page renders with Tempo configured and no Stripe credenti
       return nextResolve(specifier, context);
     },
   });
-  let worker;
+  let worker, PaymentsState;
   try {
-    ({ default: worker } = await import('../workers/payments.mjs'));
+    ({ default: worker, PaymentsState } = await import('../workers/payments.mjs'));
   } finally {
     hooks.deregister();
   }
+  const db = new DatabaseSync(':memory:');
+  const kv = new Map();
+  kv.put = kv.set.bind(kv);
+  const stats = new PaymentsState({ storage: { kv, sql: {
+    exec(statement, ...args) {
+      if (/^SELECT/.test(statement)) return { toArray: () => db.prepare(statement).all(...args) };
+      db.prepare(statement).run(...args);
+    },
+  } } });
   const env = {
     PAYMENTS_ORIGIN: 'https://phantompipe-payments.example.com',
     WORKER_QUOTE_SIGNING_SECRET: 'worker-test-signer-that-is-long-enough',
     MPP_NETWORK: 'tempo',
     MPP_PAY_TO: '0x0000000000000000000000000000000000000042',
     MPP_SECRET_KEY: 'test MPP secret at least 32 bytes',
+    PAYMENTS_STATE: { getByName: () => stats },
   };
   for (const [amount_cents, total] of [[10, '$0.10'], [500, '$5.00']]) {
     const { token } = makeQuote({ amount_cents, description: 'Tempo quote' }, env.WORKER_QUOTE_SIGNING_SECRET);
@@ -79,6 +90,18 @@ test('the Worker quote page renders with Tempo configured and no Stripe credenti
   assert.equal(card.status, 303);
   const cardToken = new URL(card.headers.get('Location'), env.PAYMENTS_ORIGIN).pathname.slice(3);
   assert.equal(readQuote(cardToken, env.WORKER_QUOTE_SIGNING_SECRET).amount_cents, 100);
+  const taggedCard = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/q/evidence-brief-10?v=media-1`), env);
+  assert.equal(taggedCard.status, 303);
+  const cardQuote = new URL(taggedCard.headers.get('Location'), env.PAYMENTS_ORIGIN);
+  assert.equal(cardQuote.search, '?v=media-1');
+  const page = await worker.fetch(new Request(cardQuote), env);
+  assert.match(await page.text(), /&amp;v=media-1"/);
+
+  for (const [input, variant] of [['untagged', 'untagged'], ['invalid%40example.com', '_untagged']]) {
+    const opened = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/q/evidence-brief-10?v=${input}`), env);
+    assert.equal(opened.status, 303);
+    assert.equal(new URL(opened.headers.get('Location'), env.PAYMENTS_ORIGIN).searchParams.get('v'), variant);
+  }
 
   const mpp = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/api/mpp/pay?product=evidence-brief-10`), {
     ...env,
@@ -87,6 +110,25 @@ test('the Worker quote page renders with Tempo configured and no Stripe credenti
   assert.equal(mpp.status, 303);
   const mppToken = new URL(mpp.headers.get('Location'), env.PAYMENTS_ORIGIN).searchParams.get('quote');
   assert.equal(readQuote(mppToken, env.WORKER_QUOTE_SIGNING_SECRET).amount_cents, 100);
+
+  const taggedMpp = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/api/mpp/pay?product=evidence-brief-10&v=media-1`), env);
+  const mppQuote = new URL(taggedMpp.headers.get('Location'), env.PAYMENTS_ORIGIN);
+  assert.equal(mppQuote.searchParams.get('v'), 'media-1');
+  assert.equal(stats.listVariants().length, 3);
+  for (const response of await Promise.all([1, 2].map(() => worker.fetch(new Request(mppQuote), env)))) {
+    assert.equal(response.status, 402);
+    assert.match(response.headers.get('WWW-Authenticate'), /^Payment /);
+  }
+  const invalid = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/api/mpp/pay?quote=invalid&v=media-1`), env);
+  assert.equal(invalid.status, 400);
+  const day = new Date().toISOString().slice(0, 10);
+  assert.deepEqual(stats.listVariants().map((row) => ({ ...row })), [
+    { day, event: 'card_open', variant: '_untagged', count: 2 },
+    { day, event: 'card_open', variant: 'media-1', count: 1 },
+    { day, event: 'card_open', variant: 'untagged', count: 1 },
+    { day, event: 'mpp_challenge', variant: 'media-1', count: 2 },
+  ]);
+  db.close();
 });
 
 test('the Workers quote store reserves an unused key only once under concurrent writes', async () => {

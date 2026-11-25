@@ -4,7 +4,9 @@ import { test } from 'node:test';
 import site, { QuoteReceipts } from '../workers/site.mjs';
 
 const origin = 'https://phantompipe.com';
+const stubStats = { getByName: () => ({ async incrementVariant() {} }) };
 const env = {
+  PAYMENTS_STATE: stubStats,
   ASSETS: {
     async fetch(request) {
       const { pathname } = new URL(request.url);
@@ -23,10 +25,11 @@ function get(path, init) {
   return site.fetch(new Request(origin + path, init), env);
 }
 
-function withQuoteReceipts() {
+function withQuoteReceipts(paymentsState = stubStats) {
   const receipts = new Map();
   return (path, init) => site.fetch(new Request(origin + path, init), {
     ...env,
+    PAYMENTS_STATE: paymentsState,
     QUOTE_RECEIPTS: {
       getByName(id) {
         if (!receipts.has(id)) {
@@ -39,6 +42,101 @@ function withQuoteReceipts() {
     },
   });
 }
+
+test('variant stats report only successful tagged discovery fetches and forwarded quote requests', async (t) => {
+  const counts = [];
+  const day = new Date().toISOString().slice(0, 10);
+  const request = withQuoteReceipts({
+    getByName(name) {
+      assert.equal(name, 'variant-stats');
+      return {
+        incrementVariant(event, variant) { counts.push({ day, event, variant, count: 1 }); },
+        listVariants() { return counts; },
+      };
+    },
+  });
+  const rewrites = [];
+  globalThis.HTMLRewriter = class {
+    on(selector, handler) {
+      handler.element({ setAttribute: (name, value) => rewrites.push([selector, name, value]) });
+    }
+    transform(response) { return response; }
+  };
+  t.after(() => { delete globalThis.HTMLRewriter; });
+  await request('/?v=media-1');
+  await request('/quote?v=media-1');
+  assert.deepEqual(rewrites, [
+    ['a[href="/quote"]', 'href', '/quote?v=media-1'],
+    ['a[href="/offer.json"]', 'href', '/offer.json?v=media-1'],
+    ['a[href="/llms.txt"]', 'href', '/llms.txt?v=media-1'],
+    ['form[name="quote"]', 'action', '/thanks/?v=media-1'],
+  ]);
+  const offerResponse = await request('/offer.json?v=media-1');
+  assert.equal(offerResponse.headers.get('Cache-Control'), 'no-store');
+  const offer = await offerResponse.json();
+  const quoteUrl = new URL(offer.quote_request.url);
+  assert.equal(quoteUrl.href, origin + '/quote?v=media-1');
+  assert.equal(offer.contact.url, quoteUrl.href);
+  const { card_url, mpp_url } = offer.evidence_brief.marketplace_payment;
+  assert.equal(card_url, origin + '/q/evidence-brief-10?v=media-1');
+  assert.equal(mpp_url, origin + '/api/mpp/pay?product=evidence-brief-10&v=media-1');
+  const llms = await (await request('/llms.txt?v=invalid%40example.com')).text();
+  for (const url of [quoteUrl.href, card_url, mpp_url]) {
+    assert.ok(llms.includes(url.replace('v=media-1', 'v=_untagged')));
+  }
+  assert.ok(llms.includes(origin + '/offer.json?v=_untagged'));
+  assert.ok(llms.includes(origin + '/q/{signed_quote_token}'));
+  assert.ok(!llms.includes('invalid@example.com'));
+  await request('/offer.json');
+  await request('/llms.txt?v=media-1', { method: 'HEAD' });
+  await request('/404?v=media-1');
+  let upstreamStatus = 303;
+  t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: upstreamStatus, headers: { Location: '/thanks/' } }));
+  const headers = { 'Content-Type': 'application/json' };
+  const body = JSON.stringify({ name: 'A Person', email: 'a@example.com', service: 'not-sure', brief: 'Test' });
+  const post = (path, init) => request(path, { method: 'POST', headers, body, ...init });
+  assert.equal((await post('/quote?v=media-1', { body: '{}' })).status, 400);
+  assert.equal((await post(quoteUrl.pathname + quoteUrl.search)).status, 202);
+  assert.equal((await post('/thanks/?v=competitive-1')).status, 303);
+  upstreamStatus = 502;
+  assert.equal((await post('/quote?v=media-1')).status, 502);
+  const response = await request('/api/stats/variants');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  assert.deepEqual(await response.json(), { counts: [
+    { day, event: 'homepage_fetch', variant: 'media-1', count: 1 },
+    { day, event: 'offer_fetch', variant: 'media-1', count: 1 },
+    { day, event: 'llms_fetch', variant: '_untagged', count: 1 },
+    { day, event: 'quote_request', variant: 'media-1', count: 1 },
+    { day, event: 'quote_request', variant: 'competitive-1', count: 1 },
+  ] });
+  assert.equal((await post('/api/stats/variants')).status, 405);
+});
+
+test('tagged discovery GET and HEAD ignore static asset validators', async () => {
+  const validators = { ETag: '"static"', 'Last-Modified': 'Tue, 24 Nov 2026 01:00:00 GMT' };
+  const headers = { 'If-None-Match': validators.ETag, 'If-Modified-Since': validators['Last-Modified'] };
+  const conditionalEnv = { ...env, ASSETS: {
+    async fetch(request) {
+      if (request.headers.has('If-None-Match') || request.headers.has('If-Modified-Since')) {
+        return new Response(null, { status: 304, headers: validators });
+      }
+      const asset = await env.ASSETS.fetch(request);
+      return new Response(asset.body, { status: asset.status, headers: validators });
+    },
+  } };
+  for (const method of ['GET', 'HEAD']) {
+    const send = (path) => site.fetch(new Request(origin + path, { method, headers }), conditionalEnv);
+    assert.equal((await send('/offer.json')).status, 304);
+    const response = await send('/offer.json?v=media-1');
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    assert.equal(response.headers.get('ETag'), null);
+    assert.equal(response.headers.get('Last-Modified'), null);
+    if (method === 'HEAD') assert.equal(await response.text(), '');
+    else assert.equal((await response.json()).quote_request.url, origin + '/quote?v=media-1');
+  }
+});
 
 test('www redirects to the canonical apex without changing the path, query, or method', async () => {
   for (const [path, method] of [

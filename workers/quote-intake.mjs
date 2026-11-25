@@ -54,6 +54,17 @@ function quoteBodyTooLarge() {
   return json({ error: 'Quote body exceeds 32 KiB.' }, 413);
 }
 
+export function wasQuoteForwarded(response) {
+  if (response.ok) return true;
+  const location = response.headers.get('Location');
+  if (![302, 303].includes(response.status) || !location) return false;
+  try {
+    return ['/thanks', '/thanks/'].includes(new URL(location, 'https://phantompipe.netlify.app').pathname);
+  } catch {
+    return false;
+  }
+}
+
 export async function submitQuote(request, env, forward) {
   if (Number(request.headers.get('Content-Length')) > maxQuoteBodyBytes) return quoteBodyTooLarge();
   const type = mediaType(request);
@@ -84,10 +95,7 @@ export async function submitQuote(request, env, forward) {
   fields.set('brief', fields.get('brief') + '\n\nQuote request ID: ' + id);
   try {
     const upstream = await forward(new Request(request.url, { method: 'POST', body: fields }));
-    const location = upstream.headers.get('Location');
-    const redirectedToThanks = [302, 303].includes(upstream.status) && location &&
-      ['/thanks', '/thanks/'].includes(new URL(location, 'https://phantompipe.netlify.app').pathname);
-    if (!upstream.ok && !redirectedToThanks) {
+    if (!wasQuoteForwarded(upstream)) {
       return json({ error: 'Quote intake is unavailable. Contact dane@phantompipe.com.' }, 502);
     }
   } catch {

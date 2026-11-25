@@ -1,4 +1,6 @@
-import { quoteStatus, submitQuote, wantsQuoteReceipt } from './quote-intake.mjs';
+import { withVariant } from '../lib/variants.mjs';
+import { quoteStatus, submitQuote, wantsQuoteReceipt, wasQuoteForwarded } from './quote-intake.mjs';
+import { readVariants, recordVariant } from './variant-stats.mjs';
 export { QuoteReceipts } from './quote-intake.mjs';
 
 const pages = new Map([
@@ -12,6 +14,11 @@ const pages = new Map([
 ]);
 const quotePaths = new Set(['/quote', '/quote/']);
 const intakePaths = new Set([...quotePaths, '/thanks', '/thanks/']);
+const discoveryPaths = new Map([
+  ['/', 'homepage_fetch'],
+  ['/offer.json', 'offer_fetch'],
+  ['/llms.txt', 'llms_fetch'],
+]);
 
 function netlify(request, { pathname, search }) {
   const url = new URL('https://phantompipe.netlify.app');
@@ -20,10 +27,41 @@ function netlify(request, { pathname, search }) {
   return fetch(new Request(url, request), { redirect: 'manual' });
 }
 
-function asset(request, env, path) {
+function asset(request, env, path, personalized) {
   const url = new URL(request.url);
   url.pathname = path;
-  return env.ASSETS.fetch(new Request(url, request));
+  const assetRequest = new Request(url, request);
+  if (personalized) {
+    assetRequest.headers.delete('If-None-Match');
+    assetRequest.headers.delete('If-Modified-Since');
+  }
+  return env.ASSETS.fetch(assetRequest);
+}
+
+function taggedPage(response, url) {
+  const rewriter = new HTMLRewriter();
+  if (url.pathname === '/') {
+    for (const path of ['/quote', '/offer.json', '/llms.txt']) {
+      rewriter.on(`a[href="${path}"]`, { element: (el) => el.setAttribute('href', withVariant(path, url)) });
+    }
+  } else {
+    rewriter.on('form[name="quote"]', { element: (el) => el.setAttribute('action', withVariant('/thanks/', url)) });
+  }
+  return rewriter.transform(response);
+}
+
+async function taggedDiscovery(response, headers, url) {
+  if (url.pathname === '/offer.json') {
+    const offer = await response.json();
+    const payment = offer.evidence_brief.marketplace_payment;
+    for (const [section, key] of [[offer.quote_request, 'url'], [offer.contact, 'url'], [payment, 'card_url'], [payment, 'mpp_url']]) {
+      section[key] = withVariant(section[key], url);
+    }
+    return Response.json(offer, { status: response.status, headers });
+  }
+  const text = await response.text();
+  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|q\/evidence-brief-10|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
+  return new Response(text.replace(links, (link) => withVariant(link, url)), { status: response.status, headers });
 }
 
 export default {
@@ -36,11 +74,20 @@ export default {
       return Response.redirect(url, 308);
     }
     const { pathname } = url;
-    if (request.method === 'POST' && quotePaths.has(pathname) && wantsQuoteReceipt(request)) {
-      return submitQuote(request, env, (submission) => netlify(submission, { pathname: '/thanks/', search: url.search }));
+    if (pathname === '/api/stats/variants') return readVariants(request, env);
+    if (request.method === 'POST' && intakePaths.has(pathname)) {
+      const forward = async (submission, target) => {
+        const response = await netlify(submission, target);
+        if (wasQuoteForwarded(response)) await recordVariant(env, 'quote_request', url);
+        return response;
+      };
+      if (quotePaths.has(pathname) && wantsQuoteReceipt(request)) {
+        return submitQuote(request, env, (submission) => forward(submission, { pathname: '/thanks/', search: url.search }));
+      }
+      return forward(request, url);
     }
     if (pathname.startsWith('/quote/status/')) return quoteStatus(request, env, pathname);
-    if (pathname === '/agent-pay-test' || (request.method === 'POST' && intakePaths.has(pathname))) {
+    if (pathname === '/agent-pay-test') {
       return netlify(request, url);
     }
     if (!['GET', 'HEAD'].includes(request.method)) {
@@ -49,7 +96,9 @@ export default {
         'Cache-Control': 'no-store',
       } });
     }
-    const response = await asset(request, env, pages.get(pathname) ?? pathname);
+    const event = discoveryPaths.get(pathname);
+    const personalized = url.searchParams.has('v') && (event || quotePaths.has(pathname));
+    const response = await asset(request, env, pages.get(pathname) ?? pathname, personalized);
     if (!response.ok) return response;
     const headers = new Headers(response.headers);
     if (pathname === '/llms.txt') headers.set('Content-Type', 'text/plain; charset=utf-8');
@@ -57,6 +106,16 @@ export default {
       headers.set('Content-Type', 'application/json; charset=utf-8');
     }
     if (pathname === '/offer.json') headers.set('Access-Control-Allow-Origin', '*');
+    if (personalized) {
+      headers.set('Cache-Control', 'no-store');
+      headers.delete('ETag');
+      headers.delete('Last-Modified');
+      headers.delete('Content-Length');
+      if (request.method === 'HEAD') return new Response(null, { status: response.status, headers });
+      if (event) await recordVariant(env, event, url);
+      if (pathname === '/offer.json' || pathname === '/llms.txt') return taggedDiscovery(response, headers, url);
+      return taggedPage(new Response(response.body, { status: response.status, headers }), url);
+    }
     return new Response(response.body, { status: response.status, headers });
   },
 };
