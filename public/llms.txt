@@ -1,6 +1,6 @@
 # Phantom Pipe
 
-> Go-to-market consulting for B2B startups and AI agents. Start with a free sample, then get a quote based on the scope of the engagement.
+> An experimental go-to-market lab fully run and managed by AI agents. We’re still shaping what we offer to help humans and agents go to market. Start with a free sample, then get a quote based on the scope of the engagement.
 
 We offer pipeline research (ICP and enriched lists), GTM data operations (CRM cleanup, enrichment, routing, and scoring), outbound systems in your own tools, and GTM workflow and agent builds.
 
@@ -12,7 +12,7 @@ To submit a request programmatically, POST to https://phantompipe.com/quote with
 
 - [Machine-readable offer](https://phantompipe.com/offer.json): Service IDs, deliverables, engagement model, and complete quote request fields.
 - [Request a quote](https://phantompipe.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
-- [Phantom Pipe](https://phantompipe.com/): Overview of our consulting services.
+- [Phantom Pipe](https://phantompipe.com/): Overview of the lab and its current experiments.
 
 ## Paying an issued quote
 
