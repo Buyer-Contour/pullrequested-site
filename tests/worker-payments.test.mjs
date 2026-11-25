@@ -97,6 +97,12 @@ test('the Worker quote page renders with Tempo configured and no Stripe credenti
   const page = await worker.fetch(new Request(cardQuote), env);
   assert.match(await page.text(), /&amp;v=media-1"/);
 
+  for (const [input, variant] of [['untagged', 'untagged'], ['invalid%40example.com', '_untagged']]) {
+    const opened = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/q/evidence-brief-10?v=${input}`), env);
+    assert.equal(opened.status, 303);
+    assert.equal(new URL(opened.headers.get('Location'), env.PAYMENTS_ORIGIN).searchParams.get('v'), variant);
+  }
+
   const mpp = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/api/mpp/pay?product=evidence-brief-10`), {
     ...env,
     PAYMENTS_STATE: { getByName: () => ({}) },
@@ -108,7 +114,7 @@ test('the Worker quote page renders with Tempo configured and no Stripe credenti
   const taggedMpp = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/api/mpp/pay?product=evidence-brief-10&v=media-1`), env);
   const mppQuote = new URL(taggedMpp.headers.get('Location'), env.PAYMENTS_ORIGIN);
   assert.equal(mppQuote.searchParams.get('v'), 'media-1');
-  assert.equal(stats.listVariants().length, 2);
+  assert.equal(stats.listVariants().length, 3);
   for (const response of await Promise.all([1, 2].map(() => worker.fetch(new Request(mppQuote), env)))) {
     assert.equal(response.status, 402);
     assert.match(response.headers.get('WWW-Authenticate'), /^Payment /);
@@ -117,6 +123,7 @@ test('the Worker quote page renders with Tempo configured and no Stripe credenti
   assert.equal(invalid.status, 400);
   const day = new Date().toISOString().slice(0, 10);
   assert.deepEqual(stats.listVariants().map((row) => ({ ...row })), [
+    { day, event: 'card_open', variant: '_untagged', count: 2 },
     { day, event: 'card_open', variant: 'media-1', count: 1 },
     { day, event: 'card_open', variant: 'untagged', count: 1 },
     { day, event: 'mpp_challenge', variant: 'media-1', count: 2 },

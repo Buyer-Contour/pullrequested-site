@@ -1,4 +1,4 @@
-import { isVariant, variantOf } from '../lib/variants.mjs';
+import { isVariant, untaggedVariant, variantOf } from '../lib/variants.mjs';
 
 const statsObject = 'variant-stats';
 const events = new Set(['card_open', 'mpp_challenge', 'quote_request', 'homepage_fetch', 'offer_fetch', 'llms_fetch']);
@@ -10,7 +10,7 @@ export function variantStats(sql) {
   )`);
   return {
     increment(event, variant) {
-      if (!events.has(event) || !isVariant(variant)) return;
+      if (!events.has(event) || (!isVariant(variant) && variant !== untaggedVariant)) return;
       const day = new Date().toISOString().slice(0, 10);
       sql.exec(`INSERT INTO variant_counts VALUES (?, ?, ?, 1)
         ON CONFLICT(day, event, variant) DO UPDATE SET count = count + 1`, day, event, variant);

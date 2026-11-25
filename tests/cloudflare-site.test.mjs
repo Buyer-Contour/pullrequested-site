@@ -67,10 +67,26 @@ test('variant stats report only successful tagged discovery fetches and forwarde
   await request('/quote?v=media-1');
   assert.deepEqual(rewrites, [
     ['a[href="/quote"]', 'href', '/quote?v=media-1'],
+    ['a[href="/offer.json"]', 'href', '/offer.json?v=media-1'],
+    ['a[href="/llms.txt"]', 'href', '/llms.txt?v=media-1'],
     ['form[name="quote"]', 'action', '/thanks/?v=media-1'],
   ]);
-  await request('/offer.json?v=media-1');
-  await request('/llms.txt?v=invalid%40example.com');
+  const offerResponse = await request('/offer.json?v=media-1');
+  assert.equal(offerResponse.headers.get('Cache-Control'), 'no-store');
+  const offer = await offerResponse.json();
+  const quoteUrl = new URL(offer.quote_request.url);
+  assert.equal(quoteUrl.href, origin + '/quote?v=media-1');
+  assert.equal(offer.contact.url, quoteUrl.href);
+  const { card_url, mpp_url } = offer.evidence_brief.marketplace_payment;
+  assert.equal(card_url, origin + '/q/evidence-brief-10?v=media-1');
+  assert.equal(mpp_url, origin + '/api/mpp/pay?product=evidence-brief-10&v=media-1');
+  const llms = await (await request('/llms.txt?v=invalid%40example.com')).text();
+  for (const url of [quoteUrl.href, card_url, mpp_url]) {
+    assert.ok(llms.includes(url.replace('v=media-1', 'v=_untagged')));
+  }
+  assert.ok(llms.includes(origin + '/offer.json?v=_untagged'));
+  assert.ok(llms.includes(origin + '/q/{signed_quote_token}'));
+  assert.ok(!llms.includes('invalid@example.com'));
   await request('/offer.json');
   await request('/llms.txt?v=media-1', { method: 'HEAD' });
   await request('/404?v=media-1');
@@ -80,7 +96,7 @@ test('variant stats report only successful tagged discovery fetches and forwarde
   const body = JSON.stringify({ name: 'A Person', email: 'a@example.com', service: 'not-sure', brief: 'Test' });
   const post = (path, init) => request(path, { method: 'POST', headers, body, ...init });
   assert.equal((await post('/quote?v=media-1', { body: '{}' })).status, 400);
-  assert.equal((await post('/quote?v=media-1')).status, 202);
+  assert.equal((await post(quoteUrl.pathname + quoteUrl.search)).status, 202);
   assert.equal((await post('/thanks/?v=competitive-1')).status, 303);
   upstreamStatus = 502;
   assert.equal((await post('/quote?v=media-1')).status, 502);
@@ -90,7 +106,7 @@ test('variant stats report only successful tagged discovery fetches and forwarde
   assert.deepEqual(await response.json(), { counts: [
     { day, event: 'homepage_fetch', variant: 'media-1', count: 1 },
     { day, event: 'offer_fetch', variant: 'media-1', count: 1 },
-    { day, event: 'llms_fetch', variant: 'untagged', count: 1 },
+    { day, event: 'llms_fetch', variant: '_untagged', count: 1 },
     { day, event: 'quote_request', variant: 'media-1', count: 1 },
     { day, event: 'quote_request', variant: 'competitive-1', count: 1 },
   ] });

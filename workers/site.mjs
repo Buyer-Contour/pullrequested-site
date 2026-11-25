@@ -36,11 +36,27 @@ function asset(request, env, path) {
 function taggedPage(response, url) {
   const rewriter = new HTMLRewriter();
   if (url.pathname === '/') {
-    rewriter.on('a[href="/quote"]', { element: (el) => el.setAttribute('href', withVariant('/quote', url)) });
+    for (const path of ['/quote', '/offer.json', '/llms.txt']) {
+      rewriter.on(`a[href="${path}"]`, { element: (el) => el.setAttribute('href', withVariant(path, url)) });
+    }
   } else {
     rewriter.on('form[name="quote"]', { element: (el) => el.setAttribute('action', withVariant('/thanks/', url)) });
   }
   return rewriter.transform(response);
+}
+
+async function taggedDiscovery(response, headers, url) {
+  if (url.pathname === '/offer.json') {
+    const offer = await response.json();
+    const payment = offer.evidence_brief.marketplace_payment;
+    for (const [section, key] of [[offer.quote_request, 'url'], [offer.contact, 'url'], [payment, 'card_url'], [payment, 'mpp_url']]) {
+      section[key] = withVariant(section[key], url);
+    }
+    return Response.json(offer, { status: response.status, headers });
+  }
+  const text = await response.text();
+  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|q\/evidence-brief-10|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
+  return new Response(text.replace(links, (link) => withVariant(link, url)), { status: response.status, headers });
 }
 
 export default {
@@ -86,8 +102,13 @@ export default {
     const tagged = request.method === 'GET' && url.searchParams.has('v');
     const event = discoveryPaths.get(pathname);
     if (tagged && event) await recordVariant(env, event, url);
-    if (tagged && (event || quotePaths.has(pathname))) headers.set('Cache-Control', 'no-store');
-    const output = new Response(response.body, { status: response.status, headers });
-    return tagged && (pathname === '/' || quotePaths.has(pathname)) ? taggedPage(output, url) : output;
+    if (tagged && (event || quotePaths.has(pathname))) {
+      headers.set('Cache-Control', 'no-store');
+      headers.delete('ETag');
+      headers.delete('Content-Length');
+      if (pathname === '/offer.json' || pathname === '/llms.txt') return taggedDiscovery(response, headers, url);
+      return taggedPage(new Response(response.body, { status: response.status, headers }), url);
+    }
+    return new Response(response.body, { status: response.status, headers });
   },
 };

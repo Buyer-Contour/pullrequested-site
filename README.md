@@ -36,9 +36,9 @@ Give each pitch a short, non-personal variant ID using lowercase letters, digits
 
 - Homepage and discovery: `/?v=media-1`, `/offer.json?v=media-1`, `/llms.txt?v=media-1`.
 - Payments: `/q/evidence-brief-10?v=media-1`, `/api/mpp/pay?product=evidence-brief-10&v=media-1`. Follow redirects without dropping their query string.
-- Quote intake: link to `/quote?v=media-1`, or POST directly to it for agent requests. The tagged homepage and browser form preserve the tag for submissions.
+- Quote intake: link to `/quote?v=media-1`, or POST directly to it for agent requests. The tagged homepage, discovery documents, and browser form preserve the tag on their quote links.
 
-`GET /api/stats/variants` on the site Worker returns `{ "counts": [{ "day": "YYYY-MM-DD", "event": "card_open", "variant": "media-1", "count": 1 }] }` with UTC daily totals. Discovery events count successful tagged GETs only. Payment events count durable card opens and issued MPP challenges, not completed payments. Intake counts requests accepted by the forwarding endpoint, not verified inbox delivery. Missing or invalid tags on payment or intake, and invalid tags on discovery, count as `untagged`. Only the event, day, normalized variant, and count are stored. Repeat fetches, previews and bots can count; these are not unique visitors or proof of intent.
+`GET /api/stats/variants` on the site Worker returns `{ "counts": [{ "day": "YYYY-MM-DD", "event": "card_open", "variant": "media-1", "count": 1 }] }` with UTC daily totals. Discovery events count successful tagged GETs only. Payment events count durable card opens and issued MPP challenges, not completed payments. Intake counts requests accepted by the forwarding endpoint, not verified inbox delivery. Missing or invalid tags on payment or intake, and invalid tags on discovery, count as `_untagged`, distinct from the valid pitch ID `untagged`. Only the event, day, normalized variant, and count are stored. Repeat fetches, previews and bots can count; these are not unique visitors or proof of intent.
 
 Deploy `wrangler.toml` before `wrangler.site.toml` for changes to variant counters: the site Worker uses the payment Worker's existing Durable Object namespace.
 
