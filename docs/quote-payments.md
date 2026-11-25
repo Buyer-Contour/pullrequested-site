@@ -31,7 +31,7 @@ The service uses a per-quote Stripe idempotency key and limits quote validity to
 
 ## Cloudflare Workers
 
-Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only. When using the [Cloudflare site Worker](../README.md#deploy-the-site-to-cloudflare), retain more specific routes to `phantompipe-payments` for `/q/*`, `/payment/submitted*`, `/api/checkout*`, `/api/pay*`, `/api/mpp/pay*`, `/api/stripe-webhook*`, and `/agent-pay-test*`.
+Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only. When using the [Cloudflare site Worker](../README.md#deploy-the-site-to-cloudflare), retain the existing more specific routes to `phantompipe-payments` for `/q/*`, `/payment/submitted*`, `/api/checkout*`, `/api/pay*`, `/api/mpp/pay*`, and `/api/stripe-webhook*`. The legacy `/agent-pay-test` apex path retains its existing Netlify backend.
 
 - The production configuration in `wrangler.toml` uses `https://phantompipe.com` as `PAYMENTS_ORIGIN` and Tempo mainnet. Verify that only payment paths route to the payment Worker before issuing apex quotes.
 - After verifying the apex payment routes, update the dedicated live Stripe endpoint `we_1Ufl2FElm0HOkGFhYsy8X7TZ` from the `workers.dev` URL to `https://phantompipe.com/api/stripe-webhook`. Keep its signing secret bound as `STRIPE_WEBHOOK_SECRET`; do not reuse the older endpoint's secret. Set the remaining Stripe and Tempo secrets as described above.

@@ -4,7 +4,6 @@ import { test } from 'node:test';
 import site from '../workers/site.mjs';
 
 const origin = 'https://phantompipe.com';
-const inbox = 'dane@phantompipe.com';
 const env = {
   ASSETS: {
     async fetch(request) {
@@ -18,21 +17,10 @@ const env = {
       }
     },
   },
-  QUOTE_INBOX: inbox,
-  AGENTMAIL_API_KEY: 'test-key',
-};
-
-const quote = {
-  'form-name': 'quote', name: 'Test requester', email: 'example@example.com',
-  company: 'Test + Co', service: 'not-sure', brief: 'Find prospects in Montréal.',
 };
 
 function get(path, init) {
   return site.fetch(new Request(origin + path, init), env);
-}
-
-function submit(path, fields = quote) {
-  return get(path, { method: 'POST', body: new URLSearchParams(fields) });
 }
 
 test('Cloudflare serves the homepage, quote form, and agent discovery with the expected headers', async () => {
@@ -52,43 +40,50 @@ test('Cloudflare serves the homepage, quote form, and agent discovery with the e
   assert.equal((await get('/nonexistent')).status, 404);
 });
 
-test('browser and agent submissions forward to the same inbox before acknowledging', async (t) => {
-  const send = t.mock.method(globalThis, 'fetch', async (url, request) => {
-    assert.equal(url, 'https://api.agentmail.to/v0/inboxes/dane%40phantompipe.com/messages/send');
-    assert.equal(request.headers.Authorization, 'Bearer test-key');
-    assert.deepEqual(JSON.parse(request.body), {
-      to: [inbox],
-      reply_to: [quote.email],
-      subject: 'New Phantom Pipe quote request',
-      text: 'Name: Test requester\nEmail: example@example.com\nCompany or agent: Test + Co\nService: not-sure\n\nFind prospects in Montréal.',
-    });
-    return new Response(null, { status: 200 });
+test('browser and agent quote submissions keep their path, query, headers, body and upstream response', async (t) => {
+  const body = 'form-name=quote&bot-field=&name=Test+Requester&email=example%40example.com&company=A%2BB&service=not-sure&brief=Montr%C3%A9al';
+  const headers = {
+    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    Origin: origin,
+    Referer: origin + '/quote/',
+    'X-Request-Marker': 'fixture',
+  };
+  const upstream = t.mock.method(globalThis, 'fetch', async (request, options) => {
+    const { pathname } = new URL(request.url);
+    assert.equal(new URL(request.url).origin, 'https://phantompipe.netlify.app');
+    assert.equal(new URL(request.url).search, '?source=fixture');
+    assert.equal(request.method, 'POST');
+    assert.equal(options.redirect, 'manual');
+    for (const [name, value] of Object.entries(headers)) assert.equal(request.headers.get(name), value);
+    assert.equal(await request.text(), body);
+    return pathname.startsWith('/thanks')
+      ? new Response(null, { status: 303, headers: { Location: '/thanks/' } })
+      : new Response('Netlify confirmation', { headers: { 'X-Upstream': 'netlify' } });
   });
-  const agent = await submit('/quote');
-  assert.equal(agent.status, 200);
-  assert.match(await agent.text(), /<h1>Thanks\.<\/h1>/);
-  assert.equal(agent.headers.get('Cache-Control'), 'no-store');
-  const browser = await submit('/thanks/');
-  assert.equal(browser.status, 303);
-  assert.equal(browser.headers.get('Location'), '/thanks/');
-  assert.match(await (await get('/thanks/')).text(), /<h1>Thanks\.<\/h1>/);
-  assert.equal(send.mock.callCount(), 2);
+
+  for (const path of ['/quote', '/quote/', '/thanks', '/thanks/']) {
+    const response = await get(path + '?source=fixture', { method: 'POST', headers, body });
+    assert.equal(upstream.mock.calls.at(-1).arguments[0].url, 'https://phantompipe.netlify.app' + path + '?source=fixture');
+    if (path.startsWith('/thanks')) {
+      assert.equal(response.status, 303);
+      assert.equal(response.headers.get('Location'), '/thanks/');
+    } else {
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('X-Upstream'), 'netlify');
+      assert.equal(await response.text(), 'Netlify confirmation');
+    }
+  }
+  assert.equal(upstream.mock.callCount(), 4);
 });
 
-test('invalid or honeypot submissions are not emailed', async (t) => {
-  const send = t.mock.method(globalThis, 'fetch', async () => new Response(null));
-  assert.equal((await submit('/quote', { ...quote, 'bot-field': 'spam' })).status, 200);
-  assert.equal((await submit('/quote', { ...quote, email: 'bad' })).status, 400);
-  assert.equal((await submit('/quote', { ...quote, service: 'invalid' })).status, 400);
-  assert.equal((await submit('/quote', { ...quote, brief: 'a'.repeat(16 * 1024) })).status, 413);
-  assert.equal((await get('/quote', { method: 'POST', body: '{}' })).status, 415);
-  assert.equal(send.mock.callCount(), 0);
-});
-
-test('provider failure never returns a successful quote acknowledgment', async (t) => {
-  t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 429 }));
-  const response = await submit('/thanks/');
-  assert.equal(response.status, 503);
-  assert.equal(response.headers.get('Cache-Control'), 'no-store');
-  assert.equal(response.headers.get('Location'), null);
+test('the legacy agent verification path retains its origin and other requests are not proxied', async (t) => {
+  const upstream = t.mock.method(globalThis, 'fetch', async request => {
+    assert.equal(request.url, 'https://phantompipe.netlify.app/agent-pay-test?quote=fixture');
+    return new Response('upstream unavailable', { status: 503 });
+  });
+  assert.equal((await get('/agent-pay-test?quote=fixture')).status, 503);
+  assert.equal((await get('/quote', { method: 'PUT', body: 'fixture' })).status, 405);
+  assert.equal((await get('/offer.json', { method: 'POST', body: 'fixture' })).status, 405);
+  assert.equal((await get('/api/pay')).status, 404);
+  assert.equal(upstream.mock.callCount(), 1);
 });
