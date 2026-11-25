@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { setEnvironmentContext } from '@netlify/blobs';
 import Stripe from 'stripe';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { checkoutVerificationDescription, makeAgentVerificationQuote } from '../lib/payments/live-verification.mjs';
 import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
 import { paymentConfig } from '../lib/payments/runtime.mjs';
+import netlifyMppPay from '../netlify/functions/mpp-pay.mjs';
 import netlifyQuotePage from '../netlify/functions/quote-page.mjs';
 
 const signingSecret = 'test-only-quote-signing-key-32-bytes';
@@ -110,6 +112,39 @@ test('a ten-cent quote offers only Tempo MPP and cannot reserve a Stripe payment
   assert.deepEqual(calls, { checkout: [], agent: [], methods: [] });
 });
 
+test('the durable card link issues new fixed-price quotes without opening Checkout', async () => {
+  const { handlers, entries, calls, tick } = fixture();
+  const product = 'evidence-brief-10';
+  const open = () => handlers.page(new Request(`${to('/q', product)}&amount_cents=1`));
+  const first = await open();
+  assert.equal(first.status, 303);
+  assert.equal(first.headers.get('Cache-Control'), 'no-store');
+  assert.equal(first.headers.get('Referrer-Policy'), 'no-referrer');
+  const firstToken = new URL(first.headers.get('Location'), origin).pathname.slice(3);
+  const quote = readQuote(firstToken, signingSecret, { now: testNow });
+  assert.equal(quote.amount_cents, 100);
+  assert.equal(quote.description, '10-row evidence brief (10 accepted rows at $0.10 each)');
+  const page = await handlers.page(new Request(to('/q', firstToken)));
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /Total: \$1\.00 USD.*Continue to Stripe Checkout/);
+
+  tick(24 * 60 * 60);
+  assert.equal((await handlers.page(new Request(to('/q', firstToken)))).status, 410);
+  const later = await open();
+  assert.equal(later.status, 303);
+  const laterToken = new URL(later.headers.get('Location'), origin).pathname.slice(3);
+  const laterQuote = readQuote(laterToken, signingSecret, { now: testNow + 24 * 60 * 60 });
+  assert.notEqual(laterQuote.id, quote.id);
+  assert.ok(laterQuote.expires_at > quote.expires_at);
+  assert.equal(laterQuote.amount_cents, 100);
+  assert.equal(entries.size, 0);
+  assert.equal(calls.checkout.length, 0);
+  const checkout = await handlers.checkout(new Request(to('/api/checkout', laterToken), { method: 'POST' }));
+  assert.equal(checkout.status, 303);
+  assert.equal(calls.checkout[0].params.line_items[0].price_data.unit_amount, 100);
+  assert.equal((await handlers.page(new Request(to('/q', 'other-product')))).status, 400);
+});
+
 test('the Netlify quote page renders with Tempo configured and no Stripe credentials', async (t) => {
   const originalEnv = process.env;
   process.env = {
@@ -127,6 +162,30 @@ test('the Netlify quote page renders with Tempo configured and no Stripe credent
   assert.match(body, /Total: \$0\.10 USD/);
   assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
   assert.doesNotMatch(body, /\/api\/checkout/);
+});
+
+test('Netlify payment functions mint both durable links with the configured signer', async (t) => {
+  const originalEnv = process.env;
+  process.env = {
+    PAYMENTS_ORIGIN: origin,
+    QUOTE_SIGNING_SECRET: signingSecret,
+    STRIPE_SECRET_KEY: 'sk_test_fixture',
+    MPP_NETWORK: 'moderato',
+    MPP_PAY_TO: '0x0000000000000000000000000000000000000042',
+    MPP_SECRET_KEY: 'test MPP secret at least 32 bytes',
+  };
+  t.after(() => { process.env = originalEnv; });
+  setEnvironmentContext({ siteID: 'test-site', token: 'test-token', apiURL: 'https://blobs.example.invalid' });
+
+  const product = 'evidence-brief-10';
+  const card = await netlifyQuotePage(new Request(to('/.netlify/functions/quote-page', product)));
+  const mpp = await netlifyMppPay(new Request(`${origin}/.netlify/functions/mpp-pay?product=${product}`));
+  assert.equal(card.status, 303);
+  assert.equal(mpp.status, 303);
+  const cardToken = new URL(card.headers.get('Location'), origin).pathname.slice(3);
+  const mppToken = new URL(mpp.headers.get('Location'), origin).searchParams.get('quote');
+  assert.equal(readQuote(cardToken, signingSecret).amount_cents, 100);
+  assert.equal(readQuote(mppToken, signingSecret).amount_cents, 100);
 });
 
 test('checkout displays an escaped quote, creates one session, and records a verified paid webhook once', async () => {
