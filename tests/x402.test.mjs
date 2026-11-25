@@ -6,7 +6,7 @@ import { ExactEvmScheme } from '@x402/evm/exact/client';
 import { privateKeyToAccount } from 'viem/accounts';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { makeQuote } from '../lib/payments/quotes.mjs';
-import { baseSepolia, createX402Rail, x402Path } from '../lib/payments/x402.mjs';
+import { baseSepolia, createX402Rail, x402Config, x402Path } from '../lib/payments/x402.mjs';
 
 const origin = 'https://pullrequested.com';
 const payTo = '0x1111111111111111111111111111111111111111';
@@ -16,7 +16,7 @@ const signer = privateKeyToAccount(`0x${'3'.repeat(64)}`);
 const client = new x402Client().register(baseSepolia, new ExactEvmScheme(signer));
 const quote = () => makeQuote({ amount_cents: 51, description: 'x402 unit test' }, signingSecret);
 
-function setup() {
+function setup(testMode = true) {
   const db = new Map();
   const calls = { verify: 0, settle: 0 };
   const store = {
@@ -35,12 +35,31 @@ function setup() {
     async settle() { calls.settle++; return { success: true, network: baseSepolia, transaction, payer: signer.address }; },
   };
   const x402Rail = createX402Rail({ facilitator, origin, network: baseSepolia, payTo });
-  const handlers = createPaymentHandlers({ store, origin, signingSecret, x402Rail });
+  const handlers = createPaymentHandlers({ store, origin, signingSecret, x402Rail, testMode });
   const request = (token, proof) => handlers.x402(new Request(`${origin}${x402Path}?quote=${token}`, {
     headers: proof ? { 'Payment-Signature': proof } : {},
   }));
   return { handlers, store, calls, request };
 }
+
+test('live configuration does not default to Base Sepolia', () => {
+  const env = { X402_PAY_TO: payTo };
+  assert.equal(x402Config({ ...env, CONTEXT: 'production' }), null);
+  assert.equal(x402Config({ ...env, STRIPE_LIVE_RESTRICTED_KEY: 'rk_live_fixture' }), null);
+  assert.equal(x402Config({ ...env, CONTEXT: 'production', X402_NETWORK: baseSepolia }).network, baseSepolia);
+  assert.equal(x402Config(env).network, baseSepolia);
+});
+
+test('Base Sepolia cannot reserve or mark a live quote paid', async () => {
+  const { request, store } = setup(false);
+  const { token, quote: { id } } = quote();
+  const required = decodePaymentRequiredHeader((await request(token)).headers.get('Payment-Required'));
+  const proof = encodePaymentSignatureHeader(await client.createPaymentPayload(required));
+  assert.equal((await request(token, proof)).status, 200);
+  assert.equal((await store.get(`x402-testnet/paid/${id}`)).payment_id, transaction);
+  assert.equal(await store.get(`paid/${id}`), undefined);
+  assert.equal(await store.get(`reservation/${id}`), undefined);
+});
 
 test('native x402 provides Bazaar schemas, settles once, and rejects cross-quote proof replays', async () => {
   const { request, calls, handlers } = setup();
