@@ -2,6 +2,8 @@ const pages = new Map([
   ['/', '/index.html'],
   ['/quote', '/quote/index.html'],
   ['/quote/', '/quote/index.html'],
+  ['/lab-notes', '/lab-notes/index.html'],
+  ['/lab-notes/', '/lab-notes/index.html'],
   ['/thanks', '/thanks/index.html'],
   ['/thanks/', '/thanks/index.html'],
 ]);

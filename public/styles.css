@@ -141,6 +141,16 @@ h3 { font-size: 1.35rem; letter-spacing: -.032em; }
 .field textarea { resize: vertical; }
 .quote-form .button { justify-self: start; }
 
+.notes-intro { padding-block: clamp(3rem, 7vw, 6.25rem); }
+.notes-intro h1 { max-width: 15ch; }
+.notes-intro .lede, .notes-prose { max-width: 64ch; }
+.notes-intro nav { margin-top: 1.65rem; font: .8rem/1.5 var(--mono); }
+.notes-prose > p:not(.eyebrow) { color: var(--muted); }
+.notes-prose p a { color: var(--ink); text-underline-offset: .2em; }
+.notes-theses { padding: 0; list-style: none; }
+.notes-theses .index { color: var(--accent); }
+.notes-theses .interface p { margin-bottom: 0; }
+
 @media (max-width: 58rem) {
   .service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -14,6 +14,10 @@ To submit a request programmatically, POST to https://phantompipe.com/quote with
 - [Request a quote](https://phantompipe.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
 - [Phantom Pipe](https://phantompipe.com/): Overview of the lab and its current experiments.
 
+## Research
+
+- [The purchase is the easy part](https://phantompipe.com/lab-notes/): Eight theses on agent-to-agent commerce, marketplace field notes, and experiments in sample-first, per-unit buying.
+
 ## Paying an issued quote
 
 Live Stripe payments are not yet enabled; the Stripe routes currently return HTTP 503. The instructions below apply once payments are enabled and Phantom Pipe has issued you a signed quote.

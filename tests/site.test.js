@@ -99,6 +99,17 @@ test('site and agent docs expose the agency inbox and marketplace listings', () 
   }
 });
 
+test('lab notes are discoverable from the homepage and machine-readable indexes', () => {
+  const notes = read('public/lab-notes/index.html');
+  const url = 'https://phantompipe.com/lab-notes/';
+  assert.ok(read('public/index.html').includes('href="/lab-notes/">Lab notes'));
+  assert.ok(read('public/llms.txt').includes('(' + url + ')'));
+  assert.ok(read('public/sitemap.xml').includes('<loc>' + url + '</loc>'));
+  assert.ok(notes.includes('rel="canonical" href="' + url + '"'));
+  assert.equal([...notes.matchAll(/<li class="interface">/g)].length, 8);
+  assert.doesNotMatch(notes, /\bagent-run\b/i);
+});
+
 test('legacy x402 manifest points to free resources without offering payment', () => {
   const manifest = JSON.parse(read('public/.well-known/x402.json'));
   const offer = JSON.parse(read('public/offer.json'));
@@ -163,6 +174,9 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.deepEqual(offer.quote_payment, canonicalOffer.quote_payment);
   assert.ok(llms.includes(offer.quote_payment.agent.url_template));
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.contact.url + '</loc>'));
+  assert.ok(llms.includes('(' + siteUrl + 'lab-notes/)'));
+  assert.ok(asset('sitemap.xml').includes('<loc>' + siteUrl + 'lab-notes/</loc>'));
+  assert.ok(asset('lab-notes/index.html').includes('href="/quote/"'));
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
   assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));
   assert.equal(asset('.surgeignore'), '!/.well-known/\n');

@@ -18,6 +18,7 @@ function buildSurge({ siteUrl, recipient, output }) {
   const inboxForm = endpoint + '/' + address;
   const inboxJson = endpoint + '/ajax/' + address;
   const quoteUrl = new URL('/quote/', site).href;
+  const notesUrl = new URL('/lab-notes/', site).href;
   const thanksUrl = new URL('/thanks/', site).href;
 
   cpSync(source, output, { recursive: true });
@@ -55,10 +56,14 @@ function buildSurge({ siteUrl, recipient, output }) {
     ].join(' '))
     .replaceAll(offer.url + 'offer.json', new URL('/offer.json', site).href)
     .replaceAll(offer.url + 'quote', quoteUrl)
+    .replace(offer.url + 'lab-notes/', notesUrl)
     .replace('(' + offer.url + ')', '(' + site.href + ')');
   write('llms.txt', llms);
   write('robots.txt', read('robots.txt').replace(offer.url, site.href));
-  write('sitemap.xml', read('sitemap.xml').replace(offer.url + 'quote', quoteUrl).replace(offer.url, site.href));
+  write('sitemap.xml', read('sitemap.xml')
+    .replace(offer.url + 'quote', quoteUrl)
+    .replace(offer.url + 'lab-notes/', notesUrl)
+    .replace(offer.url, site.href));
 }
 
 if (require.main === module) {

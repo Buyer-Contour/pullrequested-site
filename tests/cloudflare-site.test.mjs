@@ -40,6 +40,17 @@ test('Cloudflare serves the homepage, quote form, and agent discovery with the e
   assert.equal((await get('/nonexistent')).status, 404);
 });
 
+test('Cloudflare serves the lab notes at both directory paths', async () => {
+  for (const path of ['/lab-notes', '/lab-notes/']) {
+    const response = await get(path);
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /The purchase is the easy part — Phantom Pipe/);
+  }
+  const head = await get('/lab-notes/', { method: 'HEAD' });
+  assert.equal(head.status, 200);
+  assert.equal(await head.text(), '');
+});
+
 test('browser and agent quote submissions keep their path, query, headers, body and upstream response', async (t) => {
   const body = 'form-name=quote&bot-field=&name=Test+Requester&email=example%40example.com&company=A%2BB&service=not-sure&brief=Montr%C3%A9al';
   const headers = {
