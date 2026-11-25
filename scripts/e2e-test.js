@@ -4,7 +4,7 @@ const { setTimeout: delay } = require('node:timers/promises');
 async function main() {
   const { paymentConfig } = await import('../lib/payments/runtime.mjs');
   const { makeQuote } = await import('../lib/payments/quotes.mjs');
-  const { stripe, origin, testMode, signingSecret, webhookSecret } = paymentConfig();
+  const { stripe, origin, testMode, publishableKey, signingSecret, webhookSecret } = paymentConfig();
   assert.ok(testMode, 'This script only runs with a Stripe test-mode key');
   const simulateDelivery = process.argv.includes('--local-webhook');
   if (simulateDelivery) {
@@ -16,12 +16,31 @@ async function main() {
   const payUrl = new URL(`/api/pay?quote=${agent.token}`, origin);
   const challenge = await fetch(payUrl);
   assert.equal(challenge.status, 402, 'Expected an HTTP 402 challenge');
-  const { nonce, quote_id } = await challenge.json();
+  const { nonce, quote_id, payment: requirements } = await challenge.json();
   assert.equal(quote_id, agent.quote.id);
+  const useFixtureCard = process.argv.includes('--fixture-card');
+  let payment_method = 'pm_card_visa';
+  if (!useFixtureCard) {
+    const key = requirements.stripe?.publishable_key;
+    assert.ok(typeof key === 'string' && /^pk_test_[a-zA-Z0-9_]+$/.test(key),
+      'Set STRIPE_PUBLISHABLE_KEY on the test payment service or pass --fixture-card to test with pm_card_visa');
+    if (publishableKey) assert.ok(key === publishableKey, 'The advertised Stripe publishable key does not match the local one');
+    const tokenize = await fetch('https://api.stripe.com/v1/payment_methods', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ type: 'card', 'card[token]': 'tok_visa' }),
+    });
+    assert.equal(tokenize.status, 200, `Stripe test card tokenization returned HTTP ${tokenize.status}`);
+    const method = await tokenize.json();
+    assert.equal(method.customer, null);
+    assert.equal(method.livemode, false);
+    assert.match(method.id, /^pm_[a-zA-Z0-9]+$/);
+    payment_method = method.id;
+  }
   const payment = await fetch(payUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nonce, payment_method: 'pm_card_visa' }),
+    body: JSON.stringify({ nonce, payment_method }),
   });
   assert.equal(payment.status, 200, `Agent confirmation returned HTTP ${payment.status}`);
   const { payment_intent_id } = await payment.json();
@@ -35,7 +54,7 @@ async function main() {
   const replay = await fetch(payUrl, { headers });
   assert.equal(replay.status, 409);
   assert.equal((await replay.json()).error, 'payment_replayed');
-  console.log('Agent: Stripe PaymentIntent succeeded, signed quote receipt returned, replay rejected (HTTP 409).');
+  console.log(`Agent (${useFixtureCard ? 'pm_card_visa fixture' : 'publishable-key tokenized card'}): Stripe PaymentIntent succeeded, quote receipt returned, replay rejected (HTTP 409).`);
 
   const human = makeQuote({ amount_cents, description: 'Human quote payment — test only' }, signingSecret);
   const checkoutUrl = new URL(`/api/checkout?quote=${human.token}`, origin);

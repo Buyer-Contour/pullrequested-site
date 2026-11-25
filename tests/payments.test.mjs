@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import Stripe from 'stripe';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
+import { paymentConfig } from '../lib/payments/runtime.mjs';
 
 const signingSecret = 'test-only-quote-signing-key-32-bytes';
 const webhookSecret = 'whsec_test_fixture';
@@ -14,11 +15,12 @@ const quoteAt = (description = 'Quoted work', expiresIn) =>
   makeQuote({ amount_cents: 500, description, expiresIn }, signingSecret, testNow);
 const to = (path, token) => new URL(`${path}?quote=${token}`, origin);
 
-function fixture({ testMode = true } = {}) {
+function fixture({ testMode = true, publishableKey } = {}) {
   let clock = testNow;
   const entries = new Map();
-  const calls = { checkout: [], agent: [] };
+  const calls = { checkout: [], agent: [], methods: [] };
   const intents = new Map();
+  const methods = new Map();
   const store = {
     async get(key) { return entries.get(key); },
     async add(key, value) {
@@ -33,6 +35,11 @@ function fixture({ testMode = true } = {}) {
       calls.checkout.push({ params, options });
       return { id: sessionId, url: `https://checkout.stripe.com/c/pay/${sessionId}` };
     } } },
+    paymentMethods: { async retrieve(id) {
+      calls.methods.push(id);
+      if (!methods.has(id)) throw Object.assign(new Error('No such PaymentMethod'), { code: 'resource_missing' });
+      return methods.get(id);
+    } },
     paymentIntents: {
       async create(params, options) {
         calls.agent.push({ params, options });
@@ -43,7 +50,7 @@ function fixture({ testMode = true } = {}) {
       async retrieve(id) { return intents.get(id); },
     },
   };
-  const handlers = createPaymentHandlers({ stripe, store, origin, testMode, signingSecret, webhookSecret, now: () => clock });
+  const handlers = createPaymentHandlers({ stripe, store, origin, testMode, publishableKey, signingSecret, webhookSecret, now: () => clock });
   function webhookRequest(session, { secret = webhookSecret, type = 'checkout.session.completed' } = {}) {
     const payload = JSON.stringify({ type, livemode: !testMode, data: { object: session } });
     const signature = stripe.webhooks.generateTestHeaderString({ payload, secret });
@@ -51,7 +58,7 @@ function fixture({ testMode = true } = {}) {
       method: 'POST', body: payload, headers: { 'Stripe-Signature': signature },
     });
   }
-  return { handlers, entries, calls, intents, webhookRequest, tick: (secs) => { clock += secs; } };
+  return { handlers, entries, calls, intents, methods, webhookRequest, tick: (secs) => { clock += secs; } };
 }
 
 function postPayment(token, body) {
@@ -142,6 +149,7 @@ test('agent challenge binds quote, amount, currency, nonce and rejects concurren
   const confirmed = await post(nonce);
   assert.equal(confirmed.status, 200);
   assert.equal((await confirmed.json()).payment_intent_id, intentId);
+  assert.deepEqual(calls.methods, [], 'Stripe test fixture is confirmed directly, not looked up');
   assert.equal(calls.agent[0].params.metadata.nonce, nonce);
   assert.equal(calls.agent[0].options.idempotencyKey, `quote-agent-${quote.id}`);
   const checkout = await handlers.checkout(new Request(to('/api/checkout', token)));
@@ -170,16 +178,77 @@ test('agent challenge binds quote, amount, currency, nonce and rejects concurren
   assert.equal((await replay.json()).error, 'payment_replayed');
 });
 
-test('live agent payment requires a Stripe shared payment token and cannot swap credentials', async () => {
+test('Stripe shared payment tokens remain supported and cannot swap credentials', async () => {
   const { token } = quoteAt();
   const { handlers, calls } = fixture({ testMode: false });
   const challenge = await (await handlers.pay(getPayment(token))).json();
   const { nonce } = challenge;
   assert.ok(!challenge.payment.test_only_alternative);
+  assert.ok(!challenge.payment.stripe);
   assert.equal((await handlers.pay(postPayment(token, { nonce, payment_method: 'pm_card_visa' }))).status, 400);
   assert.equal((await handlers.pay(postPayment(token, { nonce, shared_payment_token: 'spt_first' }))).status, 200);
   assert.equal((await handlers.pay(postPayment(token, { nonce, shared_payment_token: 'spt_second' }))).status, 409);
   assert.equal(calls.agent.length, 1);
   assert.equal(calls.agent[0].params.shared_payment_granted_token, 'spt_first');
   assert.match(calls.agent[0].options.apiVersion, /\.preview$/);
+});
+
+test('payment runtime accepts a same-mode publishable key and never publishes a secret key', () => {
+  const env = { STRIPE_SECRET_KEY: 'sk_test_fixture', PAYMENTS_ORIGIN: origin, QUOTE_SIGNING_SECRET: signingSecret };
+  assert.equal(paymentConfig(env).publishableKey, undefined);
+  assert.equal(paymentConfig({ ...env, STRIPE_PUBLISHABLE_KEY: 'pk_test_fixture' }).publishableKey, 'pk_test_fixture');
+  for (const invalid of ['sk_test_fixture', 'pk_live_fixture']) {
+    assert.throws(() => paymentConfig({ ...env, STRIPE_PUBLISHABLE_KEY: invalid }), /must be a Stripe publishable key in the same mode/);
+  }
+});
+
+test('402 advertises Stripe.js and only accepts a new, unattached card PaymentMethod from the right Stripe mode', async () => {
+  const publishableKey = 'pk_live_fixture';
+  const { token, quote } = quoteAt();
+  const { handlers, calls, entries, methods } = fixture({ testMode: false, publishableKey });
+  const response = await handlers.pay(getPayment(token));
+  assert.equal(response.status, 402);
+  const { nonce, payment } = await response.json();
+  assert.equal(payment.stripe.publishable_key, publishableKey);
+  assert.equal(payment.stripe.tokenize.method, 'stripe.createPaymentMethod');
+  assert.match(payment.stripe.tokenize.url, /^https:\/\/docs\.stripe\.com\//);
+  assert.ok(payment.fields.payment_method);
+  assert.ok(payment.fields.shared_payment_token);
+
+  const id = 'pm_cardFixture123';
+  const goodMethod = { customer: null, type: 'card', created: testNow, livemode: true };
+  const post = (body) => handlers.pay(postPayment(token, { nonce, ...body }));
+  assert.equal((await post({ payment_method: 'pm_card_visa' })).status, 400);
+  assert.equal((await post({ payment_method: id, shared_payment_token: 'spt_test' })).status, 400);
+  assert.equal((await post({ payment_method: id, nonce: 'wrong' })).status, 402);
+  assert.deepEqual(calls.methods, []);
+
+  const unknown = await post({ payment_method: id });
+  assert.equal(unknown.status, 402);
+  assert.equal((await unknown.json()).error, 'payment_method_not_found');
+  for (const [fields, error] of [
+    [{ customer: 'cus_123' }, 'payment_method_attached_to_customer'],
+    [{ customer: { id: 'cus_123' } }, 'payment_method_attached_to_customer'],
+    [{ created: testNow - 1 }, 'payment_method_not_eligible'],
+    [{ type: 'us_bank_account' }, 'payment_method_not_eligible'],
+    [{ livemode: false }, 'payment_method_not_eligible'],
+  ]) {
+    methods.set(id, { ...goodMethod, ...fields });
+    const response = await post({ payment_method: id });
+    assert.equal(response.status, 402);
+    assert.equal((await response.json()).error, error);
+  }
+  assert.equal(entries.has(`reservation/${quote.id}`), false);
+  assert.equal(calls.agent.length, 0);
+
+  methods.set(id, goodMethod);
+  const confirmation = await post({ payment_method: id });
+  assert.equal(confirmation.status, 200);
+  const { payment_intent_id } = await confirmation.json();
+  assert.equal(calls.agent[0].params.payment_method, id);
+  assert.ok(!('customer' in calls.agent[0].params));
+  assert.ok(!('apiVersion' in calls.agent[0].options));
+  const results = await Promise.all([1, 2].map(() => handlers.pay(getPayment(token, payment_intent_id))));
+  assert.deepEqual(results.map((item) => item.status).sort(), [200, 409]);
+  assert.equal((await results.find((item) => item.status === 409).json()).error, 'payment_replayed');
 });

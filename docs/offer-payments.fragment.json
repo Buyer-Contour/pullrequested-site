@@ -10,7 +10,18 @@
       "protocol": "quote-pay-v1",
       "url_template": "https://pullrequested.com/api/pay?quote={signed_quote_token}",
       "challenge": { "method": "GET", "status": 402 },
-      "payment": { "method": "POST", "content_type": "application/json", "fields": ["nonce", "shared_payment_token"] },
+      "payment": {
+        "method": "POST",
+        "content_type": "application/json",
+        "required_fields": ["nonce"],
+        "one_of_fields": ["payment_method", "shared_payment_token"],
+        "payment_method": {
+          "type": "fresh unattached Stripe card PaymentMethod ID",
+          "publishable_key_path": "payment.stripe.publishable_key",
+          "tokenization_url": "https://docs.stripe.com/js/payment_methods/create_payment_method"
+        },
+        "shared_payment_token": { "type": "Stripe SPT", "requires_preview_access": true }
+      },
       "redeem": { "method": "GET", "header": "X-PAYMENT", "value": "payment_intent_id from POST response", "replay_status": 409 }
     }
   }
