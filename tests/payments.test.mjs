@@ -15,7 +15,7 @@ const quoteAt = (description = 'Quoted work', expiresIn) =>
   makeQuote({ amount_cents: 500, description, expiresIn }, signingSecret, testNow);
 const to = (path, token) => new URL(`${path}?quote=${token}`, origin);
 
-function fixture({ testMode = true, publishableKey } = {}) {
+function fixture({ testMode = true, publishableKey, afterAdd } = {}) {
   let clock = testNow;
   const entries = new Map();
   const calls = { checkout: [], agent: [], methods: [] };
@@ -26,6 +26,7 @@ function fixture({ testMode = true, publishableKey } = {}) {
     async add(key, value) {
       if (entries.has(key)) return false;
       entries.set(key, value);
+      afterAdd?.(key, (seconds) => { clock += seconds; });
       return true;
     },
   };
@@ -200,6 +201,18 @@ test('payment runtime accepts a same-mode publishable key and never publishes a 
   for (const invalid of ['sk_test_fixture', 'pk_live_fixture']) {
     assert.throws(() => paymentConfig({ ...env, STRIPE_PUBLISHABLE_KEY: invalid }), /must be a Stripe publishable key in the same mode/);
   }
+});
+
+test('an agent quote expiring while writing the reservation cannot start a Stripe charge', async () => {
+  const { token } = quoteAt('Expiring agent quote', 60);
+  const { handlers, calls } = fixture({
+    afterAdd: (key, tick) => { if (key.startsWith('reservation/')) tick(60); },
+  });
+  const { nonce } = await (await handlers.pay(getPayment(token))).json();
+  const response = await handlers.pay(postPayment(token, { nonce, payment_method: 'pm_card_visa' }));
+  assert.equal(response.status, 410);
+  assert.equal((await response.json()).error, 'quote_expired');
+  assert.equal(calls.agent.length, 0);
 });
 
 test('402 advertises Stripe.js and only accepts a new, unattached card PaymentMethod from the right Stripe mode', async () => {
