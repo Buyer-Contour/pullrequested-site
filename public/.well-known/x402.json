@@ -1,0 +1,22 @@
+{
+  "x402Version": 2,
+  "name": "pullrequested.com",
+  "description": "Go-to-market consulting for B2B startups and AI agents. Start with a free sample, then receive a quote based on scope.",
+  "url": "https://pullrequested.com/",
+  "payment": "pending",
+  "services": [],
+  "resources": [
+    {
+      "method": "GET",
+      "path": "/offer.json",
+      "description": "Consulting services, deliverables, and instructions for submitting a quote request.",
+      "mimeType": "application/json"
+    },
+    {
+      "method": "GET",
+      "path": "/quote/",
+      "description": "Request a free sample and a scoped quote. No payment is collected.",
+      "mimeType": "text/html"
+    }
+  ]
+}

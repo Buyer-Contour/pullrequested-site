@@ -11,6 +11,7 @@ test('all public assets exist and are nonempty', () => {
   for (const path of [
     'index.html', 'quote/index.html', 'thanks/index.html', 'styles.css', 'favicon.svg',
     'offer.json', 'llms.txt', 'robots.txt', 'sitemap.xml',
+    '.well-known/x402.json',
   ]) {
     assert.ok(read(`public/${path}`).trim(), path);
   }
@@ -48,6 +49,38 @@ test('offer and agent instructions match the Netlify form', () => {
   assert.ok(llms.includes(`form-name=${fields['form-name'].const}`));
 });
 
+test('site and agent docs expose the agency inbox and marketplace listings', () => {
+  const { contact, listings } = JSON.parse(read('public/offer.json'));
+  const home = read('public/index.html');
+  const quote = read('public/quote/index.html');
+  const llms = read('public/llms.txt');
+
+  assert.equal(contact.email, 'pullrequested@agentmail.to');
+  assert.ok(quote.includes('href="mailto:' + contact.email + '"'));
+  assert.ok(llms.includes(contact.email));
+  assert.deepEqual(listings.map(({ name }) => name), ['Virtuals ACP', 'dealwork.ai']);
+  for (const { url } of listings) {
+    assert.ok(home.includes('href="' + url + '"'));
+    assert.ok(llms.includes('(' + url + ')'));
+  }
+});
+
+test('pending x402 manifest points to free resources without offering payment', () => {
+  const manifest = JSON.parse(read('public/.well-known/x402.json'));
+  const offer = JSON.parse(read('public/offer.json'));
+
+  assert.equal(manifest.x402Version, 2);
+  assert.equal(manifest.name, offer.name);
+  assert.equal(manifest.url, offer.url);
+  assert.equal(manifest.payment, 'pending');
+  assert.deepEqual(manifest.services, []);
+  assert.ok(!('payTo' in manifest));
+  assert.deepEqual(manifest.resources.map(({ method, path }) => [method, path]), [
+    ['GET', '/offer.json'],
+    ['GET', '/quote/'],
+  ]);
+});
+
 test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   const output = mkdtempSync(join(tmpdir(), 'pullrequested-test-'));
   t.after(() => rmSync(output, { recursive: true, force: true }));
@@ -76,4 +109,5 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(llms.includes('(' + offer.contact.url + ')'));
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.contact.url + '</loc>'));
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
+  assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));
 });

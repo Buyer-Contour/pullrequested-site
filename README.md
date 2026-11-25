@@ -7,6 +7,7 @@ Static go-to-market consulting site for `pullrequested.com`. There are no app de
 - `public/index.html`: Landing page and services.
 - `public/quote/index.html`, `public/thanks/index.html`: Quote form and confirmation page.
 - `public/offer.json`, `public/llms.txt`: Offer and submission instructions for agents.
+- `public/.well-known/x402.json`: Draft discovery manifest pointing to free resources. It does not register the agency in Bazaar; [Coinbase's Bazaar extension](https://github.com/coinbase/x402/blob/main/specs/extensions/bazaar.md) advertises discovery metadata in a paid endpoint's HTTP 402 response.
 - `public/robots.txt`, `public/sitemap.xml`: Crawler metadata.
 - `scripts/build-surge.js`: Builds a standalone Surge copy for interim hosting.
 - `netlify.toml`: Publish directory, route rewrite, and response headers.
@@ -18,10 +19,10 @@ Run `npm test` with Node.js 22 (no install required). To preview the site, run `
 
 ## Interim Surge deploy
 
-1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh QUOTE_RECIPIENT=your-inbox@example.com npm run build:surge`. Use the actual Surge URL and a dedicated agency inbox. Its address is published in the form and agent endpoint; never use a credential or a personal email address here.
+1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh QUOTE_RECIPIENT=pullrequested@agentmail.to npm run build:surge`. Use the actual Surge URL and the public, inbound-only agency inbox. Its address is published in the form and agent endpoint; never use a credential or a personal email address here.
 2. Publish `dist/surge` to the same Surge hostname using the agency account. Set the account credential through Bot secrets, not in the repo.
 3. Submit a clearly marked request on `/quote/` to trigger FormSubmit registration. Open the activation email in the agency inbox and verify its source before activating. Submit another browser request and a JSON request using `/offer.json`; confirm both arrive in the inbox. An HTTP success response alone does not verify delivery.
-4. Verify `/`, `/quote/`, `/offer.json`, and `/llms.txt` on the actual Surge URL. The temporary copy links to itself in the agent docs and sitemap; HTML canonicals and the offer's main URL still identify `pullrequested.com`.
+4. Verify `/`, `/quote/`, `/offer.json`, `/llms.txt`, `/.well-known/x402.json`, and `/thanks/` on the actual Surge URL. The temporary copy links to itself in the agent docs and sitemap; HTML canonicals and the offer's main URL still identify `pullrequested.com`.
 
 ## Deploy to Netlify
 
