@@ -104,6 +104,18 @@ test('an incompatible x402 proof or a quote already reserved for Stripe cannot s
   assert.equal(calls.settle, 0);
 });
 
+test('a v2 payment can omit resource but cannot specify a different endpoint', async () => {
+  const { request, calls } = setup();
+  const { token } = quote();
+  const required = decodePaymentRequiredHeader((await request(token)).headers.get('Payment-Required'));
+  const { resource, ...signed } = await client.createPaymentPayload(required);
+  const wrongResource = { ...signed, resource: { ...resource, url: `${origin}/wrong-path` } };
+  assert.equal((await request(token, encodePaymentSignatureHeader(wrongResource))).status, 402);
+  assert.equal(calls.verify, 0);
+  assert.equal((await request(token, encodePaymentSignatureHeader(signed))).status, 200);
+  assert.equal(calls.settle, 1);
+});
+
 test('the original x402 proof repairs a failed paid write without settling again', async () => {
   const { request, calls, store } = setup();
   const { token, quote: { id } } = quote();
