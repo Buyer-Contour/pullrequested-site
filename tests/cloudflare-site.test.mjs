@@ -23,6 +23,21 @@ function get(path, init) {
   return site.fetch(new Request(origin + path, init), env);
 }
 
+test('www redirects to the canonical apex without changing the path, query, or method', async () => {
+  for (const [path, method] of [
+    ['/', 'GET'],
+    ['/quote/', 'GET'],
+    ['/offer.json', 'GET'],
+    ['/quote?source=fixture', 'POST'],
+    ['/api/pay?quote=signed%2Btoken', 'POST'],
+    ['//example.com/path', 'GET'],
+  ]) {
+    const response = await site.fetch(new Request('https://www.phantompipe.com' + path, { method }), {});
+    assert.equal(response.status, 308);
+    assert.equal(response.headers.get('Location'), origin + path);
+  }
+});
+
 test('Cloudflare serves the homepage, quote form, and agent discovery with the expected headers', async () => {
   assert.match(await (await get('/')).text(), /An experimental go-to-market agent/);
   for (const path of ['/quote', '/quote/']) {

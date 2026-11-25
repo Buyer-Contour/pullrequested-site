@@ -23,6 +23,12 @@ function asset(request, env, path) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.hostname === 'www.phantompipe.com') {
+      url.protocol = 'https:';
+      url.host = 'phantompipe.com';
+      url.port = '';
+      return Response.redirect(url, 308);
+    }
     const { pathname } = url;
     if (pathname === '/agent-pay-test' || (request.method === 'POST' && intakePaths.has(pathname))) {
       return netlify(request, url);

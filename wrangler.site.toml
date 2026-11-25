@@ -4,6 +4,10 @@ main = "workers/site.mjs"
 compatibility_date = "2026-11-25"
 workers_dev = true
 preview_urls = false
+routes = [
+  { pattern = "phantompipe.com/*", zone_id = "454ab4be94fd5278a1e1c697c86320df" },
+  { pattern = "www.phantompipe.com/*", zone_id = "454ab4be94fd5278a1e1c697c86320df" },
+]
 
 [assets]
 directory = "public"
