@@ -21,7 +21,7 @@
           {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","icp_signal":"Edge deployment tooling"},
           {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","icp_signal":"Infrastructure monitoring"},
           {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","icp_signal":"Observability dashboards"},
-          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-08","icp_signal":"Search and analytics"}
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","icp_signal":"Search and analytics"}
         ]
       }
     },
@@ -43,7 +43,7 @@
           {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","canonical_domain":"fastly.com"},
           {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","canonical_domain":"datadoghq.com"},
           {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","canonical_domain":"grafana.com"},
-          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-08","canonical_domain":"elastic.co"}
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","canonical_domain":"elastic.co"}
         ]
       }
     },
@@ -65,7 +65,7 @@
           {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","segment":"developer-tooling","suggested_opener":"I saw your team published Fastly CLI 10.18.0. Is edge deployment tooling a focus for your team this quarter?"},
           {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","segment":"observability","suggested_opener":"I saw your team published Datadog Agent 7.64.1. Is infrastructure monitoring a focus for your team this quarter?"},
           {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","segment":"observability","suggested_opener":"I saw your team published Grafana 11.6.0. Is observability dashboards a focus for your team this quarter?"},
-          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-08","segment":"search-infrastructure","suggested_opener":"I saw your team published Elasticsearch 9.0.0. Is search and analytics a focus for your team this quarter?"}
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","segment":"search-infrastructure","suggested_opener":"I saw your team published Elasticsearch 9.0.0. Is search and analytics a focus for your team this quarter?"}
         ]
       }
     },
@@ -87,7 +87,7 @@
           {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","proposed_trigger":"fastly_cli.release.published"},
           {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","proposed_trigger":"datadog_agent.release.published"},
           {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","proposed_trigger":"grafana.release.published"},
-          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-08","proposed_trigger":"elasticsearch.release.published"}
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","proposed_trigger":"elasticsearch.release.published"}
         ]
       }
     }
