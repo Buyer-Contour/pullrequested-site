@@ -31,7 +31,7 @@ function buildSurge({ siteUrl, recipient, output }) {
     .replace('<input type="hidden" name="form-name" value="quote">', [
       '<input type="hidden" name="_next" value="' + thanksUrl + '">',
       '<input type="hidden" name="_captcha" value="false">',
-      '<input type="hidden" name="_subject" value="New pullrequested.com quote request">',
+      '<input type="hidden" name="_subject" value="New Phantom Pipe quote request">',
     ].join('\n      '))
     .replace('name="bot-field"', 'name="_honey"');
   write('quote/index.html', quote);

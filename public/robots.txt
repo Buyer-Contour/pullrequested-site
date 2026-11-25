@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pullrequested.com/sitemap.xml
+Sitemap: https://phantompipe.com/sitemap.xml

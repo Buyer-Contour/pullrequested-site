@@ -8,7 +8,7 @@ import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { makeQuote } from '../lib/payments/quotes.mjs';
 import { baseSepolia, createX402Rail, x402Config, x402Path } from '../lib/payments/x402.mjs';
 
-const origin = 'https://pullrequested.com';
+const origin = 'https://phantompipe.com';
 const payTo = '0x1111111111111111111111111111111111111111';
 const signingSecret = 'unit-test-quote-key-not-a-secret!';
 const transaction = `0x${'2'.repeat(64)}`;
