@@ -5,6 +5,16 @@
   "url": "https://pullrequested.com/",
   "payment": "pending",
   "services": [],
+  "pending_payment": {
+    "method": "GET",
+    "path": "/api/x402/pay",
+    "query_parameter": "quote",
+    "requires_issued_quote": true,
+    "scheme": "exact",
+    "network": "eip155:8453",
+    "asset": "USDC",
+    "discovery_extension": "bazaar"
+  },
   "resources": [
     {
       "method": "GET",

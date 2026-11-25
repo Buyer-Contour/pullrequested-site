@@ -25,6 +25,16 @@
   status = 200
 
 [[redirects]]
+  from = "/api/x402/pay"
+  to = "/.netlify/functions/x402-pay"
+  status = 200
+
+[[redirects]]
+  from = "/agent-pay-test"
+  to = "/.netlify/functions/agent-pay-test"
+  status = 200
+
+[[redirects]]
   from = "/api/stripe-webhook"
   to = "/.netlify/functions/stripe-webhook"
   status = 200

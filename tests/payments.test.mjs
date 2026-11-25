@@ -97,7 +97,10 @@ test('checkout displays an escaped quote, creates one session, and records a ver
   assert.equal(calls.checkout.length, 1);
   const [{ params, options }] = calls.checkout;
   assert.equal(params.metadata.quote_id, quote.id);
+  assert.equal(params.metadata.source, 'pullrequested');
   assert.equal(params.payment_intent_data.metadata.quote_id, quote.id);
+  assert.equal(params.payment_intent_data.metadata.source, 'pullrequested');
+  assert.equal(params.line_items[0].price_data.product_data.metadata.source, 'pullrequested');
   assert.equal(params.expires_at, quote.expires_at);
   assert.equal(params.line_items[0].price_data.unit_amount, quote.amount_cents);
   assert.equal(params.success_url, origin + '/payment/submitted');
@@ -111,6 +114,7 @@ test('checkout displays an escaped quote, creates one session, and records a ver
   assert.equal(agent.status, 409);
   assert.equal(calls.agent.length, 0);
   assert.equal((await handlers.webhook(webhookRequest(session, { secret: 'wrong' }))).status, 400);
+  assert.equal((await handlers.webhook(webhookRequest({ ...session, metadata: { ...session.metadata, source: undefined } }))).status, 200);
   assert.equal((await handlers.webhook(webhookRequest({ ...session, payment_status: 'unpaid' }))).status, 200);
   assert.equal((await handlers.webhook(webhookRequest({ ...session, amount_total: 50 }))).status, 200);
   assert.equal(entries.get(`paid/${quote.id}`), undefined);
@@ -152,6 +156,7 @@ test('agent challenge binds quote, amount, currency, nonce and rejects concurren
   assert.equal((await confirmed.json()).payment_intent_id, intentId);
   assert.deepEqual(calls.methods, [], 'Stripe test fixture is confirmed directly, not looked up');
   assert.equal(calls.agent[0].params.metadata.nonce, nonce);
+  assert.equal(calls.agent[0].params.metadata.source, 'pullrequested');
   assert.equal(calls.agent[0].options.idempotencyKey, `quote-agent-${quote.id}`);
   const checkout = await handlers.checkout(new Request(to('/api/checkout', token)));
   assert.equal(checkout.status, 409);
@@ -201,6 +206,26 @@ test('payment runtime accepts a same-mode publishable key and never publishes a 
   for (const invalid of ['sk_test_fixture', 'pk_live_fixture']) {
     assert.throws(() => paymentConfig({ ...env, STRIPE_PUBLISHABLE_KEY: invalid }), /must be a Stripe publishable key in the same mode/);
   }
+  const live = { PAYMENTS_ORIGIN: origin, QUOTE_SIGNING_SECRET: signingSecret };
+  assert.throws(() => paymentConfig({ ...live, STRIPE_SECRET_KEY: 'sk_live_fixture' }), /require STRIPE_LIVE_RESTRICTED_KEY/);
+  assert.throws(() => paymentConfig({ ...live, STRIPE_LIVE_RESTRICTED_KEY: 'sk_live_fixture' }), /must be a restricted live key/);
+  assert.equal(paymentConfig({ ...live, STRIPE_LIVE_RESTRICTED_KEY: 'rk_live_fixture', STRIPE_PUBLISHABLE_KEY: 'pk_live_fixture' }).testMode, false);
+});
+
+test('live agent verification page is restricted to signed $1 verification quotes', async () => {
+  const { handlers } = fixture({ testMode: false, publishableKey: 'pk_live_fixture' });
+  const view = (token) => handlers.agentVerification(new Request(to('/agent-pay-test', token)));
+  assert.equal((await view(quoteAt().token)).status, 404);
+  const { token } = makeQuote({ amount_cents: 100, description: 'Live verification (agent)' }, signingSecret, testNow);
+  const response = await view(token);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+  const nonce = response.headers.get('Content-Security-Policy').match(/'nonce-([\w-]+)'/)[1];
+  const body = await response.text();
+  assert.match(body, new RegExp(`nonce="${nonce}"`));
+  assert.match(body, /stripe\.createPaymentMethod/);
+  assert.match(body, /replay\.status !== 409/);
+  assert.ok(!body.includes(token));
 });
 
 test('an agent quote expiring while writing the reservation cannot start a Stripe charge', async () => {

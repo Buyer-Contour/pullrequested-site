@@ -4,9 +4,9 @@ import { createServer } from 'node:http';
 import { dirname, join } from 'node:path';
 import { Readable } from 'node:stream';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
-import { paymentConfig } from '../lib/payments/runtime.mjs';
+import { loadX402Rail, paymentConfig } from '../lib/payments/runtime.mjs';
 
-const config = paymentConfig();
+const config = paymentConfig(process.env, { allowMissingStripe: Boolean(process.env.X402_PAY_TO) });
 const { origin } = config;
 if (origin.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(origin.hostname) || !origin.port) {
   throw new Error('Local server requires an explicit loopback URL and port, e.g. http://127.0.0.1:8787');
@@ -37,7 +37,7 @@ const store = {
     }
   },
 };
-const handlers = createPaymentHandlers({ ...config, store });
+const handlers = createPaymentHandlers({ ...config, store, x402Rail: await loadX402Rail(origin) });
 
 createServer(async (incoming, outgoing) => {
   try {
@@ -58,7 +58,8 @@ createServer(async (incoming, outgoing) => {
       handler = handlers.page;
     } else {
       handler = new Map([
-        ['/api/pay', handlers.pay], ['/api/checkout', handlers.checkout], ['/api/stripe-webhook', handlers.webhook],
+        ['/api/pay', handlers.pay], ['/api/checkout', handlers.checkout], ['/api/stripe-webhook', handlers.webhook], ['/api/x402/pay', handlers.x402],
+        ['/agent-pay-test', handlers.agentVerification],
       ]).get(url.pathname);
     }
     const response = handler ? await handler(new Request(url, init)) : new Response('Not found', { status: 404 });
