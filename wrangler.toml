@@ -5,7 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
 [vars]
-MPP_PAY_TO = "0x1f31A5bFf4F43e6a7670D1125f52d8a845d9C85F"
+MPP_PAY_TO = "0xD95C1942dce3c8622AcdB0436B4BC9e93B3E0765"
 
 [[durable_objects.bindings]]
 name = "PAYMENTS_STATE"
