@@ -33,7 +33,7 @@ The service uses a per-quote Stripe idempotency key and limits quote validity to
 
 Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only; the static site and quote intake stay on Netlify.
 
-- Use the assigned `https://phantompipe-payments.<subdomain>.workers.dev` URL as `PAYMENTS_ORIGIN` unless Cloudflare serves the site's DNS. Set the same Stripe and Tempo settings described above via Workers secrets or environment bindings.
+- The deployed Worker uses `https://phantompipe-payments.phantompipe.workers.dev` as `PAYMENTS_ORIGIN` and Tempo mainnet, as declared in `wrangler.toml`. The dedicated live Stripe webhook is `we_1Ufl2FElm0HOkGFhYsy8X7TZ` at `https://phantompipe-payments.phantompipe.workers.dev/api/stripe-webhook`. Bind its signing secret as `STRIPE_WEBHOOK_SECRET`, not the signing secret from the older endpoint. Set the remaining Stripe and Tempo secrets as described above.
 - Set `WORKER_QUOTE_SIGNING_SECRET` to a new secret of at least 32 random bytes, distinct from the Netlify signer. The Worker does not fall back to `QUOTE_SIGNING_SECRET`. When issuing Worker quotes, pass the Worker secret to the quote generator as `QUOTE_SIGNING_SECRET` and the Worker URL as `PAYMENTS_ORIGIN`. Use that origin for the dedicated Stripe webhook too.
 - Netlify Blobs records are not shared with the Worker. Before switching hosts, resolve in-flight payments on Netlify, stop issuing there, and issue fresh quote IDs for the Worker. Update the static site's payment discovery URLs when its next deployment is available.
 

@@ -5,6 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
 [vars]
+PAYMENTS_ORIGIN = "https://phantompipe-payments.phantompipe.workers.dev"
+MPP_NETWORK = "tempo"
 MPP_PAY_TO = "0x1f31A5bFf4F43e6a7670D1125f52d8a845d9C85F"
 
 [[durable_objects.bindings]]
