@@ -110,4 +110,5 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.contact.url + '</loc>'));
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
   assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));
+  assert.equal(asset('.surgeignore'), '!/.well-known/\n');
 });

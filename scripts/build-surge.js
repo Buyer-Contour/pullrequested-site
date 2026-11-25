@@ -21,6 +21,7 @@ function buildSurge({ siteUrl, recipient, output }) {
   const read = (path) => readFileSync(join(output, path), 'utf8');
   const write = (path, body) => writeFileSync(join(output, path), body);
 
+  write('.surgeignore', '!/.well-known/\n');
   write('index.html', read('index.html').replaceAll('href="/quote"', 'href="/quote/"'));
   const quote = read('quote/index.html')
     .replace('action="/thanks/" data-netlify="true" netlify-honeypot="bot-field"', 'action="' + inboxForm + '"')
