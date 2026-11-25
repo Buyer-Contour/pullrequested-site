@@ -29,11 +29,12 @@ The first valid payment attempt reserves its path for that quote. GETting a chal
 
 The service uses a per-quote Stripe idempotency key and limits quote validity to less than Stripe's minimum idempotency-key retention. An atomic conditional create reserves the path before a charge and records the first valid receipt; Stripe metadata is only used to verify the quote binding, not as an atomic lock. Keep the same payment origin, Stripe account, signer, and state store throughout a quote's lifetime. Test and live state are separate.
 
-## Cloudflare Workers fallback
+## Cloudflare Workers
 
 Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only; the static site and quote intake stay on Netlify.
 
-- The deployed Worker uses `https://phantompipe-payments.phantompipe.workers.dev` as `PAYMENTS_ORIGIN` and Tempo mainnet, as declared in `wrangler.toml`. The dedicated live Stripe webhook is `we_1Ufl2FElm0HOkGFhYsy8X7TZ` at `https://phantompipe-payments.phantompipe.workers.dev/api/stripe-webhook`. Bind its signing secret as `STRIPE_WEBHOOK_SECRET`, not the signing secret from the older endpoint. Set the remaining Stripe and Tempo secrets as described above.
+- The production configuration in `wrangler.toml` uses `https://phantompipe.com` as `PAYMENTS_ORIGIN` and Tempo mainnet. Before deploying this configuration, verify the proxied apex still serves the Netlify site and that only the payment paths route to the Worker. Until then, keep issuing quotes at `https://phantompipe-payments.phantompipe.workers.dev`.
+- After verifying the apex payment routes, update the dedicated live Stripe endpoint `we_1Ufl2FElm0HOkGFhYsy8X7TZ` from the `workers.dev` URL to `https://phantompipe.com/api/stripe-webhook`. Keep its signing secret bound as `STRIPE_WEBHOOK_SECRET`; do not reuse the older endpoint's secret. Set the remaining Stripe and Tempo secrets as described above.
 - Set `WORKER_QUOTE_SIGNING_SECRET` to a new secret of at least 32 random bytes, distinct from the Netlify signer. The Worker does not fall back to `QUOTE_SIGNING_SECRET`. When issuing Worker quotes, pass the Worker secret to the quote generator as `QUOTE_SIGNING_SECRET` and the Worker URL as `PAYMENTS_ORIGIN`. Use that origin for the dedicated Stripe webhook too.
 - Netlify Blobs records are not shared with the Worker. Before switching hosts, resolve in-flight payments on Netlify, stop issuing there, and issue fresh quote IDs for the Worker. Update the static site's payment discovery URLs when its next deployment is available.
 
