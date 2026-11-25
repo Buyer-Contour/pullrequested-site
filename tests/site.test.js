@@ -123,7 +123,7 @@ test('the evidence brief publishes its sample, buyer checks and post-acceptance 
   const home = read('public/index.html');
   const { price, sample, request, acceptance, payment, receipt_schema: receipt } = brief;
 
-  assert.deepEqual(price, { unit: 'accepted_account_row', currency: 'USD', amount_minor_per_row: 300 });
+  assert.deepEqual(price, { unit: 'accepted_account_row', currency: 'USD', amount_minor_per_row: 10 });
   assert.deepEqual(sample, { row_count: 3, amount_minor: 0, currency: 'USD', counts_toward_paid_rows: false });
   assert.ok(intake.fields.service.enum.includes(request.service));
   assert.match(request.before_work, /agree in writing.*maximum total/);
@@ -134,8 +134,10 @@ test('the evidence brief publishes its sample, buyer checks and post-acceptance 
   assert.match(acceptance.silence_default, /no rejection.*accepted/);
   assert.equal(acceptance.cure_window_hours, 24);
   assert.equal(payment.model, 'pay_per_accepted_row');
+  assert.equal(payment.rail, 'tempo_mpp');
+  assert.equal(payment.quote_granularity, 'one_per_accepted_paid_row');
   assert.match(payment.funds_holder, /^The buyer holds all funds/);
-  assert.match(payment.settlement, /Only after acceptance is final.*\/api\/mpp\/pay.*pending production verification/);
+  assert.match(payment.settlement, /Only after acceptance is final.*separate signed quote.*\/api\/mpp\/pay.*Stripe's card minimum.*pending production verification/);
 
   assert.deepEqual(receipt.required, ['gaps', 'rows', 'accepted_count']);
   assert.deepEqual(Object.keys(receipt.properties), receipt.required);
@@ -144,8 +146,8 @@ test('the evidence brief publishes its sample, buyer checks and post-acceptance 
   assert.deepEqual(row.required, ['account_domain', 'fit_note', 'owning_role', 'role_source_url', 'trigger', 'opener']);
   assert.deepEqual(row.properties.trigger.required, ['summary', 'source_url', 'date']);
 
-  for (const copy of [home, llms]) assert.ok(copy.includes('$3 USD per accepted row'));
-  for (const phrase of ['3 rows free', '90 calendar days', '48 hours', '24 hours', '/api/mpp/pay']) {
+  for (const copy of [home, llms]) assert.ok(copy.includes('$0.10 USD per accepted row'));
+  for (const phrase of ['3 rows free', '90 calendar days', '48 hours', '24 hours', '/api/mpp/pay', 'a separate signed quote for each accepted paid row', "Stripe's card minimum"]) {
     assert.ok(llms.includes(phrase), phrase);
   }
 });

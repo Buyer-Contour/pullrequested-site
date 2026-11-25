@@ -2,6 +2,7 @@ const { parseArgs } = require('node:util');
 
 async function main() {
   const { makeQuote } = await import('../lib/payments/quotes.mjs');
+  const { stripeMinimumCents } = await import('../lib/payments/stripe-settings.mjs');
   const { values } = parseArgs({
     options: {
       'amount-cents': { type: 'string' },
@@ -18,7 +19,9 @@ async function main() {
   console.log(JSON.stringify({
     quote,
     quote_url: new URL(`/q/${token}`, process.env.PAYMENTS_ORIGIN).href,
-    pay_url: new URL(`/api/pay?quote=${token}`, process.env.PAYMENTS_ORIGIN).href,
+    ...(quote.amount_cents >= stripeMinimumCents && {
+      pay_url: new URL(`/api/pay?quote=${token}`, process.env.PAYMENTS_ORIGIN).href,
+    }),
     mpp_url: new URL(`/api/mpp/pay?quote=${token}`, process.env.PAYMENTS_ORIGIN).href,
   }, null, 2));
 }

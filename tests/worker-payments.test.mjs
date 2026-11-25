@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { registerHooks } from 'node:module';
 import { test } from 'node:test';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { makeQuote } from '../lib/payments/quotes.mjs';
@@ -40,6 +41,39 @@ test('Workers require a separate quote signer and reject quotes signed for Netli
     assert.equal(rejected.status, 400);
     assert.deepEqual(await rejected.json(), { error: 'invalid_quote' });
     assert.equal((await handle(request(workerSecret))).status, mppOnly ? 402 : 200);
+  }
+});
+
+test('the Worker quote page renders with Tempo configured and no Stripe credentials', async () => {
+  const hooks = registerHooks({
+    resolve(specifier, context, nextResolve) {
+      if (specifier === 'cloudflare:workers') {
+        return { url: 'data:text/javascript,export%20class%20DurableObject%20%7B%7D', shortCircuit: true };
+      }
+      return nextResolve(specifier, context);
+    },
+  });
+  let worker;
+  try {
+    ({ default: worker } = await import('../workers/payments.mjs'));
+  } finally {
+    hooks.deregister();
+  }
+  const env = {
+    PAYMENTS_ORIGIN: 'https://phantompipe-payments.example.com',
+    WORKER_QUOTE_SIGNING_SECRET: 'worker-test-signer-that-is-long-enough',
+    MPP_NETWORK: 'tempo',
+    MPP_PAY_TO: '0x0000000000000000000000000000000000000042',
+    MPP_SECRET_KEY: 'test MPP secret at least 32 bytes',
+  };
+  for (const [amount_cents, total] of [[10, '$0.10'], [500, '$5.00']]) {
+    const { token } = makeQuote({ amount_cents, description: 'Tempo quote' }, env.WORKER_QUOTE_SIGNING_SECRET);
+    const response = await worker.fetch(new Request(`${env.PAYMENTS_ORIGIN}/q/${token}`), env);
+    assert.equal(response.status, 200);
+    const body = await response.text();
+    assert.ok(body.includes(`Total: ${total} USD`));
+    assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
+    assert.doesNotMatch(body, /\/api\/checkout/);
   }
 });
 

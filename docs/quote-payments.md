@@ -16,6 +16,8 @@ The payment service charges only an agency-issued quote. Give a human the `quote
 npm run payments:quote -- --amount-cents 500 --description 'Test consulting quote'
 ```
 
+For the evidence brief, issue a separate quote for each accepted paid row. Run `npm run payments:quote -- --amount-cents 10 --description 'Evidence brief: accepted row <row reference>'` once per row and send its `mpp_url`. Quotes below $0.50 are Tempo MPP only; the generator omits `pay_url` and the quote page shows the MPP link instead of Stripe Checkout. Do not issue a quote for any of the three free sample rows.
+
 Quotes default to 23 hours (the maximum). To shorten one, add `--expires-in SECONDS`. A new Checkout session needs at least 31 minutes of remaining quote lifetime so its Stripe expiry does not exceed the quote expiry. Never reuse a quote ID; the script always generates a new one.
 
 ## Netlify and Stripe

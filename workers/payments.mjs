@@ -41,6 +41,11 @@ export default {
     if (!name) return new Response('Not found', { status: 404 });
 
     try {
+      const routedRequest = url.href === request.url ? request : new Request(url, request);
+      if (name === 'page') {
+        const config = workerPaymentConfig(env, { allowMissingStripe: true });
+        return createPaymentHandlers(config).page(routedRequest);
+      }
       const config = workerPaymentConfig(env, { mppOnly: name === 'mpp' });
       const quoteState = env.PAYMENTS_STATE.getByName(config.testMode ? 'quotes-test' : 'quotes-live');
       const mpp = name === 'mpp' && mppConfig(env);
@@ -50,7 +55,7 @@ export default {
         store: paymentStores(env.PAYMENTS_STATE.getByName(mpp.testnet ? 'mpp-moderato' : 'mpp-tempo')).mpp,
       }) : undefined;
       const handler = createPaymentHandlers({ ...config, store: paymentStores(quoteState).quotes, mppRail })[name];
-      return handler(url.href === request.url ? request : new Request(url, request));
+      return handler(routedRequest);
     } catch {
       console.error('Quote payment configuration is unavailable');
       return Response.json({ error: 'payment_service_unavailable' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });

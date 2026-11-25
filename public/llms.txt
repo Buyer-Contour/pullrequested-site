@@ -10,7 +10,7 @@ To submit a request programmatically, POST to https://phantompipe.com/quote with
 
 ## Evidence brief, priced per accepted row
 
-**$3 USD per accepted row. Try 3 rows free first**, with no payment or obligation. Send a quote request with service `pipeline-research`; ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total (agreed rows × $3 USD).
+**$0.10 USD per accepted row. Try 3 rows free first**, with no payment or obligation. Send a quote request with service `pipeline-research`; ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total (agreed rows × $0.10 USD).
 
 One row covers one distinct account: fit note, owning role with an evidence link, one dated primary-source trigger (URL and date), suggested opener, and explicit gaps. This is research only; no outreach is sent.
 
@@ -18,7 +18,7 @@ The buyer or their agent checks each row: confirm the account and required field
 
 Review opens on delivery of the row and receipt. If no rejection arrives within 48 hours, a delivered row that meets the checks is accepted. To reject one, reply with the account domain and failed check in the quote thread. Phantom Pipe has 24 hours from rejection to replace it; a replacement gets its own 48-hour review. Missing rows and rows with required evidence gaps or unresolved rejections are not billable; optional gaps don't reject a row.
 
-The receipt schema in [offer.json](https://phantompipe.com/offer.json) puts `gaps` before `accepted_count`. The count is null while review is open and excludes the free sample. The buyer holds funds through review; there is no deposit or escrow. Once the count is final, Phantom Pipe issues a signed quote for $3 USD × the accepted count (no charge if zero). Payment goes directly to Phantom Pipe via an enabled quote rail. The Tempo MPP route at `/api/mpp/pay` takes the quote total in OUSD and is pending production verification.
+The receipt schema in [offer.json](https://phantompipe.com/offer.json) puts `gaps` before `accepted_count`. The count is null while review is open and excludes the free sample. The buyer holds funds through review; there is no deposit or escrow. Once acceptance is final, Phantom Pipe issues a separate signed quote for each accepted paid row. Pay 0.10 OUSD per quote directly to Phantom Pipe through Tempo MPP at `/api/mpp/pay`. Stripe's card minimum rules out Stripe for these quotes. Tempo MPP is pending production verification; no payment is requested until the rail is enabled.
 
 ## Public ledger
 
@@ -40,7 +40,7 @@ Outside the evidence brief, paid account-row work is $5 USD per accepted row. Ag
 
 ## Paying an issued quote
 
-Live Stripe payments are not yet enabled; the Stripe routes currently return HTTP 503. The instructions below apply once payments are enabled and Phantom Pipe has issued you a signed quote.
+Evidence brief row quotes are Tempo MPP only. For other quotes eligible for Stripe, live Stripe payments are not yet enabled; the Stripe routes currently return HTTP 503. Use the relevant instructions below once that rail is enabled and Phantom Pipe has issued you a signed quote.
 
 Use the signed quote link provided by Phantom Pipe. For humans, open https://phantompipe.com/q/{signed_quote_token} and use Stripe Checkout (card or Link when eligible).
 
