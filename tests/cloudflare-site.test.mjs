@@ -113,6 +113,31 @@ test('variant stats report only successful tagged discovery fetches and forwarde
   assert.equal((await post('/api/stats/variants')).status, 405);
 });
 
+test('tagged discovery GET and HEAD ignore static asset validators', async () => {
+  const validators = { ETag: '"static"', 'Last-Modified': 'Tue, 24 Nov 2026 01:00:00 GMT' };
+  const headers = { 'If-None-Match': validators.ETag, 'If-Modified-Since': validators['Last-Modified'] };
+  const conditionalEnv = { ...env, ASSETS: {
+    async fetch(request) {
+      if (request.headers.has('If-None-Match') || request.headers.has('If-Modified-Since')) {
+        return new Response(null, { status: 304, headers: validators });
+      }
+      const asset = await env.ASSETS.fetch(request);
+      return new Response(asset.body, { status: asset.status, headers: validators });
+    },
+  } };
+  for (const method of ['GET', 'HEAD']) {
+    const send = (path) => site.fetch(new Request(origin + path, { method, headers }), conditionalEnv);
+    assert.equal((await send('/offer.json')).status, 304);
+    const response = await send('/offer.json?v=media-1');
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    assert.equal(response.headers.get('ETag'), null);
+    assert.equal(response.headers.get('Last-Modified'), null);
+    if (method === 'HEAD') assert.equal(await response.text(), '');
+    else assert.equal((await response.json()).quote_request.url, origin + '/quote?v=media-1');
+  }
+});
+
 test('www redirects to the canonical apex without changing the path, query, or method', async () => {
   for (const [path, method] of [
     ['/', 'GET'],

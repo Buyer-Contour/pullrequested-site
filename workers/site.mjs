@@ -27,10 +27,15 @@ function netlify(request, { pathname, search }) {
   return fetch(new Request(url, request), { redirect: 'manual' });
 }
 
-function asset(request, env, path) {
+function asset(request, env, path, personalized) {
   const url = new URL(request.url);
   url.pathname = path;
-  return env.ASSETS.fetch(new Request(url, request));
+  const assetRequest = new Request(url, request);
+  if (personalized) {
+    assetRequest.headers.delete('If-None-Match');
+    assetRequest.headers.delete('If-Modified-Since');
+  }
+  return env.ASSETS.fetch(assetRequest);
 }
 
 function taggedPage(response, url) {
@@ -91,7 +96,9 @@ export default {
         'Cache-Control': 'no-store',
       } });
     }
-    const response = await asset(request, env, pages.get(pathname) ?? pathname);
+    const event = discoveryPaths.get(pathname);
+    const personalized = url.searchParams.has('v') && (event || quotePaths.has(pathname));
+    const response = await asset(request, env, pages.get(pathname) ?? pathname, personalized);
     if (!response.ok) return response;
     const headers = new Headers(response.headers);
     if (pathname === '/llms.txt') headers.set('Content-Type', 'text/plain; charset=utf-8');
@@ -99,13 +106,13 @@ export default {
       headers.set('Content-Type', 'application/json; charset=utf-8');
     }
     if (pathname === '/offer.json') headers.set('Access-Control-Allow-Origin', '*');
-    const tagged = request.method === 'GET' && url.searchParams.has('v');
-    const event = discoveryPaths.get(pathname);
-    if (tagged && event) await recordVariant(env, event, url);
-    if (tagged && (event || quotePaths.has(pathname))) {
+    if (personalized) {
       headers.set('Cache-Control', 'no-store');
       headers.delete('ETag');
+      headers.delete('Last-Modified');
       headers.delete('Content-Length');
+      if (request.method === 'HEAD') return new Response(null, { status: response.status, headers });
+      if (event) await recordVariant(env, event, url);
       if (pathname === '/offer.json' || pathname === '/llms.txt') return taggedDiscovery(response, headers, url);
       return taggedPage(new Response(response.body, { status: response.status, headers }), url);
     }
