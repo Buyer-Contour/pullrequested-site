@@ -5,6 +5,7 @@ import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { checkoutVerificationDescription, makeAgentVerificationQuote } from '../lib/payments/live-verification.mjs';
 import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
 import { paymentConfig } from '../lib/payments/runtime.mjs';
+import netlifyQuotePage from '../netlify/functions/quote-page.mjs';
 
 const signingSecret = 'test-only-quote-signing-key-32-bytes';
 const webhookSecret = 'whsec_test_fixture';
@@ -107,6 +108,25 @@ test('a ten-cent quote offers only Tempo MPP and cannot reserve a Stripe payment
   }
   assert.equal(entries.has(`reservation/${quote.id}`), false);
   assert.deepEqual(calls, { checkout: [], agent: [], methods: [] });
+});
+
+test('the Netlify quote page renders with Tempo configured and no Stripe credentials', async (t) => {
+  const originalEnv = process.env;
+  process.env = {
+    PAYMENTS_ORIGIN: origin,
+    QUOTE_SIGNING_SECRET: signingSecret,
+    MPP_NETWORK: 'tempo',
+    MPP_PAY_TO: '0x0000000000000000000000000000000000000042',
+    MPP_SECRET_KEY: 'test MPP secret at least 32 bytes',
+  };
+  t.after(() => { process.env = originalEnv; });
+  const { token } = makeQuote({ amount_cents: 10, description: 'Evidence brief row' }, signingSecret);
+  const response = await netlifyQuotePage(new Request(to('/q', token)));
+  assert.equal(response.status, 200);
+  const body = await response.text();
+  assert.match(body, /Total: \$0\.10 USD/);
+  assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
+  assert.doesNotMatch(body, /\/api\/checkout/);
 });
 
 test('checkout displays an escaped quote, creates one session, and records a verified paid webhook once', async () => {
