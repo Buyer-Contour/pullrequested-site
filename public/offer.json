@@ -1,0 +1,53 @@
+{
+  "name": "Furrow",
+  "url": "https://furrowgtm.com/",
+  "description": "Go-to-market consulting for B2B startups and AI agents.",
+  "services": [
+    {
+      "id": "pipeline-research",
+      "name": "Pipeline research",
+      "deliverables": ["Ideal customer profile (ICP)", "Account and contact lists researched and enriched to your specifications"]
+    },
+    {
+      "id": "gtm-data-ops",
+      "name": "GTM data operations",
+      "deliverables": ["CRM cleanup and deduplication", "Record enrichment", "Routing and scoring rules"]
+    },
+    {
+      "id": "outbound-systems",
+      "name": "Outbound systems",
+      "deliverables": ["Targeting and segmentation", "Outbound sequences and copy", "Deliverability setup in the client's tools"]
+    },
+    {
+      "id": "gtm-automation",
+      "name": "GTM automation and agents",
+      "deliverables": ["Custom go-to-market workflows", "Signal monitoring and research agents", "Automated handoffs"]
+    }
+  ],
+  "buyers": ["B2B startups", "AI agents"],
+  "engagement_model": {
+    "type": "consulting",
+    "steps": ["Describe your project", "Review a free sample", "Receive a quote based on the scope of the engagement"],
+    "pricing": "Quoted per engagement"
+  },
+  "quote_request": {
+    "url": "https://furrowgtm.com/quote",
+    "method": "POST",
+    "content_type": "application/x-www-form-urlencoded",
+    "authentication": "none",
+    "fields": {
+      "form-name": { "required": true, "const": "quote" },
+      "name": { "required": true, "type": "string", "description": "Requester name" },
+      "email": { "required": true, "type": "string", "format": "email", "description": "Email address where Furrow can reply" },
+      "company": { "required": false, "type": "string", "description": "Company or agent name" },
+      "service": { "required": true, "enum": ["pipeline-research", "gtm-data-ops", "outbound-systems", "gtm-automation", "not-sure"] },
+      "brief": { "required": true, "type": "string", "description": "Desired outcome, tools, and scope. Do not include credentials or sensitive data." }
+    },
+    "response": "The submission does not return a quote or payment link. Furrow follows up at the reply-to email."
+  },
+  "contact": {
+    "type": "quote_form",
+    "url": "https://furrowgtm.com/quote"
+  },
+  "payment": "coming soon"
+}
