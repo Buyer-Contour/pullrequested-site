@@ -181,6 +181,41 @@ test('invalid quotes and upstream failures do not return a receipt', async (t) =
   assert.equal(upstream.mock.callCount(), 1);
 });
 
+test('quote intake rejects oversized bodies before parsing or forwarding', async (t) => {
+  const upstream = t.mock.method(globalThis, 'fetch');
+  let headerBodyReads = 0;
+  const oversizedHeader = await get('/quote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': '32769' },
+    body: new ReadableStream({ pull() { headerBodyReads++; } }, { highWaterMark: 0 }),
+    duplex: 'half',
+  });
+  assert.equal(oversizedHeader.status, 413);
+  assert.equal(headerBodyReads, 0);
+
+  for (const headers of [
+    { 'Content-Type': 'application/json' },
+    { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'Content-Length': '3' },
+  ]) {
+    const chunk = new TextEncoder().encode('é'.repeat(8193));
+    let reads = 0;
+    let cancelled = false;
+    const body = new ReadableStream({
+      pull(controller) {
+        if (reads++ < 2) controller.enqueue(chunk);
+        else controller.close();
+      },
+      cancel() { cancelled = true; },
+    }, { highWaterMark: 0 });
+    const response = await get('/quote', { method: 'POST', headers, body, duplex: 'half' });
+    assert.equal(response.status, 413);
+    assert.equal(reads, 2);
+    assert.equal(cancelled, true);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  }
+  assert.equal(upstream.mock.callCount(), 0);
+});
+
 test('the legacy agent verification path retains its origin and other requests are not proxied', async (t) => {
   const upstream = t.mock.method(globalThis, 'fetch', async request => {
     assert.equal(request.url, 'https://phantompipe.netlify.app/agent-pay-test?quote=fixture');

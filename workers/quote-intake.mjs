@@ -1,5 +1,6 @@
 const responseWindowHours = 48;
 const receiptLifetimeMs = 30 * 24 * 60 * 60 * 1000;
+const maxQuoteBodyBytes = 32 * 1024;
 const services = new Set(['pipeline-research', 'gtm-data-ops', 'outbound-systems', 'gtm-automation', 'not-sure']);
 const receiptPath = '/quote/status/';
 
@@ -28,7 +29,33 @@ function receipt(request, id) {
   };
 }
 
+async function readQuoteBody(request) {
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const bytes = new Uint8Array(maxQuoteBodyBytes);
+  let length = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return new TextDecoder().decode(bytes.subarray(0, length));
+      if (value.byteLength > bytes.length - length) {
+        void reader.cancel().catch(() => {});
+        return null;
+      }
+      bytes.set(value, length);
+      length += value.byteLength;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+function quoteBodyTooLarge() {
+  return json({ error: 'Quote body exceeds 32 KiB.' }, 413);
+}
+
 export async function submitQuote(request, env, forward) {
+  if (Number(request.headers.get('Content-Length')) > maxQuoteBodyBytes) return quoteBodyTooLarge();
   const type = mediaType(request);
   if (type !== 'application/json' && type !== 'application/x-www-form-urlencoded') {
     return json({ error: 'Unsupported content type.' }, 415);
@@ -36,7 +63,9 @@ export async function submitQuote(request, env, forward) {
 
   let fields;
   try {
-    const body = type === 'application/json' ? await request.json() : Object.fromEntries(await request.formData());
+    const text = await readQuoteBody(request);
+    if (text === null) return quoteBodyTooLarge();
+    const body = type === 'application/json' ? JSON.parse(text) : Object.fromEntries(new URLSearchParams(text));
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error();
     if ((type !== 'application/json' || Object.hasOwn(body, 'form-name')) && body['form-name'] !== 'quote') throw new Error();
     fields = new URLSearchParams({ 'form-name': 'quote' });
