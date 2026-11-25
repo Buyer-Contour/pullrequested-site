@@ -1,0 +1,13 @@
+name = "phantompipe-payments"
+main = "workers/payments.mjs"
+compatibility_date = "2026-11-25"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "PAYMENTS_STATE"
+class_name = "PaymentsState"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PaymentsState"]

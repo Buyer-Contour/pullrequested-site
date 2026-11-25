@@ -27,7 +27,14 @@ Quotes default to 23 hours (the maximum). To shorten one, add `--expires-in SECO
 
 The first valid payment attempt reserves its path for that quote. GETting a challenge or viewing the human quote does not reserve it; opening Stripe Checkout does. Retry interrupted agent POSTs using the same credential. To switch paths or replace a rejected credential, first check in Stripe that no payment succeeded; expire any open Checkout session before issuing a replacement quote. Do not edit or delete active reservations. Retry any pending settlement in Stripe before reissuing or changing payment configuration.
 
-The service uses a per-quote Stripe idempotency key and limits quote validity to less than Stripe's minimum idempotency-key retention. A strongly consistent Netlify Blobs conditional create reserves the path before a charge and records the first valid receipt; Stripe metadata is only used to verify the quote binding, not as an atomic lock. Keep the same payment origin, Stripe account, signer, and Blobs store throughout a quote's lifetime. Blobs keep test and live state separate.
+The service uses a per-quote Stripe idempotency key and limits quote validity to less than Stripe's minimum idempotency-key retention. An atomic conditional create reserves the path before a charge and records the first valid receipt; Stripe metadata is only used to verify the quote binding, not as an atomic lock. Keep the same payment origin, Stripe account, signer, and state store throughout a quote's lifetime. Test and live state are separate.
+
+## Cloudflare Workers fallback
+
+Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only; the static site and quote intake stay on Netlify.
+
+- Use the assigned `https://phantompipe-payments.<subdomain>.workers.dev` URL as `PAYMENTS_ORIGIN` unless Cloudflare serves the site's DNS. Set the same Stripe and Tempo settings described above via Workers secrets or environment bindings. Use the Worker origin in the quote generator and the dedicated Stripe webhook URL.
+- Netlify Blobs records are not shared with the Worker. Before switching hosts, resolve in-flight payments on Netlify, stop issuing there, and issue fresh quote IDs for the Worker. Update the static site's payment discovery URLs when its next deployment is available.
 
 ## Agent API
 
