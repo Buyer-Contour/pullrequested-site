@@ -9,7 +9,7 @@ import { paymentConfig } from '../lib/payments/runtime.mjs';
 const signingSecret = 'test-only-quote-signing-key-32-bytes';
 const webhookSecret = 'whsec_test_fixture';
 const testNow = 1_780_000_000;
-const origin = 'https://pullrequested.com';
+const origin = 'https://phantompipe.com';
 const intentId = 'pi_test123';
 const sessionId = 'cs_test_123';
 const quoteAt = (description = 'Quoted work', expiresIn) =>
@@ -90,7 +90,9 @@ test('checkout displays an escaped quote, creates one session, and records a ver
   const page = await handlers.page(new Request(to('/q', token)));
   assert.equal(page.status, 200);
   assert.equal(page.headers.get('Referrer-Policy'), 'no-referrer');
-  assert.match(await page.text(), /&lt;script&gt;unsafe&lt;\/script&gt;/);
+  const body = await page.text();
+  assert.match(body, /&lt;script&gt;unsafe&lt;\/script&gt;/);
+  assert.match(body, /<h1>Pay your Phantom Pipe quote<\/h1>/);
   const checkout = () => handlers.checkout(new Request(to('/api/checkout', token)));
   const first = await checkout();
   assert.equal(first.status, 303);
@@ -237,6 +239,7 @@ test('live agent verification page accepts only signed $1 verification quotes an
   assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
   const nonce = response.headers.get('Content-Security-Policy').match(/'nonce-([\w-]+)'/)[1];
   const body = await response.text();
+  assert.match(body, /<title>Agent payment verification \| Phantom Pipe<\/title>/);
   assert.match(body, new RegExp(`nonce="${nonce}"`));
   assert.match(body, /stripe\.createPaymentMethod/);
   assert.match(body, /replay\.status !== 409/);

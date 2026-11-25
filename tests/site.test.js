@@ -17,14 +17,31 @@ test('all public assets exist and are nonempty', () => {
   }
 });
 
+test('public assets and payment fragments use the Phantom Pipe brand', () => {
+  for (const path of [
+    'public/index.html', 'public/quote/index.html', 'public/thanks/index.html',
+    'public/offer.json', 'public/llms.txt', 'public/.well-known/x402.json',
+    'public/robots.txt', 'public/sitemap.xml',
+    'docs/offer-payments.fragment.json', 'docs/llms-payments.fragment.txt',
+  ]) {
+    assert.doesNotMatch(read(path), /pullrequested/i, path);
+  }
+  for (const path of ['index.html', 'quote/index.html', 'thanks/index.html']) {
+    assert.match(read(`public/${path}`), /aria-label="Phantom Pipe home"/, path);
+  }
+  assert.match(read('public/llms.txt'), /^# Phantom Pipe\n/);
+  assert.ok(read('public/robots.txt').includes('Sitemap: https://phantompipe.com/sitemap.xml'));
+  assert.ok(read('public/sitemap.xml').includes('<loc>https://phantompipe.com/quote</loc>'));
+});
+
 test('offer and agent instructions match the Netlify form', () => {
   const offer = JSON.parse(read('public/offer.json'));
   const { url, method, content_type, fields } = offer.quote_request;
   const quote = read('public/quote/index.html');
   const llms = read('public/llms.txt');
 
-  assert.equal(offer.name, 'pullrequested.com');
-  assert.equal(offer.url, 'https://pullrequested.com/');
+  assert.equal(offer.name, 'Phantom Pipe');
+  assert.equal(offer.url, 'https://phantompipe.com/');
   assert.equal(offer.contact.url, url);
   assert.equal(new URL(url).origin, new URL(offer.url).origin);
   assert.equal(new URL(url).pathname, '/quote');
@@ -100,7 +117,7 @@ test('offer and llms document issued-quote payment rails without claiming live a
 });
 
 test('Surge copy routes human and agent requests to FormSubmit', (t) => {
-  const output = mkdtempSync(join(tmpdir(), 'pullrequested-test-'));
+  const output = mkdtempSync(join(tmpdir(), 'phantom-pipe-test-'));
   t.after(() => rmSync(output, { recursive: true, force: true }));
   const siteUrl = 'https://pullrequested.surge.sh/';
   const recipient = 'quotes@example.com';
@@ -112,11 +129,12 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
 
   assert.ok(quote.includes('action="https://formsubmit.co/quotes@example.com"'));
   assert.ok(quote.includes('name="_next" value="' + siteUrl + 'thanks/"'));
+  assert.ok(quote.includes('name="_subject" value="New Phantom Pipe quote request"'));
   assert.ok(quote.includes('name="_honey"'));
   assert.doesNotMatch(quote, /data-netlify|name="form-name"/);
   assert.ok(asset('index.html').includes('href="/quote/"'));
-  assert.ok(asset('index.html').includes('rel="canonical" href="https://pullrequested.com/"'));
-  assert.equal(offer.url, 'https://pullrequested.com/');
+  assert.ok(asset('index.html').includes('rel="canonical" href="https://phantompipe.com/"'));
+  assert.equal(offer.url, 'https://phantompipe.com/');
   assert.equal(offer.site_url, siteUrl);
   assert.equal(offer.contact.url, siteUrl + 'quote/');
   assert.equal(offer.quote_request.url, 'https://formsubmit.co/ajax/quotes@example.com');
@@ -135,7 +153,7 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
 });
 
 test('Surge defaults to the agency contact email for quote delivery', (t) => {
-  const output = mkdtempSync(join(tmpdir(), 'pullrequested-test-'));
+  const output = mkdtempSync(join(tmpdir(), 'phantom-pipe-test-'));
   t.after(() => rmSync(output, { recursive: true, force: true }));
   buildSurge({ siteUrl: 'https://pullrequested.surge.sh/', output });
 

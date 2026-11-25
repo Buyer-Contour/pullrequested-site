@@ -4,11 +4,11 @@
     "human": {
       "provider": "Stripe Checkout",
       "methods": ["card", "Link when eligible"],
-      "url_template": "https://pullrequested.com/q/{signed_quote_token}"
+      "url_template": "https://phantompipe.com/q/{signed_quote_token}"
     },
     "agent": {
       "protocol": "quote-pay-v1",
-      "url_template": "https://pullrequested.com/api/pay?quote={signed_quote_token}",
+      "url_template": "https://phantompipe.com/api/pay?quote={signed_quote_token}",
       "challenge": { "method": "GET", "status": 402 },
       "payment": {
         "method": "POST",
@@ -31,7 +31,7 @@
       "scheme": "exact",
       "network": "eip155:8453",
       "asset": "USDC",
-      "url_template": "https://pullrequested.com/api/x402/pay?quote={signed_quote_token}",
+      "url_template": "https://phantompipe.com/api/x402/pay?quote={signed_quote_token}",
       "discovery_extension": "bazaar",
       "challenge_header": "PAYMENT-REQUIRED",
       "payment_header": "PAYMENT-SIGNATURE",
