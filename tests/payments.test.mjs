@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import Stripe from 'stripe';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
+import { makeAgentVerificationQuote } from '../lib/payments/live-verification.mjs';
 import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
 import { paymentConfig } from '../lib/payments/runtime.mjs';
 
@@ -142,7 +143,7 @@ test('an expired quote cannot start a payment and near-expiry Checkout cannot ou
 
 test('agent challenge binds quote, amount, currency, nonce and rejects concurrent and later replays', async () => {
   const { quote, token } = quoteAt();
-  const { handlers, calls, intents } = fixture();
+  const { handlers, calls, intents, tick } = fixture();
   const challenge = await handlers.pay(getPayment(token));
   assert.equal(challenge.status, 402);
   const { nonce, amount_cents, currency, quote_id } = await challenge.json();
@@ -182,6 +183,8 @@ test('agent challenge binds quote, amount, currency, nonce and rejects concurren
   const replay = await redeem();
   assert.equal(replay.status, 409);
   assert.equal((await replay.json()).error, 'payment_replayed');
+  tick(23 * 60 * 60);
+  assert.equal((await handlers.pay(getPayment(token))).status, 409);
 });
 
 test('Stripe shared payment tokens remain supported and cannot swap credentials', async () => {
@@ -212,11 +215,11 @@ test('payment runtime accepts a same-mode publishable key and never publishes a 
   assert.equal(paymentConfig({ ...live, STRIPE_LIVE_RESTRICTED_KEY: 'rk_live_fixture', STRIPE_PUBLISHABLE_KEY: 'pk_live_fixture' }).testMode, false);
 });
 
-test('live agent verification page is restricted to signed $1 verification quotes', async () => {
-  const { handlers } = fixture({ testMode: false, publishableKey: 'pk_live_fixture' });
+test('live agent verification page accepts only signed $1 verification quotes and expires after 15 minutes', async () => {
+  const { handlers, tick } = fixture({ testMode: false, publishableKey: 'pk_live_fixture' });
   const view = (token) => handlers.agentVerification(new Request(to('/agent-pay-test', token)));
   assert.equal((await view(quoteAt().token)).status, 404);
-  const { token } = makeQuote({ amount_cents: 100, description: 'Live verification (agent)' }, signingSecret, testNow);
+  const { token } = makeAgentVerificationQuote(signingSecret, testNow);
   const response = await view(token);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
@@ -226,6 +229,8 @@ test('live agent verification page is restricted to signed $1 verification quote
   assert.match(body, /stripe\.createPaymentMethod/);
   assert.match(body, /replay\.status !== 409/);
   assert.ok(!body.includes(token));
+  tick(15 * 60);
+  assert.equal((await view(token)).status, 410);
 });
 
 test('an agent quote expiring while writing the reservation cannot start a Stripe charge', async () => {

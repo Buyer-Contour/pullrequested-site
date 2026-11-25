@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
-import { agentVerificationDescription, checkoutVerificationDescription, refundVerificationPayment, verificationAmount } from '../lib/payments/live-verification.mjs';
+import { checkoutVerificationDescription, makeAgentVerificationQuote, refundVerificationPayment, verificationAmount } from '../lib/payments/live-verification.mjs';
 import { makeQuote, readQuote } from '../lib/payments/quotes.mjs';
 import { paymentConfig } from '../lib/payments/runtime.mjs';
 import { stripeSource } from '../lib/payments/stripe-settings.mjs';
@@ -19,12 +19,9 @@ async function main() {
   assert.ok(process.argv.includes('--confirm-two-live-payments'), 'Requires approval for two USD 1.00 verification payments');
   const { stripe, origin, testMode, publishableKey, signingSecret } = paymentConfig();
   assert.ok(!testMode && publishableKey && origin.protocol === 'https:', 'Use the restricted live key, matching publishable key, and deployed HTTPS origin');
-  const make = (description) => {
-    const { token } = makeQuote({ amount_cents: verificationAmount, description }, signingSecret);
-    return { token, quote: readQuote(token, signingSecret) };
-  };
-  const agent = make(agentVerificationDescription);
-  const human = make(checkoutVerificationDescription);
+  const agent = makeAgentVerificationQuote(signingSecret);
+  const { token } = makeQuote({ amount_cents: verificationAmount, description: checkoutVerificationDescription }, signingSecret);
+  const human = { token, quote: readQuote(token, signingSecret) };
   const pageUrl = new URL(`/agent-pay-test?quote=${agent.token}`, origin);
   const agentUrl = new URL(`/api/pay?quote=${agent.token}`, origin);
   const checkoutUrl = new URL(`/api/checkout?quote=${human.token}`, origin);
@@ -55,7 +52,7 @@ async function main() {
         query: `status:'succeeded' AND metadata['source']:'${stripeSource}' AND metadata['quote_id']:'${agent.quote.id}'`, limit: 1,
       });
       return result.data[0];
-    }, 15 * 60_000, `Agent payment not found for quote ${agent.quote.id}; check Stripe before retrying`);
+    }, agent.quote.expires_at * 1000 + 2 * 60_000 - Date.now(), `Agent payment not found for quote ${agent.quote.id}; check Stripe before retrying`);
     await refund(agent.quote, intent.id, 'Agent');
     await waitFor(async () => (await fetch(agentUrl, { redirect: 'error' })).status === 409, 60_000, 'Agent verification page did not record a paid quote');
     const replay = await fetch(agentUrl, { headers: { 'X-PAYMENT': intent.id }, redirect: 'error' });
