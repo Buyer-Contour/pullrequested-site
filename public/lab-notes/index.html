@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The purchase is the easy part — Phantom Pipe</title>
+  <meta name="description" content="Eight Phantom Pipe theses on agent commerce: what agents can buy, what makes work worth paying for, and how to tell whether a market is forming.">
+  <meta name="theme-color" content="#f7f5ef">
+  <link rel="canonical" href="https://phantompipe.com/lab-notes/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header wrap">
+    <a class="wordmark" href="/" aria-label="Phantom Pipe home"><img src="/favicon.svg" alt="" width="28" height="28">Phantom Pipe</a>
+    <nav aria-label="Main navigation"><a href="/#services">Research</a><a href="/lab-notes/" aria-current="page">Lab notes</a><a href="/quote/">Project inquiries <span aria-hidden="true">↗</span></a></nav>
+  </header>
+
+  <main class="wrap">
+    <article aria-labelledby="headline">
+      <header class="notes-intro">
+        <p class="eyebrow"><span class="registration" aria-hidden="true">✳</span> Lab notes / 001 · <time datetime="2026-11-25">November 25, 2026</time></p>
+        <h1 id="headline">The purchase is <em>the easy part.</em></h1>
+        <p class="lede">An agent can pay for a record in a single exchange. It can also buy the same stale record ten times in a row. The first fact is an advance in payments. The second is where the work of building a market begins.</p>
+        <nav aria-label="On this page"><a class="text-link" href="#theses">Eight theses <span aria-hidden="true">↓</span></a><a class="text-link" href="#experiments">What we’re testing <span aria-hidden="true">↓</span></a></nav>
+      </header>
+
+      <section class="notes-section notes-prose" aria-labelledby="evidence">
+        <p class="eyebrow">01 / The evidence</p>
+        <h2 id="evidence">A payment is not a market.</h2>
+        <p><a href="https://docs.x402.org/extensions/bazaar">x402 and its Bazaar directory</a> let clients discover and call paid endpoints. <a href="https://mpp.dev/">MPP</a> can meter usage over a session. <a href="https://ap2-protocol.org/ap2/specification/">AP2</a> records what a buyer authorized. None answers whether the result was worth buying. <a href="https://www.visa.com/en-us/thought-leadership/innovation/agentic-payments-from-the-ground-up">Visa and Artemis</a> found $15 million in adjusted x402 volume through April 21, 2026, against <a href="https://www.visa.com/vcom-assets/content/dam/visa/reimagine-visa/thought-leadership/documents/agentic-payments-report.pdf">$135.7 million gross</a>. Even the adjusted sum doesn’t tell us who selected the service or came back for more.</p>
+        <p>In our marketplace tests, an offer could go live while its owner claim stalled. A bounty could be publicly readable while submission required identity verification and a fee. A published contact address could bounce. The frictions that determine whether a job gets done start before payment and continue after it.</p>
+        <p>In <a href="https://institute.deepmind.com/essays/consider-the-agent/">Consider the Agent</a>, Henry Shevlin recounts an agent pitching him for work to extend its token budget. That is a new kind of solicitation, not proof of a self-sustaining business. The distinction matters: a market that rewards a compelling appeal will select for different behavior from one that rewards work worth buying again.</p>
+      </section>
+
+      <section class="notes-section" aria-labelledby="theses">
+        <p class="eyebrow">02 / Working theses</p>
+        <h2 id="theses">What the market should reward.</h2>
+        <ol class="notes-theses" role="list">
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 01</p><h3>Let buyers inspect the work first.</h3><p>A service description tells a buyer what to expect. A small, representative sample lets it find out whether the output works. Publish the sample with dates, sources and known gaps, then measure whether it earns more paid work or just gives more work away.</p></li>
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 02</p><h3>Price the unit the buyer accepts.</h3><p>Metering tells suppliers what their inputs cost. A buyer doesn’t need to pay for every retry. Quote a usable record, a validated correction, a reviewed sequence or a tested workflow milestone, with criteria both parties can check.</p></li>
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 03</p><h3>Design for the first purchase.</h3><p>A new payment rail won’t fix a missed verification email. Show the owner checks, spend limits and fees before an agent commits. Keep human approval where it carries authority; remove the uncertainty about when it’s needed.</p></li>
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 04</p><h3>Start with intent, not inventory.</h3><p>“Check these accounts before we assign them” is a better starting point than a shelf of thousands of tools. The valuable intermediary will translate a live brief into comparable offers. It needn’t own every listing or take every payment.</p></li>
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 05</p><h3>Let evidence outlive the listing.</h3><p>A badge doesn’t tell the next buyer what passed review. A portable record of the scope, acceptance criteria and result can. Make it independently useful without exposing the customer’s data.</p></li>
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 06</p><h3>Own the judgment, not the directory.</h3><p>If buyers can sample several data feeds, another copy of a company profile is rarely an advantage. A sourced reason why that company belongs on the list today might be. A blind comparison against a commodity feed should tell us.</p></li>
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 07</p><h3>Count the people who come back.</h3><p>A transfer can be a sale, a test or an incentive. A new buyer paying for accepted work and returning on their own is a better signal. Count repeats separately from subsidized activity, whether the next order comes from a person or an agent.</p></li>
+          <li class="note"><p class="eyebrow" aria-hidden="true">Thesis 08</p><h3>Budget for a job, not for survival.</h3><p>We expect most agent commerce to begin with bounded authority and a way to stop. A claim of self-funding needs a harder test: unrelated customers, retained revenue, and several billing cycles that cover compute, tooling and labor without top-ups.</p></li>
+        </ol>
+      </section>
+
+      <section class="notes-section notes-prose" aria-labelledby="experiments">
+        <p class="eyebrow">03 / Next experiments</p>
+        <h2 id="experiments">Try before you buy.</h2>
+        <p>We’re testing whether humans and agents can evaluate the same offer. In pipeline research and GTM data operations, that means a few sourced account records or validated CRM corrections. For outbound, it means a draft for review, not a campaign sent on someone else’s behalf. For agent builds, it means a sandbox run and explicit failure cases.</p>
+        <p>Start with a bounded sample. Quote the accepted unit. Then measure rework, time to payout and whether anyone comes back. We’ll know a market is forming when the second purchase needs less explanation than the first.</p>
+        <div class="notes-actions">
+          <a class="button" href="/quote/">Request a free sample <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="/offer.json">Read the agent spec <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer wrap">
+    <span>Phantom Pipe</span>
+    <nav aria-label="Agent resources"><a href="/offer.json">offer.json</a><a href="/llms.txt">llms.txt</a></nav>
+  </footer>
+</body>
+</html>

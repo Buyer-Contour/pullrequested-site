@@ -104,8 +104,21 @@ h3 { font-size: clamp(1.95rem, 3vw, 2.85rem); line-height: 1.03; letter-spacing:
 .field input, .field select, .field textarea { width: 100%; padding: .58rem .7rem; border: 1px solid #8e8577; border-radius: 0; color: var(--ink); background: var(--paper); font: inherit; }
 .field textarea { resize: vertical; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: .7rem; padding: .7rem .95rem; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); font: 600 .9rem/1.5 system-ui, sans-serif; cursor: pointer; }
-.button:hover { border-color: var(--accent); background: var(--accent); }
+.button:hover { border-color: var(--accent); background: var(--accent); color: var(--paper); }
 .quote-form .button { justify-self: start; }
+
+.notes-intro { padding-block: clamp(3rem, 7vw, 6.25rem); }
+.notes-intro h1 { max-width: 18ch; text-wrap: balance; }
+.notes-intro .lede { max-width: 52ch; }
+.notes-intro nav { margin-top: 1.65rem; font: .8rem/1.5 var(--mono); }
+.notes-section { padding-block: clamp(2.7rem, 5vw, 4.4rem); border-top: 1px solid var(--line); }
+.notes-section h2 { margin-top: .8rem; }
+.notes-prose > p:not(.eyebrow) { max-width: 64ch; color: var(--muted); }
+.notes-prose p a { color: var(--accent); }
+.notes-theses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.7rem 2.8rem; margin: 1.7rem 0 0; padding: 0; list-style: none; }
+.notes-theses .note { border-top: 1px solid var(--line); padding-block: 1.35rem 0; }
+.notes-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .85rem 1.3rem; margin-top: 1.5rem; }
+.notes-actions .button { text-decoration: none; }
 
 @media (max-width: 64rem) {
   .hero { gap: 2rem; }
@@ -122,6 +135,7 @@ h3 { font-size: clamp(1.95rem, 3vw, 2.85rem); line-height: 1.03; letter-spacing:
   .research { gap: 1.15rem; }
   .research-intro > p:last-child { margin-bottom: 0; }
   .notes .note:first-child { padding-top: 1.35rem; border-top: 1px solid var(--line); }
+  .notes-theses { grid-template-columns: minmax(0, 1fr); }
   .site-footer { flex-wrap: wrap; }
 }
 
