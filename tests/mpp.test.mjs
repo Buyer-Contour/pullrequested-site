@@ -77,6 +77,33 @@ test('MPP atomically rejects a replay, excludes other live rails, and isolates t
   }
 });
 
+test('a settled MPP pull can recover from a failed transaction claim without resettling', async (t) => {
+  let settlements = 0;
+  const { handler, store } = setup({
+    testnet: false,
+    verify: async () => ({ push: false }),
+    async settle() {
+      assert.equal(++settlements, 1);
+      return { transaction: tx, header: 'signed-receipt' };
+    },
+  });
+  const add = store.add;
+  let failTransactionClaim = true;
+  t.mock.method(store, 'add', async (key, value) => {
+    if (key === `mpp-transaction/${tx}` && failTransactionClaim) throw new Error('Temporary write failure');
+    return add(key, value);
+  });
+  t.mock.method(console, 'error', () => {});
+  const { token } = issue();
+  assert.equal((await handler(request(token, 'Payment test'))).status, 502);
+  failTransactionClaim = false;
+  const paid = await handler(request(token, 'Payment test'));
+  assert.equal(paid.status, 200);
+  assert.equal(paid.headers.get('Payment-Receipt'), 'signed-receipt');
+  assert.equal((await paid.json()).payment_id, tx);
+  assert.equal((await handler(request(token, 'Payment test'))).status, 409);
+});
+
 test('late MPP push proofs credit only a bound transfer mined by the signed deadline', async (t) => {
   const start = Math.floor(Date.now() / 1000) * 1000;
   let now = start;
