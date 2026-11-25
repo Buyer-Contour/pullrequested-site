@@ -138,3 +138,21 @@ test('the original x402 proof repairs a failed paid write without settling again
   assert.equal((await request(token, proof)).status, 409);
   assert.equal(calls.settle, 1);
 });
+
+test('x402 records a paid receipt even if the settlement journal write fails', async () => {
+  const { request, calls, store } = setup();
+  const { token, quote: { id } } = quote();
+  const add = store.add;
+  store.add = async (key, value) => {
+    if (key.startsWith('x402-settlement/')) throw new Error('fixture settlement journal write failed');
+    return add(key, value);
+  };
+  const required = decodePaymentRequiredHeader((await request(token)).headers.get('Payment-Required'));
+  const proof = encodePaymentSignatureHeader(await client.createPaymentPayload(required));
+  const response = await request(token, proof);
+  assert.equal(response.status, 200);
+  assert.equal(decodePaymentResponseHeader(response.headers.get('Payment-Response')).transaction, transaction);
+  assert.equal((await store.get(`paid/${id}`)).payment_id, transaction);
+  assert.equal((await request(token, proof)).status, 409);
+  assert.equal(calls.settle, 1);
+});
