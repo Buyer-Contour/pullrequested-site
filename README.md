@@ -25,10 +25,10 @@ The `phantompipe-site` Worker serves `public/`. It forwards browser and agent qu
 Deploy from the repository root with Wrangler 4 and the zone's deploy credentials:
 
 ```sh
-npx wrangler deploy --config wrangler.site.toml --route 'phantompipe.com/*' --x-route-zones --zone-id 454ab4be94fd5278a1e1c697c86320df
+npx wrangler@4 deploy --config wrangler.site.toml
 ```
 
-Keep the more specific payment routes on the separate `phantompipe-payments` Worker (see [quote payments](docs/quote-payments.md)). Do not change its secret bindings or Durable Object. Compare browser and agent submission responses and payment responses before and after any routing change. The apex must have a proxied DNS record for the Worker route.
+Keep the more specific apex payment routes on the separate `phantompipe-payments` Worker (see [quote payments](docs/quote-payments.md)). Do not change its secret bindings or Durable Object. Compare browser and agent submission responses and payment responses before and after any routing change. Both the apex and `www` need proxied DNS records. The site Worker redirects `www` to the apex with HTTP 308, preserving the path, query, and request method.
 
 ## Interim Surge deploy
 
