@@ -6,7 +6,7 @@ assert.ok(process.argv.includes('--confirm-create-live-webhook'), 'Pass --confir
 const { stripe, origin, testMode } = paymentConfig();
 assert.ok(!testMode && origin.protocol === 'https:', 'Use a restricted live key and the deployed HTTPS origin');
 const url = new URL('/api/stripe-webhook', origin).href;
-const description = 'pullrequested.com quote payments';
+const description = 'Phantom Pipe quote payments';
 for await (const existing of stripe.webhookEndpoints.list({ limit: 100 })) {
   if (existing.url !== url) continue;
   assert.equal(existing.metadata.source, stripeSource, 'A different integration owns this webhook URL');

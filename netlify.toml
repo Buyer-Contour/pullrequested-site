@@ -25,13 +25,13 @@
   status = 200
 
 [[redirects]]
-  from = "/api/x402/pay"
-  to = "/.netlify/functions/x402-pay"
+  from = "/agent-pay-test"
+  to = "/.netlify/functions/agent-pay-test"
   status = 200
 
 [[redirects]]
-  from = "/agent-pay-test"
-  to = "/.netlify/functions/agent-pay-test"
+  from = "/api/mpp/pay"
+  to = "/.netlify/functions/mpp-pay"
   status = 200
 
 [[redirects]]

@@ -7,11 +7,11 @@ Static go-to-market consulting site for Phantom Pipe at [phantompipe.com](https:
 - `public/index.html`: Landing page and services.
 - `public/quote/index.html`, `public/thanks/index.html`: Quote form and confirmation page.
 - `public/offer.json`, `public/llms.txt`: Offer and submission instructions for agents.
-- `public/.well-known/x402.json`: Draft discovery manifest pointing to free resources. It does not register the agency in Bazaar; [Coinbase's Bazaar extension](https://github.com/coinbase/x402/blob/main/specs/extensions/bazaar.md) advertises discovery metadata in a paid endpoint's HTTP 402 response.
+- `public/.well-known/x402.json`: Legacy discovery manifest pointing only to free resources; no x402 payment rail is offered.
 - `public/robots.txt`, `public/sitemap.xml`: Crawler metadata.
 - `scripts/build-surge.js`: Builds a standalone Surge copy for interim hosting.
 - `netlify.toml`: Publish directory, route rewrite, and response headers.
-- `netlify/functions/`: Signed quote pages, Stripe Checkout, agent payments, and the Stripe webhook. See the [quote payment guide](docs/quote-payments.md).
+- `netlify/functions/`: Signed quote pages, Stripe Checkout, Tempo MPP and Stripe agent payments, and the Stripe webhook. See the [quote payment guide](docs/quote-payments.md).
 - `SPEND_LEDGER.md`: Budget and recorded spend.
 
 ## Local development

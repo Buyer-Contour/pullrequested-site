@@ -6,18 +6,15 @@
     "build:surge": "node scripts/build-surge.js",
     "payments:quote": "node scripts/make-quote.js",
     "payments:dev": "node scripts/payments-server.mjs",
-    "payments:x402-e2e": "node scripts/x402-e2e.mjs",
+    "payments:mpp-e2e": "node scripts/mpp-e2e.mjs",
     "payments:e2e": "node scripts/e2e-test.js",
     "payments:e2e:live": "node scripts/stripe-live-e2e.mjs",
     "payments:refund-verification": "node scripts/stripe-refund-verification.mjs",
     "payments:create-webhook": "node scripts/stripe-create-webhook.mjs"
   },
   "dependencies": {
-    "@coinbase/cdp-sdk": "^1.62.0",
     "@netlify/blobs": "^10.7.13",
-    "@x402/core": "^2.32.0",
-    "@x402/evm": "^2.32.0",
-    "@x402/extensions": "^2.32.0",
+    "mppx": "0.22.0",
     "stripe": "^23.2.0",
     "viem": "^2.58.6"
   }

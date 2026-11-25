@@ -1,6 +1,16 @@
 # Quote payments
 
-The payment service charges only an agency-issued quote. Give a human the `quote_url` and an agent the `pay_url` from the same quote. The quote fixes the USD amount and expiry; customers cannot set the amount. The URLs are bearer links, not encrypted: do not put private information in the description or publish the links.
+## Tempo MPP
+
+The independent `GET /api/mpp/pay?quote=<signed_quote_token>` rail uses `mppx` to issue a Tempo charge and verify settlement directly on-chain. Stripe keys, CDP, and facilitators are not required.
+
+Set `MPP_NETWORK=tempo` (mainnet) or `moderato` (testnet), `MPP_PAY_TO` to the agency's public Tempo address, and `MPP_SECRET_KEY` to its own secret of at least 32 random bytes. Also set `PAYMENTS_ORIGIN` and `QUOTE_SIGNING_SECRET`. The receiving wallet's private key belongs in Bot secret storage, not the function runtime. Moderato receipts cannot mark a live quote paid.
+
+Use OUSD on the selected network. The payer pays the network fees; this route does not sponsor fees or advertise MACH funding. Run `tempo request --dry-run '<MPP quote URL>'` before paying, then `tempo request --max-spend <quote amount> '<MPP quote URL>'`. Use pull mode to let the server reserve the quote before broadcasting. In push mode, do not start another rail after taking an MPP challenge: an already-broadcast transfer cannot be canceled by a quote reservation. Reconcile an uncertain payment before issuing another one.
+
+## Issue a quote
+
+The payment service charges only an agency-issued quote. Give a human the `quote_url` and an agent the `mpp_url` for Tempo or the `pay_url` for Stripe, from the same quote. The quote fixes the USD amount and expiry; customers cannot set the amount. The URLs are bearer links, not encrypted: do not put private information in the description or publish the links.
 
 ```sh
 npm run payments:quote -- --amount-cents 500 --description 'Test consulting quote'
@@ -28,15 +38,7 @@ This is a custom HTTP 402 protocol, `quote-pay-v1`, not wire-compatible with x40
 3. To pay with a Shared Payment Token instead, send `{"nonce":"<nonce>","shared_payment_token":"<spt_…>"}`. Send exactly one credential field. Either path returns HTTP 200 with `payment_intent_id` only after Stripe confirms the charge. A card that needs additional authentication cannot be completed by this agent endpoint; contact the agency for a replacement quote payable through Checkout.
 4. `GET` the same URL with `X-PAYMENT: <payment_intent_id>`. HTTP 200 returns the paid receipt. A matching succeeded intent, exact amount and currency, and bound quote and nonce are required. A replay returns HTTP 409, an unverified payment returns HTTP 402, and an expired quote cannot start a new payment (410).
 
-The [offer.json fragment](offer-payments.fragment.json) and [llms.txt fragment](llms-payments.fragment.txt) are for the site owner to publish after verification. Use the deployed payment origin if it differs from the static site's origin. Do not advertise the Stripe quote-pay API as native x402.
-
-## Native x402 on Base
-
-This is a separate, native v2 `exact` rail at `GET /api/x402/pay?quote=<signed-quote-token>`. It charges the quote's USD amount in USDC, with no conversion fee added by the service. Use an x402 client and set its spend cap consciously; the default SDK cap may be lower than a consulting quote. The 402 response includes the `PAYMENT-REQUIRED` header and Bazaar input/output schema. Send `PAYMENT-SIGNATURE` to settle; success returns a transaction hash and `PAYMENT-RESPONSE`. The service records the funding authorization before settlement and reserves the quote across Stripe and x402. If settlement times out, reconcile the existing payment on-chain before issuing a new quote; do not resubmit it as a new authorization.
-
-1. Keep the agency's receiving wallet key in Bot secrets (do not deploy its private key). Enable the route with the public `X402_PAY_TO` wallet address. An explicit `X402_NETWORK` is required in production or with a live Stripe key. Use `X402_NETWORK=eip155:84532` for Base Sepolia and optionally `X402_FACILITATOR_URL` to override the default `https://x402.org/facilitator`. Keep Sepolia on an isolated deploy or local server with a different quote-signing secret from production. Sepolia payment records are kept out of live quote records.
-2. Use a separate Base Sepolia payer wallet. [CDP's authenticated faucet](https://docs.cdp.coinbase.com/api-reference/v2/rest-api/faucets/request-funds-on-evm-test-networks) offers 1 free test USDC per request; [Circle's web faucet](https://faucet.circle.com/) requires CAPTCHA. With the test wallet Bot secret bound as `X402_TEST_PAYER_PRIVATE_KEY`, and the Sepolia service running, run `npm run payments:x402-e2e` with the expected `X402_PAY_TO`, `QUOTE_SIGNING_SECRET`, and `PAYMENTS_ORIGIN`. It refuses mainnet, spends 0.50 test USDC, verifies the exact recipient and amount on-chain, and checks replay rejection.
-3. For Base mainnet, set `X402_NETWORK=eip155:8453` and configure `CDP_API_KEY_ID` and `CDP_API_KEY_SECRET` from Bot secrets for the CDP facilitator. Do not publish the route as active before settlement verification. The free test facilitator does not index Bazaar; [CDP Bazaar](https://docs.cdp.coinbase.com/x402/seller/get-discovered) requires a successful paid call through the CDP facilitator and metadata screening. Reserve a disposable verification quote when running CDP's public preflight; never submit a customer's private quote.
+The [offer.json fragment](offer-payments.fragment.json) and [llms.txt fragment](llms-payments.fragment.txt) are for the site owner to publish after verification. Use the deployed payment origin if it differs from the static site's origin.
 
 ## Verify in Stripe live mode
 

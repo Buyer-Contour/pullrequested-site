@@ -82,18 +82,16 @@ test('site and agent docs expose the agency inbox and marketplace listings', () 
   }
 });
 
-test('pending x402 manifest points to free resources without offering payment', () => {
+test('legacy x402 manifest points to free resources without offering payment', () => {
   const manifest = JSON.parse(read('public/.well-known/x402.json'));
   const offer = JSON.parse(read('public/offer.json'));
 
   assert.equal(manifest.x402Version, 2);
   assert.equal(manifest.name, offer.name);
   assert.equal(manifest.url, offer.url);
-  assert.equal(manifest.payment, 'pending');
+  assert.equal(manifest.payment, 'removed');
   assert.deepEqual(manifest.services, []);
-  assert.equal(manifest.pending_payment.path, '/api/x402/pay');
-  assert.equal(manifest.pending_payment.requires_issued_quote, true);
-  assert.equal(manifest.pending_payment.discovery_extension, 'bazaar');
+  assert.ok(!('pending_payment' in manifest));
   assert.ok(!('payTo' in manifest));
   assert.deepEqual(manifest.resources.map(({ method, path }) => [method, path]), [
     ['GET', '/offer.json'],
@@ -108,10 +106,11 @@ test('offer and llms document issued-quote payment rails without claiming live a
 
   assert.equal(offer.payment, 'coming soon');
   assert.deepEqual(offer.quote_payment, quote_payment);
-  assert.equal(offer.quote_payment.agent_usdc.status, 'pending');
+  assert.equal(offer.quote_payment.agent_mpp.status, 'pending');
+  assert.ok(!('agent_usdc' in offer.quote_payment));
   assert.match(llms, /Stripe routes currently return HTTP 503/);
-  assert.match(llms, /Native x402 \/ Base USDC is pending on mainnet/);
-  for (const rail of ['human', 'agent', 'agent_usdc']) {
+  assert.match(llms, /Tempo MPP is pending production verification/);
+  for (const rail of ['human', 'agent', 'agent_mpp']) {
     assert.ok(llms.includes(quote_payment[rail].url_template));
   }
 });
