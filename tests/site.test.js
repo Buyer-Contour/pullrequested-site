@@ -74,6 +74,9 @@ test('pending x402 manifest points to free resources without offering payment', 
   assert.equal(manifest.url, offer.url);
   assert.equal(manifest.payment, 'pending');
   assert.deepEqual(manifest.services, []);
+  assert.equal(manifest.pending_payment.path, '/api/x402/pay');
+  assert.equal(manifest.pending_payment.requires_issued_quote, true);
+  assert.equal(manifest.pending_payment.discovery_extension, 'bazaar');
   assert.ok(!('payTo' in manifest));
   assert.deepEqual(manifest.resources.map(({ method, path }) => [method, path]), [
     ['GET', '/offer.json'],
