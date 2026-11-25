@@ -27,11 +27,16 @@ Run `npm ci` and `npm test` with Node.js 22. To preview the static site, run `py
 
 ## Deploy to Netlify
 
-Deploy `public/`, not `dist/surge`, to switch both quote paths back to Netlify Forms.
+Production runs on the [`phantompipe` Netlify site](https://app.netlify.com/sites/phantompipe/overview) (site ID `abbb33f1-2767-44fe-84fc-460233cc6a64`). Deploy `public/`, not `dist/surge`, to keep both quote paths on Netlify Forms.
 
-1. Create or import a site on the Free plan. When deploying from Git, leave the build command blank and publish `public/`; the repository's `netlify.toml` configures that directory. For a manual CLI deploy, run from the repository root so Netlify picks up the configuration.
-2. Open the site's **Forms** page, enable form detection, and redeploy. Confirm that a form called `quote` is listed. Submissions are stored in the Forms dashboard; the agency does not need an inbox or notification address to collect them.
-3. On the site's `*.netlify.app` URL, open `/`, `/quote`, `/offer.json`, and `/llms.txt`. Submit a clearly marked test from the browser, confirm the thank-you page and a dashboard entry, then verify the agent POST independently. For example, replace `YOUR-SITE` with the actual site name:
+1. For a manual production deploy, run from the repository root after `npm ci` and bind `NETLIFY_AUTH_TOKEN` from Bot secrets. Pass the site ID explicitly so a stale local site link cannot select the retired site. `netlify.toml` supplies the publish directory, functions, redirects, and headers.
+
+   ```sh
+   npx netlify-cli deploy --prod --site abbb33f1-2767-44fe-84fc-460233cc6a64
+   ```
+
+2. Confirm form detection is enabled and the site's **Forms** page lists `quote` after deployment. Submissions are stored in the Forms dashboard; configure email notifications for the `quote` form to `dane@phantompipe.com`.
+3. On [phantompipe.netlify.app](https://phantompipe.netlify.app/), open `/`, `/quote`, `/offer.json`, and `/llms.txt`. Submit a clearly marked test from the browser, confirm the thank-you page and a dashboard entry, then verify the agent POST independently:
 
    ```sh
    curl --fail-with-body -sS -o /dev/null -w 'HTTP %{http_code}\n' \
@@ -40,10 +45,10 @@ Deploy `public/`, not `dist/surge`, to switch both quote paths back to Netlify F
      --data-urlencode 'email=test@example.com' \
      --data-urlencode 'service=not-sure' \
      --data-urlencode 'brief=Deployment smoke test; please ignore.' \
-     https://YOUR-SITE.netlify.app/quote
+     https://phantompipe.netlify.app/quote
    ```
 
    Check the stored submission in the dashboard; an HTTP success response alone is not proof of delivery. Confirm the JSON content type and wildcard CORS header on `/offer.json` and the plain-text content type on `/llms.txt`.
-4. In Netlify's domain settings, add `phantompipe.com` as the primary domain and confirm `www.phantompipe.com` is listed. For external DNS on the standard Netlify edge, use an apex ALIAS/ANAME (or flattened CNAME) to `apex-loadbalancer.netlify.com`, or an apex A record to `75.2.60.5` if the provider doesn't support those record types. Use a `www` CNAME to the assigned `YOUR-SITE.netlify.app` hostname. Confirm the exact values in Netlify's domain panel before sharing them, then verify HTTPS and the form on the custom domain. See [Netlify's external DNS guide](https://docs.netlify.com/manage/domains/configure-domains/configure-external-dns/).
+4. Verify the deploy on [phantompipe.com](https://phantompipe.com/), including HTTPS and the quote form.
 
 Keep hosting credentials in Bot secrets, not in the repository.
