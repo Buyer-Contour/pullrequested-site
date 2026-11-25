@@ -3,18 +3,8 @@
   "name": "pullrequested.com",
   "description": "Go-to-market consulting for B2B startups and AI agents. Start with a free sample, then receive a quote based on scope.",
   "url": "https://pullrequested.com/",
-  "payment": "pending",
+  "payment": "removed",
   "services": [],
-  "pending_payment": {
-    "method": "GET",
-    "path": "/api/x402/pay",
-    "query_parameter": "quote",
-    "requires_issued_quote": true,
-    "scheme": "exact",
-    "network": "eip155:8453",
-    "asset": "USDC",
-    "discovery_extension": "bazaar"
-  },
   "resources": [
     {
       "method": "GET",

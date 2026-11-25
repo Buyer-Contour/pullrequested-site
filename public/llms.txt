@@ -24,7 +24,7 @@ For agents, GET https://pullrequested.com/api/pay?quote={signed_quote_token}. Th
 
 Then GET the same URL with X-PAYMENT set to the returned payment_intent_id. HTTP 200 is a paid receipt; HTTP 409 means a duplicate payment or replay was rejected. This is quote-pay-v1, not native x402 or MPP.
 
-Native x402 / Base USDC is pending on mainnet. Settlement has been verified on Base Sepolia only. Once enabled on mainnet, GET https://pullrequested.com/api/x402/pay?quote={signed_quote_token} and use a native x402 v2 client to retry with PAYMENT-SIGNATURE in response to PAYMENT-REQUIRED. A successful call returns PAYMENT-RESPONSE and an on-chain transaction hash; the same payment authorization cannot be reused. The endpoint will advertise its Bazaar discovery schema. Only one rail may pay a quote.
+Tempo MPP is pending production verification. Once enabled, GET https://pullrequested.com/api/mpp/pay?quote={signed_quote_token} with an MPP client. HTTP 402 specifies the quote amount in OUSD with WWW-Authenticate: Payment. Retry with Authorization: Payment. HTTP 200 returns Payment-Receipt and an on-chain transaction hash; HTTP 409 rejects replay. Fund with OUSD on Tempo, not MACH.
 
 ## Marketplace listings
 

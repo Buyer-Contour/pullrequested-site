@@ -19,6 +19,7 @@ async function main() {
     quote,
     quote_url: new URL(`/q/${token}`, process.env.PAYMENTS_ORIGIN).href,
     pay_url: new URL(`/api/pay?quote=${token}`, process.env.PAYMENTS_ORIGIN).href,
+    mpp_url: new URL(`/api/mpp/pay?quote=${token}`, process.env.PAYMENTS_ORIGIN).href,
   }, null, 2));
 }
 

@@ -24,18 +24,17 @@
       },
       "redeem": { "method": "GET", "header": "X-PAYMENT", "value": "payment_intent_id from POST response", "replay_status": 409 }
     },
-    "agent_usdc": {
+    "agent_mpp": {
       "status": "pending",
-      "protocol": "x402",
-      "version": 2,
-      "scheme": "exact",
-      "network": "eip155:8453",
-      "asset": "USDC",
-      "url_template": "https://pullrequested.com/api/x402/pay?quote={signed_quote_token}",
-      "discovery_extension": "bazaar",
-      "challenge_header": "PAYMENT-REQUIRED",
-      "payment_header": "PAYMENT-SIGNATURE",
-      "settlement_header": "PAYMENT-RESPONSE",
+      "protocol": "mpp",
+      "method": "tempo",
+      "intent": "charge",
+      "network": "eip155:4217",
+      "asset": "OUSD",
+      "url_template": "https://pullrequested.com/api/mpp/pay?quote={signed_quote_token}",
+      "challenge_header": "WWW-Authenticate",
+      "payment_header": "Authorization",
+      "settlement_header": "Payment-Receipt",
       "replay_status": 409
     }
   }
