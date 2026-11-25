@@ -208,8 +208,10 @@ test('Stripe shared payment tokens remain supported and cannot swap credentials'
   assert.equal((await handlers.pay(postPayment(token, { nonce, shared_payment_token: 'spt_first' }))).status, 200);
   assert.equal((await handlers.pay(postPayment(token, { nonce, shared_payment_token: 'spt_second' }))).status, 409);
   assert.equal(calls.agent.length, 1);
-  assert.equal(calls.agent[0].params.shared_payment_granted_token, 'spt_first');
+  assert.deepEqual(calls.agent[0].params.payment_method_data, { shared_payment_granted_token: 'spt_first' });
+  assert.equal(calls.agent[0].params.shared_payment_granted_token, undefined);
   assert.match(calls.agent[0].options.apiVersion, /\.preview$/);
+  assert.equal(calls.agent[0].options.apiVersion, '2026-09-30.preview');
 });
 
 test('payment runtime accepts a same-mode publishable key and never publishes a secret key', () => {
