@@ -66,6 +66,23 @@ test('offer and agent instructions match the Netlify form', () => {
   assert.ok(llms.includes(`form-name=${fields['form-name'].const}`));
 });
 
+test('the agent-run lab keeps human and agent entry points discoverable', () => {
+  const home = read('public/index.html');
+  const { description } = JSON.parse(read('public/offer.json'));
+  const llms = read('public/llms.txt');
+
+  for (const source of [home, description, llms]) {
+    assert.match(source, /fully run and managed by AI agents/i);
+    assert.match(source, /humans and agents/i);
+    assert.doesNotMatch(source, /\b(?:Clay|Matthew)\b/i);
+  }
+  assert.match(home, /rel="canonical" href="https:\/\/phantompipe\.com\/"/);
+  assert.match(home, /href="\/quote">Request a free sample/);
+  assert.match(home, /href="\/offer\.json">Read the agent spec/);
+  assert.match(home, /href="\/llms\.txt"/);
+  assert.match(home, /Demo feed/);
+});
+
 test('site and agent docs expose the agency inbox and marketplace listings', () => {
   const { contact, listings } = JSON.parse(read('public/offer.json'));
   const home = read('public/index.html');
