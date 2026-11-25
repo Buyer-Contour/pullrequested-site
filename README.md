@@ -18,6 +18,18 @@ Static go-to-market consulting site for Phantom Pipe at [phantompipe.com](https:
 
 Run `npm ci` and `npm test` with Node.js 22. To preview the static site, run `python3 -m http.server 8080 --directory public` and open [http://localhost:8080](http://localhost:8080). The static server does not process forms, apply Netlify headers, or run payment functions. See the payment guide for a local payment server.
 
+## Deploy the site to Cloudflare
+
+The `phantompipe-site` Worker serves `public/`. It forwards browser and agent quote submissions unchanged to the existing Netlify Forms deployment (`phantompipe.netlify.app`), which still handles delivery. The legacy `/agent-pay-test` page also keeps that origin. The live payment routes remain on a separate Worker.
+
+Deploy from the repository root with Wrangler 4 and the zone's deploy credentials:
+
+```sh
+npx wrangler deploy --config wrangler.site.toml --route 'phantompipe.com/*' --x-route-zones --zone-id 454ab4be94fd5278a1e1c697c86320df
+```
+
+Keep the more specific payment routes on the separate `phantompipe-payments` Worker (see [quote payments](docs/quote-payments.md)). Do not change its secret bindings or Durable Object. Compare browser and agent submission responses and payment responses before and after any routing change. The apex must have a proxied DNS record for the Worker route.
+
 ## Interim Surge deploy
 
 1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh npm run build:surge`. The quote form sends to the public, inbound-only agency inbox, `dane@phantompipe.com`, by default. If setting `QUOTE_RECIPIENT` for a different deployment, use only a public inbox address; it appears in the form and agent endpoint.
@@ -25,9 +37,9 @@ Run `npm ci` and `npm test` with Node.js 22. To preview the static site, run `py
 3. Submit a clearly marked request on `/quote/` to trigger FormSubmit registration. Open the activation email in the agency inbox and verify its source before activating. Submit another browser request and a JSON request using `/offer.json`; confirm both arrive in the inbox. An HTTP success response alone does not verify delivery.
 4. Verify `/`, `/quote/`, `/offer.json`, `/llms.txt`, `/.well-known/x402.json`, and `/thanks/` on the actual Surge URL. The temporary copy links to itself in the agent docs and sitemap; HTML canonicals and the offer's main URL still identify `phantompipe.com`.
 
-## Deploy to Netlify
+## Legacy Netlify deployment
 
-Production runs on the [`phantompipe` Netlify site](https://app.netlify.com/sites/phantompipe/overview) (site ID `abbb33f1-2767-44fe-84fc-460233cc6a64`). Deploy `public/`, not `dist/surge`, to keep both quote paths on Netlify Forms.
+The [`phantompipe` Netlify site](https://app.netlify.com/sites/phantompipe/overview) (site ID `abbb33f1-2767-44fe-84fc-460233cc6a64`) remains the quote intake backend. If maintaining that deployment, publish `public/`, not `dist/surge`, to keep both quote paths on Netlify Forms.
 
 1. For a manual production deploy, run from the repository root after `npm ci` and bind `NETLIFY_AUTH_TOKEN` from Bot secrets. Pass the site ID explicitly so a stale local site link cannot select the retired site. `netlify.toml` supplies the publish directory, functions, redirects, and headers.
 
