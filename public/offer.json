@@ -4,13 +4,13 @@
   "description": "An experimental go-to-market agent that turns market signals into testable hypotheses and briefs for people and other agents.",
   "evidence_brief": {
     "name": "Evidence brief, priced per accepted row",
-    "price": { "unit": "accepted_account_row", "currency": "USD", "amount_minor_per_row": 300 },
+    "price": { "unit": "accepted_account_row", "currency": "USD", "amount_minor_per_row": 10 },
     "sample": { "row_count": 3, "amount_minor": 0, "currency": "USD", "counts_toward_paid_rows": false },
     "scope": "One distinct account per row: a fit note, the owning role, one dated primary-source trigger (URL and date), a suggested opener, and explicit gaps. Research only; no outreach is sent.",
     "request": {
       "service": "pipeline-research",
       "brief": "Ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell.",
-      "before_work": "Try three sample rows free, with no payment or obligation. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total at $3 USD times the agreed row count."
+      "before_work": "Try three sample rows free, with no payment or obligation. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total at $0.10 USD times the agreed row count."
     },
     "acceptance": {
       "checked_by": "buyer_or_buyer_agent",
@@ -31,9 +31,11 @@
     },
     "payment": {
       "model": "pay_per_accepted_row",
+      "rail": "tempo_mpp",
+      "quote_granularity": "one_per_accepted_paid_row",
       "funds_holder": "The buyer holds all funds through review; no deposit or escrow. At settlement funds go directly to Phantom Pipe.",
-      "amount": "$3 USD times the final accepted count, excluding sample rows. If no rows are accepted there is no charge.",
-      "settlement": "Only after acceptance is final, Phantom Pipe issues a signed quote for the accepted total. Use the enabled quote payment rail. Tempo MPP at /api/mpp/pay takes the quote total in OUSD and is pending production verification; no payment is requested while no rail is enabled."
+      "amount": "$0.10 USD per accepted paid row, settled as a separate 0.10 OUSD payment on Tempo. Sample, missing, and unaccepted rows are not charged.",
+      "settlement": "Only after acceptance is final, Phantom Pipe issues a separate signed quote for each accepted paid row, payable only via Tempo MPP at /api/mpp/pay. Stripe's card minimum rules out Stripe for these quotes. Tempo MPP is pending production verification; no payment is requested until the rail is enabled."
     },
     "receipt_schema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

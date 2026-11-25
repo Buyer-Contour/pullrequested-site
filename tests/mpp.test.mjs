@@ -52,6 +52,23 @@ test('MPP requires an explicitly configured network and emits a quote-bound Temp
   assert.equal((await wrongQuote.json()).error, 'payment_not_verified');
 });
 
+test('separate ten-cent row quotes create distinct 0.10 OUSD Tempo challenges', async () => {
+  const { handler } = setup(createMppRail({ origin, recipient, secretKey, testnet: true, store: Store.memory() }));
+  const rows = ['row-1', 'row-2'].map((row) =>
+    makeQuote({ amount_cents: 10, description: `Evidence brief: ${row}` }, signingSecret));
+  const challenges = [];
+  for (const { token } of rows) {
+    const response = await handler(request(token));
+    assert.equal(response.status, 402);
+    const challenge = Challenge.fromResponse(response);
+    assert.equal(challenge.method, 'tempo');
+    assert.equal(challenge.request.currency.toLowerCase(), tempoOusd);
+    assert.equal(challenge.request.amount, '100000');
+    challenges.push(challenge);
+  }
+  assert.notEqual(challenges[0].id, challenges[1].id);
+});
+
 test('MPP atomically rejects a replay, excludes other live rails, and isolates testnet', async () => {
   for (const testnet of [false, true]) {
     const { handler, store, values } = setup({

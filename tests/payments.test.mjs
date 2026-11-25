@@ -84,6 +84,31 @@ test('quotes bind every field and expire even on their exact deadline', () => {
   assert.throws(() => quoteAt('Consulting', 24 * 60 * 60), /Invalid quote/);
 });
 
+test('a ten-cent quote offers only Tempo MPP and cannot reserve a Stripe payment', async () => {
+  const { token, quote } = makeQuote({ amount_cents: 10, description: 'Evidence brief row' }, signingSecret, testNow);
+  const { handlers, entries, calls } = fixture();
+  const page = await handlers.page(new Request(to('/q', token)));
+  assert.equal(page.status, 200);
+  const body = await page.text();
+  assert.match(body, /Total: \$0\.10 USD/);
+  assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
+  assert.doesNotMatch(body, /\/api\/checkout|Continue to Stripe Checkout/);
+
+  const { nonce } = readQuote(token, signingSecret, { now: testNow });
+  for (const response of await Promise.all([
+    handlers.checkout(new Request(to('/api/checkout', token), { method: 'GET' })),
+    handlers.checkout(new Request(to('/api/checkout', token), { method: 'POST' })),
+    handlers.pay(getPayment(token)),
+    handlers.pay(getPayment(token, intentId)),
+    handlers.pay(postPayment(token, { nonce, payment_method: 'pm_card_visa' })),
+  ])) {
+    assert.equal(response.status, 422);
+    assert.deepEqual(await response.json(), { error: 'quote_requires_tempo_mpp' });
+  }
+  assert.equal(entries.has(`reservation/${quote.id}`), false);
+  assert.deepEqual(calls, { checkout: [], agent: [], methods: [] });
+});
+
 test('checkout displays an escaped quote, creates one session, and records a verified paid webhook once', async () => {
   const { quote, token } = quoteAt('<script>unsafe</script>');
   const { handlers, calls, entries, webhookRequest } = fixture();
