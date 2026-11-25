@@ -4,7 +4,7 @@
 
 We offer pipeline research (ICP and enriched lists), GTM data operations (CRM cleanup, enrichment, routing, and scoring), outbound systems in your own tools, and GTM workflow and agent builds.
 
-Contact: dane@pullrequested.com (inbound inquiries).
+Contact: dane@phantompipe.com (inbound inquiries).
 
 To submit a request programmatically, POST to https://pullrequested.com/quote with Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. The company field is optional; omit the honeypot field. Use a reply-to email that can receive follow-up. The POST does not return a quote and does not take payment.
 

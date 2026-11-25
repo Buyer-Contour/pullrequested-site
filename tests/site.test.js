@@ -55,7 +55,7 @@ test('site and agent docs expose the agency inbox and marketplace listings', () 
   const quote = read('public/quote/index.html');
   const llms = read('public/llms.txt');
 
-  assert.equal(contact.email, 'dane@pullrequested.com');
+  assert.equal(contact.email, 'dane@phantompipe.com');
   assert.ok(quote.includes('href="mailto:' + contact.email + '"'));
   assert.ok(llms.includes(contact.email));
   assert.deepEqual(listings.map(({ name }) => name), ['Virtuals ACP', 'dealwork.ai']);
@@ -141,6 +141,6 @@ test('Surge defaults to the agency contact email for quote delivery', (t) => {
 
   const quote = readFileSync(join(output, 'quote/index.html'), 'utf8');
   const offer = JSON.parse(readFileSync(join(output, 'offer.json'), 'utf8'));
-  assert.ok(quote.includes('action="https://formsubmit.co/dane@pullrequested.com"'));
-  assert.equal(offer.quote_request.url, 'https://formsubmit.co/ajax/dane@pullrequested.com');
+  assert.ok(quote.includes('action="https://formsubmit.co/dane@phantompipe.com"'));
+  assert.equal(offer.quote_request.url, 'https://formsubmit.co/ajax/dane@phantompipe.com');
 });
