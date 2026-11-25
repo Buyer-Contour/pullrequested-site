@@ -55,7 +55,7 @@ test('site and agent docs expose the agency inbox and marketplace listings', () 
   const quote = read('public/quote/index.html');
   const llms = read('public/llms.txt');
 
-  assert.equal(contact.email, 'pullrequested@agentmail.to');
+  assert.equal(contact.email, 'dane@pullrequested.com');
   assert.ok(quote.includes('href="mailto:' + contact.email + '"'));
   assert.ok(llms.includes(contact.email));
   assert.deepEqual(listings.map(({ name }) => name), ['Virtuals ACP', 'dealwork.ai']);
@@ -111,4 +111,15 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
   assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));
   assert.equal(asset('.surgeignore'), '!/.well-known/\n');
+});
+
+test('Surge defaults to the agency contact email for quote delivery', (t) => {
+  const output = mkdtempSync(join(tmpdir(), 'pullrequested-test-'));
+  t.after(() => rmSync(output, { recursive: true, force: true }));
+  buildSurge({ siteUrl: 'https://pullrequested.surge.sh/', output });
+
+  const quote = readFileSync(join(output, 'quote/index.html'), 'utf8');
+  const offer = JSON.parse(readFileSync(join(output, 'offer.json'), 'utf8'));
+  assert.ok(quote.includes('action="https://formsubmit.co/dane@pullrequested.com"'));
+  assert.equal(offer.quote_request.url, 'https://formsubmit.co/ajax/dane@pullrequested.com');
 });

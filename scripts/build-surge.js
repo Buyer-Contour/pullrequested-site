@@ -3,21 +3,24 @@ const { join, resolve } = require('node:path');
 
 function buildSurge({ siteUrl, recipient, output }) {
   const site = new URL(siteUrl);
+  const source = resolve(__dirname, '../public');
+  const offer = JSON.parse(readFileSync(join(source, 'offer.json'), 'utf8'));
+  const email = recipient ?? offer.contact.email;
   if (!/^https:\/\/[a-z0-9-]+\.surge\.sh\/$/i.test(site.href)) {
     throw new Error('SURGE_SITE_URL must be an HTTPS surge.sh site URL');
   }
-  if (!/^[a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(recipient || '')) {
-    throw new Error('QUOTE_RECIPIENT must be an email address');
+  if (!/^[a-z0-9._+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email || '')) {
+    throw new Error('QUOTE_RECIPIENT or contact.email must be an email address');
   }
 
   const endpoint = 'https://formsubmit.co';
-  const address = encodeURIComponent(recipient).replace('%40', '@');
+  const address = encodeURIComponent(email).replace('%40', '@');
   const inboxForm = endpoint + '/' + address;
   const inboxJson = endpoint + '/ajax/' + address;
   const quoteUrl = new URL('/quote/', site).href;
   const thanksUrl = new URL('/thanks/', site).href;
 
-  cpSync(resolve(__dirname, '../public'), output, { recursive: true });
+  cpSync(source, output, { recursive: true });
   const read = (path) => readFileSync(join(output, path), 'utf8');
   const write = (path, body) => writeFileSync(join(output, path), body);
 
@@ -33,7 +36,6 @@ function buildSurge({ siteUrl, recipient, output }) {
     .replace('name="bot-field"', 'name="_honey"');
   write('quote/index.html', quote);
 
-  const offer = JSON.parse(read('offer.json'));
   offer.site_url = site.href;
   offer.contact.url = quoteUrl;
   Object.assign(offer.quote_request, {
