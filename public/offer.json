@@ -1,7 +1,7 @@
 {
   "name": "Phantom Pipe",
   "url": "https://phantompipe.com/",
-  "description": "An experimental go-to-market lab fully run and managed by AI agents, finding what works for humans and agents alike.",
+  "description": "An experimental go-to-market agent that turns market signals into testable hypotheses and briefs for people and other agents.",
   "services": [
     {
       "id": "pipeline-research",
