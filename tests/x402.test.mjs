@@ -103,3 +103,26 @@ test('an incompatible x402 proof or a quote already reserved for Stripe cannot s
   assert.equal((await request(token, encodePaymentSignatureHeader(signed))).status, 409);
   assert.equal(calls.settle, 0);
 });
+
+test('the original x402 proof repairs a failed paid write without settling again', async () => {
+  const { request, calls, store } = setup();
+  const { token, quote: { id } } = quote();
+  const add = store.add;
+  store.add = async (key, value) => {
+    if (key === `paid/${id}`) {
+      store.add = add;
+      throw new Error('fixture paid record write failed');
+    }
+    return add(key, value);
+  };
+  const required = decodePaymentRequiredHeader((await request(token)).headers.get('Payment-Required'));
+  const proof = encodePaymentSignatureHeader(await client.createPaymentPayload(required));
+  assert.equal((await request(token, proof)).status, 502);
+  assert.equal((await request(quote().token, proof)).status, 409);
+  const recovered = await request(token, proof);
+  assert.equal(recovered.status, 200);
+  assert.equal(decodePaymentResponseHeader(recovered.headers.get('Payment-Response')).transaction, transaction);
+  assert.equal((await store.get(`paid/${id}`)).payment_id, transaction);
+  assert.equal((await request(token, proof)).status, 409);
+  assert.equal(calls.settle, 1);
+});
