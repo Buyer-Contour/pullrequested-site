@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
-import { paymentConfig } from '../lib/payments/config.mjs';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { createMppRail, mppConfig, mppPath } from '../lib/payments/mpp.mjs';
+import { workerPaymentConfig } from './payment-config.mjs';
 import { paymentState, paymentStores } from './payment-state.mjs';
 
 export class PaymentsState extends DurableObject {
@@ -41,10 +41,7 @@ export default {
     if (!name) return new Response('Not found', { status: 404 });
 
     try {
-      const { PAYMENTS_ORIGIN, QUOTE_SIGNING_SECRET } = env;
-      const config = name === 'mpp'
-        ? paymentConfig({ PAYMENTS_ORIGIN, QUOTE_SIGNING_SECRET }, { allowMissingStripe: true })
-        : paymentConfig(env);
+      const config = workerPaymentConfig(env, { mppOnly: name === 'mpp' });
       const quoteState = env.PAYMENTS_STATE.getByName(config.testMode ? 'quotes-test' : 'quotes-live');
       const mpp = name === 'mpp' && mppConfig(env);
       const mppRail = mpp ? createMppRail({

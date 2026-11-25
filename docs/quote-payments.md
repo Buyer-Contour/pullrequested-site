@@ -4,7 +4,7 @@
 
 The independent `GET /api/mpp/pay?quote=<signed_quote_token>` rail uses `mppx` to issue a Tempo charge and verify settlement directly on-chain. Stripe keys, CDP, and facilitators are not required.
 
-For production, set `MPP_NETWORK=tempo` and `MPP_PAY_TO=0xD95C1942dce3c8622AcdB0436B4BC9e93B3E0765`. For testnet, set `MPP_NETWORK=moderato` and use the intended test recipient. Set `MPP_SECRET_KEY` to its own secret of at least 32 random bytes, and set `PAYMENTS_ORIGIN` and `QUOTE_SIGNING_SECRET`. The service does not need the receiving wallet's private key. Moderato receipts cannot mark a live quote paid.
+For production, set `MPP_NETWORK=tempo` and `MPP_PAY_TO=0x1f31A5bFf4F43e6a7670D1125f52d8a845d9C85F`. For testnet, set `MPP_NETWORK=moderato` and use the intended test recipient. Set `MPP_SECRET_KEY` to its own secret of at least 32 random bytes, and set `PAYMENTS_ORIGIN` and `QUOTE_SIGNING_SECRET`. The service does not need the receiving wallet's private key. Moderato receipts cannot mark a live quote paid.
 
 Use OUSD on the selected network. The payer pays the network fees; this route does not sponsor fees or advertise MACH funding. Run `tempo request --dry-run '<MPP quote URL>'` before paying, then `tempo request --max-spend <quote amount> '<MPP quote URL>'`. Use pull mode to let the server reserve the quote before broadcasting. In push mode, do not start another rail after taking an MPP challenge: an already-broadcast transfer cannot be canceled by a quote reservation. Reconcile an uncertain payment before issuing another one.
 
@@ -33,7 +33,8 @@ The service uses a per-quote Stripe idempotency key and limits quote validity to
 
 Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only; the static site and quote intake stay on Netlify.
 
-- Use the assigned `https://phantompipe-payments.<subdomain>.workers.dev` URL as `PAYMENTS_ORIGIN` unless Cloudflare serves the site's DNS. Set the same Stripe and Tempo settings described above via Workers secrets or environment bindings. Use the Worker origin in the quote generator and the dedicated Stripe webhook URL.
+- Use the assigned `https://phantompipe-payments.<subdomain>.workers.dev` URL as `PAYMENTS_ORIGIN` unless Cloudflare serves the site's DNS. Set the same Stripe and Tempo settings described above via Workers secrets or environment bindings.
+- Set `WORKER_QUOTE_SIGNING_SECRET` to a new secret of at least 32 random bytes, distinct from the Netlify signer. The Worker does not fall back to `QUOTE_SIGNING_SECRET`. When issuing Worker quotes, pass the Worker secret to the quote generator as `QUOTE_SIGNING_SECRET` and the Worker URL as `PAYMENTS_ORIGIN`. Use that origin for the dedicated Stripe webhook too.
 - Netlify Blobs records are not shared with the Worker. Before switching hosts, resolve in-flight payments on Netlify, stop issuing there, and issue fresh quote IDs for the Worker. Update the static site's payment discovery URLs when its next deployment is available.
 
 ## Agent API
