@@ -1,30 +1,30 @@
-# pullrequested.com
+# Phantom Pipe
 
 > Go-to-market consulting for B2B startups and AI agents. Start with a free sample, then get a quote based on the scope of the engagement.
 
 We offer pipeline research (ICP and enriched lists), GTM data operations (CRM cleanup, enrichment, routing, and scoring), outbound systems in your own tools, and GTM workflow and agent builds.
 
-Contact: pullrequested@agentmail.to (inbound inquiries).
+Contact: dane@phantompipe.com (inbound inquiries).
 
-To submit a request programmatically, POST to https://pullrequested.com/quote with Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. The company field is optional; omit the honeypot field. Use a reply-to email that can receive follow-up. The POST does not return a quote and does not take payment.
+To submit a request programmatically, POST to https://phantompipe.com/quote with Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. The company field is optional; omit the honeypot field. Use a reply-to email that can receive follow-up. The POST does not return a quote and does not take payment.
 
 ## Services and quoting
 
-- [Machine-readable offer](https://pullrequested.com/offer.json): Service IDs, deliverables, engagement model, and complete quote request fields.
-- [Request a quote](https://pullrequested.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
-- [pullrequested.com](https://pullrequested.com/): Overview of our consulting services.
+- [Machine-readable offer](https://phantompipe.com/offer.json): Service IDs, deliverables, engagement model, and complete quote request fields.
+- [Request a quote](https://phantompipe.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
+- [Phantom Pipe](https://phantompipe.com/): Overview of our consulting services.
 
 ## Paying an issued quote
 
-Live Stripe payments are not yet enabled; the Stripe routes currently return HTTP 503. The instructions below apply once payments are enabled and pullrequested.com has issued you a signed quote.
+Live Stripe payments are not yet enabled; the Stripe routes currently return HTTP 503. The instructions below apply once payments are enabled and Phantom Pipe has issued you a signed quote.
 
-Use the signed quote link provided by pullrequested.com. For humans, open https://pullrequested.com/q/{signed_quote_token} and use Stripe Checkout (card or Link when eligible).
+Use the signed quote link provided by Phantom Pipe. For humans, open https://phantompipe.com/q/{signed_quote_token} and use Stripe Checkout (card or Link when eligible).
 
-For agents, GET https://pullrequested.com/api/pay?quote={signed_quote_token}. The HTTP 402 JSON challenge specifies amount, currency, quote ID, expiry and nonce. Use the key at payment.stripe.publishable_key and Stripe.js (https://docs.stripe.com/js/payment_methods/create_payment_method) to create a fresh, unattached card PaymentMethod for the quote. POST JSON with nonce and payment_method (the returned pm_ ID) to the same URL. Agents with Stripe Shared Payment Tokens can send shared_payment_token instead. Never send raw card details to the quote endpoint.
+For agents, GET https://phantompipe.com/api/pay?quote={signed_quote_token}. The HTTP 402 JSON challenge specifies amount, currency, quote ID, expiry and nonce. Use the key at payment.stripe.publishable_key and Stripe.js (https://docs.stripe.com/js/payment_methods/create_payment_method) to create a fresh, unattached card PaymentMethod for the quote. POST JSON with nonce and payment_method (the returned pm_ ID) to the same URL. Agents with Stripe Shared Payment Tokens can send shared_payment_token instead. Never send raw card details to the quote endpoint.
 
 Then GET the same URL with X-PAYMENT set to the returned payment_intent_id. HTTP 200 is a paid receipt; HTTP 409 means a duplicate payment or replay was rejected. This is quote-pay-v1, not native x402 or MPP.
 
-Tempo MPP is pending production verification. Once enabled, GET https://pullrequested.com/api/mpp/pay?quote={signed_quote_token} with an MPP client. HTTP 402 specifies the quote amount in OUSD with WWW-Authenticate: Payment. Retry with Authorization: Payment. HTTP 200 returns Payment-Receipt and an on-chain transaction hash; HTTP 409 rejects replay. Fund with OUSD on Tempo, not MACH.
+Tempo MPP is pending production verification. Once enabled, GET https://phantompipe.com/api/mpp/pay?quote={signed_quote_token} with an MPP client. HTTP 402 specifies the quote amount in OUSD with WWW-Authenticate: Payment. Retry with Authorization: Payment. HTTP 200 returns Payment-Receipt and an on-chain transaction hash; HTTP 409 rejects replay. Fund with OUSD on Tempo, not MACH.
 
 ## Marketplace listings
 

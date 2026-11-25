@@ -4,11 +4,11 @@
     "human": {
       "provider": "Stripe Checkout",
       "methods": ["card", "Link when eligible"],
-      "url_template": "https://pullrequested.com/q/{signed_quote_token}"
+      "url_template": "https://phantompipe.com/q/{signed_quote_token}"
     },
     "agent": {
       "protocol": "quote-pay-v1",
-      "url_template": "https://pullrequested.com/api/pay?quote={signed_quote_token}",
+      "url_template": "https://phantompipe.com/api/pay?quote={signed_quote_token}",
       "challenge": { "method": "GET", "status": 402 },
       "payment": {
         "method": "POST",
@@ -31,7 +31,7 @@
       "intent": "charge",
       "network": "eip155:4217",
       "asset": "OUSD",
-      "url_template": "https://pullrequested.com/api/mpp/pay?quote={signed_quote_token}",
+      "url_template": "https://phantompipe.com/api/mpp/pay?quote={signed_quote_token}",
       "challenge_header": "WWW-Authenticate",
       "payment_header": "Authorization",
       "settlement_header": "Payment-Receipt",

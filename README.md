@@ -1,6 +1,6 @@
-# pullrequested.com
+# Phantom Pipe
 
-Static go-to-market consulting site for `pullrequested.com`, with Netlify Functions for quote payments.
+Static go-to-market consulting site for Phantom Pipe at [phantompipe.com](https://phantompipe.com/), with Netlify Functions for quote payments.
 
 ## Structure
 
@@ -20,10 +20,10 @@ Run `npm ci` and `npm test` with Node.js 22. To preview the static site, run `py
 
 ## Interim Surge deploy
 
-1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh QUOTE_RECIPIENT=pullrequested@agentmail.to npm run build:surge`. Use the actual Surge URL and the public, inbound-only agency inbox. Its address is published in the form and agent endpoint; never use a credential or a personal email address here.
+1. Build the Surge copy: `SURGE_SITE_URL=https://pullrequested.surge.sh npm run build:surge`. The quote form sends to the public, inbound-only agency inbox, `dane@phantompipe.com`, by default. If setting `QUOTE_RECIPIENT` for a different deployment, use only a public inbox address; it appears in the form and agent endpoint.
 2. Publish `dist/surge` to the same Surge hostname using the agency account. Set the account credential through Bot secrets, not in the repo.
 3. Submit a clearly marked request on `/quote/` to trigger FormSubmit registration. Open the activation email in the agency inbox and verify its source before activating. Submit another browser request and a JSON request using `/offer.json`; confirm both arrive in the inbox. An HTTP success response alone does not verify delivery.
-4. Verify `/`, `/quote/`, `/offer.json`, `/llms.txt`, `/.well-known/x402.json`, and `/thanks/` on the actual Surge URL. The temporary copy links to itself in the agent docs and sitemap; HTML canonicals and the offer's main URL still identify `pullrequested.com`.
+4. Verify `/`, `/quote/`, `/offer.json`, `/llms.txt`, `/.well-known/x402.json`, and `/thanks/` on the actual Surge URL. The temporary copy links to itself in the agent docs and sitemap; HTML canonicals and the offer's main URL still identify `phantompipe.com`.
 
 ## Deploy to Netlify
 
@@ -44,6 +44,6 @@ Deploy `public/`, not `dist/surge`, to switch both quote paths back to Netlify F
    ```
 
    Check the stored submission in the dashboard; an HTTP success response alone is not proof of delivery. Confirm the JSON content type and wildcard CORS header on `/offer.json` and the plain-text content type on `/llms.txt`.
-4. In Netlify's domain settings, add `pullrequested.com` as the primary domain and confirm `www.pullrequested.com` is listed. For external DNS on the standard Netlify edge, use an apex ALIAS/ANAME (or flattened CNAME) to `apex-loadbalancer.netlify.com`, or an apex A record to `75.2.60.5` if the provider doesn't support those record types. Use a `www` CNAME to the assigned `YOUR-SITE.netlify.app` hostname. Confirm the exact values in Netlify's domain panel before sharing them, then verify HTTPS and the form on the custom domain. See [Netlify's external DNS guide](https://docs.netlify.com/manage/domains/configure-domains/configure-external-dns/).
+4. In Netlify's domain settings, add `phantompipe.com` as the primary domain and confirm `www.phantompipe.com` is listed. For external DNS on the standard Netlify edge, use an apex ALIAS/ANAME (or flattened CNAME) to `apex-loadbalancer.netlify.com`, or an apex A record to `75.2.60.5` if the provider doesn't support those record types. Use a `www` CNAME to the assigned `YOUR-SITE.netlify.app` hostname. Confirm the exact values in Netlify's domain panel before sharing them, then verify HTTPS and the form on the custom domain. See [Netlify's external DNS guide](https://docs.netlify.com/manage/domains/configure-domains/configure-external-dns/).
 
 Keep hosting credentials in Bot secrets, not in the repository.

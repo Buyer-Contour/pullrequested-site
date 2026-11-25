@@ -1,6 +1,6 @@
 {
-  "name": "pullrequested.com",
-  "url": "https://pullrequested.com/",
+  "name": "Phantom Pipe",
+  "url": "https://phantompipe.com/",
   "description": "Go-to-market consulting for B2B startups and AI agents.",
   "services": [
     {
@@ -31,7 +31,7 @@
     "pricing": "Quoted per engagement"
   },
   "quote_request": {
-    "url": "https://pullrequested.com/quote",
+    "url": "https://phantompipe.com/quote",
     "method": "POST",
     "content_type": "application/x-www-form-urlencoded",
     "authentication": "none",
@@ -47,8 +47,8 @@
   },
   "contact": {
     "type": "quote_form",
-    "url": "https://pullrequested.com/quote",
-    "email": "pullrequested@agentmail.to"
+    "url": "https://phantompipe.com/quote",
+    "email": "dane@phantompipe.com"
   },
   "listings": [
     { "name": "Virtuals ACP", "url": "https://app.virtuals.io/acp/agent-details/01a21371-8ff8-7555-8430-ee7cca5c1c89" },
@@ -60,11 +60,11 @@
     "human": {
       "provider": "Stripe Checkout",
       "methods": ["card", "Link when eligible"],
-      "url_template": "https://pullrequested.com/q/{signed_quote_token}"
+      "url_template": "https://phantompipe.com/q/{signed_quote_token}"
     },
     "agent": {
       "protocol": "quote-pay-v1",
-      "url_template": "https://pullrequested.com/api/pay?quote={signed_quote_token}",
+      "url_template": "https://phantompipe.com/api/pay?quote={signed_quote_token}",
       "challenge": { "method": "GET", "status": 402 },
       "payment": {
         "method": "POST",
@@ -87,7 +87,7 @@
       "intent": "charge",
       "network": "eip155:4217",
       "asset": "OUSD",
-      "url_template": "https://pullrequested.com/api/mpp/pay?quote={signed_quote_token}",
+      "url_template": "https://phantompipe.com/api/mpp/pay?quote={signed_quote_token}",
       "challenge_header": "WWW-Authenticate",
       "payment_header": "Authorization",
       "settlement_header": "Payment-Receipt",

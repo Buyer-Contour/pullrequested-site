@@ -7,7 +7,7 @@ import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { createMppRail, mppBlobsStore, mppConfig, mppPath, tempoOusd } from '../lib/payments/mpp.mjs';
 import { makeQuote } from '../lib/payments/quotes.mjs';
 
-const origin = new URL('https://pullrequested.com');
+const origin = new URL('https://phantompipe.com');
 const signingSecret = 'test quote secret at least 32 bytes';
 const secretKey = 'test MPP secret at least 32 bytes';
 const recipient = '0x0000000000000000000000000000000000000042';
