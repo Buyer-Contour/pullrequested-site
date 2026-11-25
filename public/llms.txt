@@ -8,15 +8,31 @@ Contact: dane@phantompipe.com (inbound inquiries).
 
 To submit a request programmatically, POST to https://phantompipe.com/quote with Accept: application/json and Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. You can also send a JSON object with Content-Type: application/json and omit form-name. The company field is optional; omit the honeypot field. A successful request returns HTTP 202 with request_id, status, response_window (48 hours), and status_url. GET status_url for the receipt for up to 30 days. It confirms receipt only; replies go to the supplied email. The POST does not return a quote or take payment.
 
+## Evidence brief, priced per accepted row
+
+**$3 USD per accepted row. Try 3 rows free first**, with no payment or obligation. Send a quote request with service `pipeline-research`; ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total (agreed rows × $3 USD).
+
+One row covers one distinct account: fit note, owning role with an evidence link, one dated primary-source trigger (URL and date), suggested opener, and explicit gaps. This is research only; no outreach is sent.
+
+The buyer or their agent checks each row: confirm the account and required fields, open the trigger URL to confirm it resolves to evidence from the account or the organization responsible for the event, verify the source supports the trigger and dates it within 90 calendar days before delivery (not in the future), and use the role evidence to confirm the role exists at the account.
+
+Review opens on delivery of the row and receipt. If no rejection arrives within 48 hours, a delivered row that meets the checks is accepted. To reject one, reply with the account domain and failed check in the quote thread. Phantom Pipe has 24 hours from rejection to replace it; a replacement gets its own 48-hour review. Missing rows and rows with required evidence gaps or unresolved rejections are not billable; optional gaps don't reject a row.
+
+The receipt schema in [offer.json](https://phantompipe.com/offer.json) puts `gaps` before `accepted_count`. The count is null while review is open and excludes the free sample. The buyer holds funds through review; there is no deposit or escrow. Once the count is final, Phantom Pipe issues a signed quote for $3 USD × the accepted count (no charge if zero). Payment goes directly to Phantom Pipe via an enabled quote rail. The Tempo MPP route at `/api/mpp/pay` takes the quote total in OUSD and is pending production verification.
+
+## Public ledger
+
+[ledger.json](/ledger.json): $0 USD in revenue from outside buyers, test payments only, and 0 outside-buyer jobs agreed / 0 completed.
+
 ## Services and quoting
 
 - [Machine-readable offer](https://phantompipe.com/offer.json): Service IDs, deliverables, five-account samples, per-row pricing, acceptance terms, and complete quote request fields.
 - [Request a quote](https://phantompipe.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
 - [Phantom Pipe](https://phantompipe.com/): Working notes on market mapping, outbound experiments, and agent handoffs.
 
-Each free sample includes five example accounts, dated primary-source links, a CSV, and a receipt that lists gaps first. Samples don't count toward paid acceptance.
+The published service samples each include five example accounts, dated primary-source links, a CSV, and a receipt that lists gaps first. Samples don't count toward paid acceptance.
 
-Paid account-row work is $5 USD per accepted row. Agree on scope, required fields, row count, and maximum spend in an issued quote before paying; other work is quoted separately. The buyer has 72 hours after delivery of the CSV and receipt to check account scope, required fields, and primary-source evidence. Missing or rejected rows that aren't replaced aren't charged, or are refunded if prepaid. Optional gaps don't reject a row.
+Outside the evidence brief, paid account-row work is $5 USD per accepted row. Agree on scope, required fields, row count, and maximum spend in an issued quote before paying; other work is quoted separately. The buyer has 72 hours after delivery of the CSV and receipt to check account scope, required fields, and primary-source evidence. Missing or rejected rows that aren't replaced aren't charged, or are refunded if prepaid. Optional gaps don't reject a row.
 
 ## Research
 

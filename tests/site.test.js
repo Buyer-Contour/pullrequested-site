@@ -11,7 +11,7 @@ test('all public assets exist and are nonempty', () => {
   for (const path of [
     'index.html', 'quote/index.html', 'thanks/index.html', 'styles.css', 'favicon.svg',
     'fonts/newsreader-roman.woff2', 'fonts/newsreader-italic.woff2', 'fonts/OFL-Newsreader.txt',
-    'offer.json', 'llms.txt', 'robots.txt', 'sitemap.xml',
+    'offer.json', 'ledger.json', 'llms.txt', 'robots.txt', 'sitemap.xml',
     '.well-known/x402.json',
   ]) {
     assert.ok(read(`public/${path}`).trim(), path);
@@ -117,6 +117,50 @@ test('the research site keeps human and agent entry points discoverable', () => 
   assert.equal([...home.matchAll(/<article class="note">/g)].length, 3);
 });
 
+test('the evidence brief publishes its sample, buyer checks and post-acceptance price', () => {
+  const { evidence_brief: brief, quote_request: intake, per_row_pricing } = JSON.parse(read('public/offer.json'));
+  const llms = read('public/llms.txt');
+  const home = read('public/index.html');
+  const { price, sample, request, acceptance, payment, receipt_schema: receipt } = brief;
+
+  assert.deepEqual(price, { unit: 'accepted_account_row', currency: 'USD', amount_minor_per_row: 300 });
+  assert.deepEqual(sample, { row_count: 3, amount_minor: 0, currency: 'USD', counts_toward_paid_rows: false });
+  assert.ok(intake.fields.service.enum.includes(request.service));
+  assert.match(request.before_work, /agree in writing.*maximum total/);
+  assert.match(per_row_pricing.applies_to, /evidence brief uses its own pricing and acceptance terms/);
+  assert.equal(acceptance.checked_by, 'buyer_or_buyer_agent');
+  assert.equal(acceptance.max_trigger_age_days, 90);
+  assert.equal(acceptance.review_window_hours, 48);
+  assert.match(acceptance.silence_default, /no rejection.*accepted/);
+  assert.equal(acceptance.cure_window_hours, 24);
+  assert.equal(payment.model, 'pay_per_accepted_row');
+  assert.match(payment.funds_holder, /^The buyer holds all funds/);
+  assert.match(payment.settlement, /Only after acceptance is final.*\/api\/mpp\/pay.*pending production verification/);
+
+  assert.deepEqual(receipt.required, ['gaps', 'rows', 'accepted_count']);
+  assert.deepEqual(Object.keys(receipt.properties), receipt.required);
+  assert.deepEqual(receipt.properties.accepted_count.type, ['integer', 'null']);
+  const row = receipt.properties.rows.items;
+  assert.deepEqual(row.required, ['account_domain', 'fit_note', 'owning_role', 'role_source_url', 'trigger', 'opener']);
+  assert.deepEqual(row.properties.trigger.required, ['summary', 'source_url', 'date']);
+
+  for (const copy of [home, llms]) assert.ok(copy.includes('$3 USD per accepted row'));
+  for (const phrase of ['3 rows free', '90 calendar days', '48 hours', '24 hours', '/api/mpp/pay']) {
+    assert.ok(llms.includes(phrase), phrase);
+  }
+});
+
+test('the linked public ledger separates test payments from outside-buyer work', () => {
+  const { ledger_url: url } = JSON.parse(read('public/offer.json'));
+  const ledger = JSON.parse(read('public' + url));
+  assert.equal(url, '/ledger.json');
+  assert.deepEqual(ledger.outside_buyer_revenue, { amount_minor: 0, currency: 'USD' });
+  assert.equal(ledger.payments, 'test payments only');
+  assert.deepEqual(ledger.outside_buyer_jobs, { agreed: 0, completed: 0 });
+  assert.ok(read('public/index.html').includes(`href="${url}">Public ledger`));
+  assert.ok(read('public/llms.txt').includes(`(${url})`));
+});
+
 test('site and agent docs expose the agency inbox and marketplace listings', () => {
   const { contact, listings } = JSON.parse(read('public/offer.json'));
   const home = read('public/index.html');
@@ -213,6 +257,7 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(llms.includes('(' + offer.contact.url + ')'));
   const canonicalOffer = JSON.parse(read('public/offer.json'));
   assert.deepEqual(offer.quote_payment, canonicalOffer.quote_payment);
+  assert.equal(asset(offer.ledger_url.slice(1)), read('public/ledger.json'));
   assert.ok(llms.includes(offer.quote_payment.agent.url_template));
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.contact.url + '</loc>'));
   assert.ok(llms.includes('(' + siteUrl + 'lab-notes/)'));

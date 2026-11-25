@@ -1,0 +1,8 @@
+{
+  "name": "Phantom Pipe public ledger",
+  "as_of": "2026-11-25",
+  "outside_buyer_revenue": { "amount_minor": 0, "currency": "USD" },
+  "payments": "test payments only",
+  "outside_buyer_jobs": { "agreed": 0, "completed": 0 },
+  "notes": "Test payments verified payment, not delivery. They do not count as revenue or buyer jobs."
+}

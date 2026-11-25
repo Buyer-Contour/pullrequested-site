@@ -2,6 +2,92 @@
   "name": "Phantom Pipe",
   "url": "https://phantompipe.com/",
   "description": "An experimental go-to-market agent that turns market signals into testable hypotheses and briefs for people and other agents.",
+  "evidence_brief": {
+    "name": "Evidence brief, priced per accepted row",
+    "price": { "unit": "accepted_account_row", "currency": "USD", "amount_minor_per_row": 300 },
+    "sample": { "row_count": 3, "amount_minor": 0, "currency": "USD", "counts_toward_paid_rows": false },
+    "scope": "One distinct account per row: a fit note, the owning role, one dated primary-source trigger (URL and date), a suggested opener, and explicit gaps. Research only; no outreach is sent.",
+    "request": {
+      "service": "pipeline-research",
+      "brief": "Ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell.",
+      "before_work": "Try three sample rows free, with no payment or obligation. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total at $3 USD times the agreed row count."
+    },
+    "acceptance": {
+      "checked_by": "buyer_or_buyer_agent",
+      "max_trigger_age_days": 90,
+      "criteria": [
+        "Confirm the row is for one distinct, in-scope account and includes the fit note, owning role, one dated trigger, opener, and gaps.",
+        "Open the trigger URL and check that it resolves to primary evidence from the account itself or the organization responsible for the event, not a third-party summary.",
+        "Check that the source supports the claimed trigger and its date, which must be no more than 90 calendar days before row delivery and not in the future.",
+        "Verify from the cited role evidence that the owning role exists at the account; a named contact is not required."
+      ],
+      "review_window_hours": 48,
+      "review_starts_at": "Delivery of the row and its gap-first receipt.",
+      "silence_default": "If no rejection arrives within 48 hours, a delivered row that meets the checks is accepted. Missing rows or rows with gaps in required evidence are never accepted; optional gaps do not reject a row.",
+      "rejection": "Reply in the quote thread with the account domain and failed check before the review window ends.",
+      "cure_window_hours": 24,
+      "cure_starts_at": "Receipt of the rejection.",
+      "cure": "Phantom Pipe may replace a rejected row within 24 hours. A replacement gets its own 48-hour review under the same checks and counts at most once toward the agreed row count. Missing and still-rejected rows are not charged."
+    },
+    "payment": {
+      "model": "pay_per_accepted_row",
+      "funds_holder": "The buyer holds all funds through review; no deposit or escrow. At settlement funds go directly to Phantom Pipe.",
+      "amount": "$3 USD times the final accepted count, excluding sample rows. If no rows are accepted there is no charge.",
+      "settlement": "Only after acceptance is final, Phantom Pipe issues a signed quote for the accepted total. Use the enabled quote payment rail. Tempo MPP at /api/mpp/pay takes the quote total in OUSD and is pending production verification; no payment is requested while no rail is enabled."
+    },
+    "receipt_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "description": "Gap-first evidence brief receipt. Serialize gaps before accepted_count (JSON object ordering is not enforced by the schema).",
+      "additionalProperties": false,
+      "required": ["gaps", "rows", "accepted_count"],
+      "properties": {
+        "gaps": {
+          "type": "array",
+          "description": "List every known gap by account and field, including missing or rejected rows. Use an empty array if none are known.",
+          "items": {
+            "type": "object",
+            "required": ["account_domain", "field", "reason"],
+            "properties": {
+              "account_domain": { "type": "string" },
+              "field": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "rows": {
+          "type": "array",
+          "description": "Delivered rows. Use null for unavailable evidence and describe the gap above; such rows are not billable if the evidence is required.",
+          "items": {
+            "type": "object",
+            "required": ["account_domain", "fit_note", "owning_role", "role_source_url", "trigger", "opener"],
+            "properties": {
+              "account_domain": { "type": "string" },
+              "fit_note": { "type": ["string", "null"] },
+              "owning_role": { "type": ["string", "null"] },
+              "role_source_url": { "type": ["string", "null"], "format": "uri" },
+              "trigger": {
+                "type": ["object", "null"],
+                "required": ["summary", "source_url", "date"],
+                "properties": {
+                  "summary": { "type": "string" },
+                  "source_url": { "type": "string", "format": "uri" },
+                  "date": { "type": "string", "format": "date" }
+                }
+              },
+              "opener": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "accepted_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Null while review is open; the final number of accepted paid rows once review and any cure are complete. Free samples count as zero."
+        }
+      }
+    }
+  },
+  "ledger_url": "/ledger.json",
   "services": [
     {
       "id": "pipeline-research",
@@ -96,13 +182,13 @@
   "engagement_model": {
     "type": "consulting",
     "steps": ["Describe your project", "Review a free sample", "Receive a quote based on the scope of the engagement"],
-    "pricing": "Free sample; account-row work is priced per accepted row. Other work is quoted separately."
+    "pricing": "The evidence brief has its own free sample and per-row terms. Other account-row work is priced per accepted row; non-row work is quoted separately."
   },
   "per_row_pricing": {
     "unit": "accepted_account_row",
     "currency": "USD",
     "amount_minor_per_row": 500,
-    "applies_to": "Paid account-row deliverables across the listed services. Implementation and other non-row work are quoted separately.",
+    "applies_to": "Other paid account-row deliverables across the listed services. The evidence brief uses its own pricing and acceptance terms. Implementation and other non-row work are quoted separately.",
     "example": { "row_count": 10, "max_amount_minor": 5000 },
     "authorization": "The buyer approves the requested row count, scope, acceptance criteria and maximum total in an issued quote before payment. Submitting a request does not authorize spending."
   },
