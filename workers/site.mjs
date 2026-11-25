@@ -1,4 +1,6 @@
-import { quoteStatus, submitQuote, wantsQuoteReceipt } from './quote-intake.mjs';
+import { withVariant } from '../lib/variants.mjs';
+import { quoteStatus, submitQuote, wantsQuoteReceipt, wasQuoteForwarded } from './quote-intake.mjs';
+import { readVariants, recordVariant } from './variant-stats.mjs';
 export { QuoteReceipts } from './quote-intake.mjs';
 
 const pages = new Map([
@@ -12,6 +14,11 @@ const pages = new Map([
 ]);
 const quotePaths = new Set(['/quote', '/quote/']);
 const intakePaths = new Set([...quotePaths, '/thanks', '/thanks/']);
+const discoveryPaths = new Map([
+  ['/', 'homepage_fetch'],
+  ['/offer.json', 'offer_fetch'],
+  ['/llms.txt', 'llms_fetch'],
+]);
 
 function netlify(request, { pathname, search }) {
   const url = new URL('https://phantompipe.netlify.app');
@@ -26,6 +33,16 @@ function asset(request, env, path) {
   return env.ASSETS.fetch(new Request(url, request));
 }
 
+function taggedPage(response, url) {
+  const rewriter = new HTMLRewriter();
+  if (url.pathname === '/') {
+    rewriter.on('a[href="/quote"]', { element: (el) => el.setAttribute('href', withVariant('/quote', url)) });
+  } else {
+    rewriter.on('form[name="quote"]', { element: (el) => el.setAttribute('action', withVariant('/thanks/', url)) });
+  }
+  return rewriter.transform(response);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -36,11 +53,20 @@ export default {
       return Response.redirect(url, 308);
     }
     const { pathname } = url;
-    if (request.method === 'POST' && quotePaths.has(pathname) && wantsQuoteReceipt(request)) {
-      return submitQuote(request, env, (submission) => netlify(submission, { pathname: '/thanks/', search: url.search }));
+    if (pathname === '/api/stats/variants') return readVariants(request, env);
+    if (request.method === 'POST' && intakePaths.has(pathname)) {
+      const forward = async (submission, target) => {
+        const response = await netlify(submission, target);
+        if (wasQuoteForwarded(response)) await recordVariant(env, 'quote_request', url);
+        return response;
+      };
+      if (quotePaths.has(pathname) && wantsQuoteReceipt(request)) {
+        return submitQuote(request, env, (submission) => forward(submission, { pathname: '/thanks/', search: url.search }));
+      }
+      return forward(request, url);
     }
     if (pathname.startsWith('/quote/status/')) return quoteStatus(request, env, pathname);
-    if (pathname === '/agent-pay-test' || (request.method === 'POST' && intakePaths.has(pathname))) {
+    if (pathname === '/agent-pay-test') {
       return netlify(request, url);
     }
     if (!['GET', 'HEAD'].includes(request.method)) {
@@ -57,6 +83,11 @@ export default {
       headers.set('Content-Type', 'application/json; charset=utf-8');
     }
     if (pathname === '/offer.json') headers.set('Access-Control-Allow-Origin', '*');
-    return new Response(response.body, { status: response.status, headers });
+    const tagged = request.method === 'GET' && url.searchParams.has('v');
+    const event = discoveryPaths.get(pathname);
+    if (tagged && event) await recordVariant(env, event, url);
+    if (tagged && (event || quotePaths.has(pathname))) headers.set('Cache-Control', 'no-store');
+    const output = new Response(response.body, { status: response.status, headers });
+    return tagged && (pathname === '/' || quotePaths.has(pathname)) ? taggedPage(output, url) : output;
   },
 };

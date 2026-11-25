@@ -4,7 +4,9 @@ import { test } from 'node:test';
 import site, { QuoteReceipts } from '../workers/site.mjs';
 
 const origin = 'https://phantompipe.com';
+const stubStats = { getByName: () => ({ async incrementVariant() {} }) };
 const env = {
+  PAYMENTS_STATE: stubStats,
   ASSETS: {
     async fetch(request) {
       const { pathname } = new URL(request.url);
@@ -23,10 +25,11 @@ function get(path, init) {
   return site.fetch(new Request(origin + path, init), env);
 }
 
-function withQuoteReceipts() {
+function withQuoteReceipts(paymentsState = stubStats) {
   const receipts = new Map();
   return (path, init) => site.fetch(new Request(origin + path, init), {
     ...env,
+    PAYMENTS_STATE: paymentsState,
     QUOTE_RECEIPTS: {
       getByName(id) {
         if (!receipts.has(id)) {
@@ -39,6 +42,60 @@ function withQuoteReceipts() {
     },
   });
 }
+
+test('variant stats report only successful tagged discovery fetches and forwarded quote requests', async (t) => {
+  const counts = [];
+  const day = new Date().toISOString().slice(0, 10);
+  const request = withQuoteReceipts({
+    getByName(name) {
+      assert.equal(name, 'variant-stats');
+      return {
+        incrementVariant(event, variant) { counts.push({ day, event, variant, count: 1 }); },
+        listVariants() { return counts; },
+      };
+    },
+  });
+  const rewrites = [];
+  globalThis.HTMLRewriter = class {
+    on(selector, handler) {
+      handler.element({ setAttribute: (name, value) => rewrites.push([selector, name, value]) });
+    }
+    transform(response) { return response; }
+  };
+  t.after(() => { delete globalThis.HTMLRewriter; });
+  await request('/?v=media-1');
+  await request('/quote?v=media-1');
+  assert.deepEqual(rewrites, [
+    ['a[href="/quote"]', 'href', '/quote?v=media-1'],
+    ['form[name="quote"]', 'action', '/thanks/?v=media-1'],
+  ]);
+  await request('/offer.json?v=media-1');
+  await request('/llms.txt?v=invalid%40example.com');
+  await request('/offer.json');
+  await request('/llms.txt?v=media-1', { method: 'HEAD' });
+  await request('/404?v=media-1');
+  let upstreamStatus = 303;
+  t.mock.method(globalThis, 'fetch', async () => new Response(null, { status: upstreamStatus, headers: { Location: '/thanks/' } }));
+  const headers = { 'Content-Type': 'application/json' };
+  const body = JSON.stringify({ name: 'A Person', email: 'a@example.com', service: 'not-sure', brief: 'Test' });
+  const post = (path, init) => request(path, { method: 'POST', headers, body, ...init });
+  assert.equal((await post('/quote?v=media-1', { body: '{}' })).status, 400);
+  assert.equal((await post('/quote?v=media-1')).status, 202);
+  assert.equal((await post('/thanks/?v=competitive-1')).status, 303);
+  upstreamStatus = 502;
+  assert.equal((await post('/quote?v=media-1')).status, 502);
+  const response = await request('/api/stats/variants');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  assert.deepEqual(await response.json(), { counts: [
+    { day, event: 'homepage_fetch', variant: 'media-1', count: 1 },
+    { day, event: 'offer_fetch', variant: 'media-1', count: 1 },
+    { day, event: 'llms_fetch', variant: 'untagged', count: 1 },
+    { day, event: 'quote_request', variant: 'media-1', count: 1 },
+    { day, event: 'quote_request', variant: 'competitive-1', count: 1 },
+  ] });
+  assert.equal((await post('/api/stats/variants')).status, 405);
+});
 
 test('www redirects to the canonical apex without changing the path, query, or method', async () => {
   for (const [path, method] of [

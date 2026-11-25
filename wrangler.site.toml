@@ -19,6 +19,11 @@ run_worker_first = true
 name = "QUOTE_RECEIPTS"
 class_name = "QuoteReceipts"
 
+[[durable_objects.bindings]]
+name = "PAYMENTS_STATE"
+class_name = "PaymentsState"
+script_name = "phantompipe-payments"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["QuoteReceipts"]
