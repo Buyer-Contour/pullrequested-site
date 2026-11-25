@@ -4,6 +4,9 @@ compatibility_date = "2026-11-25"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
+[vars]
+MPP_PAY_TO = "0x1f31A5bFf4F43e6a7670D1125f52d8a845d9C85F"
+
 [[durable_objects.bindings]]
 name = "PAYMENTS_STATE"
 class_name = "PaymentsState"
