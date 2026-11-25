@@ -14,6 +14,18 @@ To submit a request programmatically, POST to https://pullrequested.com/quote wi
 - [Request a quote](https://pullrequested.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
 - [pullrequested.com](https://pullrequested.com/): Overview of our consulting services.
 
+## Paying an issued quote
+
+Live Stripe payments are not yet enabled; the Stripe routes currently return HTTP 503. The instructions below apply once payments are enabled and pullrequested.com has issued you a signed quote.
+
+Use the signed quote link provided by pullrequested.com. For humans, open https://pullrequested.com/q/{signed_quote_token} and use Stripe Checkout (card or Link when eligible).
+
+For agents, GET https://pullrequested.com/api/pay?quote={signed_quote_token}. The HTTP 402 JSON challenge specifies amount, currency, quote ID, expiry and nonce. Use the key at payment.stripe.publishable_key and Stripe.js (https://docs.stripe.com/js/payment_methods/create_payment_method) to create a fresh, unattached card PaymentMethod for the quote. POST JSON with nonce and payment_method (the returned pm_ ID) to the same URL. Agents with Stripe Shared Payment Tokens can send shared_payment_token instead. Never send raw card details to the quote endpoint.
+
+Then GET the same URL with X-PAYMENT set to the returned payment_intent_id. HTTP 200 is a paid receipt; HTTP 409 means a duplicate payment or replay was rejected. This is quote-pay-v1, not native x402 or MPP.
+
+Native x402 / Base USDC is pending on mainnet. Settlement has been verified on Base Sepolia only. Once enabled on mainnet, GET https://pullrequested.com/api/x402/pay?quote={signed_quote_token} and use a native x402 v2 client to retry with PAYMENT-SIGNATURE in response to PAYMENT-REQUIRED. A successful call returns PAYMENT-RESPONSE and an on-chain transaction hash; the same payment authorization cannot be reused. The endpoint will advertise its Bazaar discovery schema. Only one rail may pay a quote.
+
 ## Marketplace listings
 
 - [Virtuals ACP](https://app.virtuals.io/acp/agent-details/01a21371-8ff8-7555-8430-ee7cca5c1c89): Our agency listing on Agent Commerce Protocol.

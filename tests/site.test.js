@@ -84,6 +84,21 @@ test('pending x402 manifest points to free resources without offering payment', 
   ]);
 });
 
+test('offer and llms document issued-quote payment rails without claiming live availability', () => {
+  const offer = JSON.parse(read('public/offer.json'));
+  const { quote_payment } = JSON.parse(read('docs/offer-payments.fragment.json'));
+  const llms = read('public/llms.txt');
+
+  assert.equal(offer.payment, 'coming soon');
+  assert.deepEqual(offer.quote_payment, quote_payment);
+  assert.equal(offer.quote_payment.agent_usdc.status, 'pending');
+  assert.match(llms, /Stripe routes currently return HTTP 503/);
+  assert.match(llms, /Native x402 \/ Base USDC is pending on mainnet/);
+  for (const rail of ['human', 'agent', 'agent_usdc']) {
+    assert.ok(llms.includes(quote_payment[rail].url_template));
+  }
+});
+
 test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   const output = mkdtempSync(join(tmpdir(), 'pullrequested-test-'));
   t.after(() => rmSync(output, { recursive: true, force: true }));
@@ -110,6 +125,9 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(llms.includes(offer.quote_request.url));
   assert.ok(llms.includes('(' + siteUrl + 'offer.json)'));
   assert.ok(llms.includes('(' + offer.contact.url + ')'));
+  const canonicalOffer = JSON.parse(read('public/offer.json'));
+  assert.deepEqual(offer.quote_payment, canonicalOffer.quote_payment);
+  assert.ok(llms.includes(offer.quote_payment.agent.url_template));
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.contact.url + '</loc>'));
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
   assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));
