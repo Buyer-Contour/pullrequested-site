@@ -117,7 +117,10 @@ test('late MPP push proofs credit only a bound transfer mined by the signed dead
     let minedAt;
     const rpc = {
       getTransactionReceipt: async ({ hash }) => { assert.equal(hash, tx); return receipt; },
-      getBlock: async ({ blockHash }) => { assert.equal(blockHash, tx); return { timestamp: minedAt }; },
+      getBlock: async ({ blockHash }) => {
+        assert.equal(blockHash, tx);
+        return { timestamp: minedAt / 1000n, timestampMillis: `0x${minedAt.toString(16)}` };
+      },
     };
     const { handler } = setup(createMppRail({ origin, recipient, secretKey, testnet: true, store: Store.memory(), rpc }));
     const challenge = Challenge.fromResponse(await handler(request(token)));
@@ -136,7 +139,7 @@ test('late MPP push proofs credit only a bound transfer mined by the signed dead
     assert.equal(deadline, start + Math.min(expiresIn, 300) * 1000);
     now = deadline + 2000;
 
-    minedAt = BigInt(deadline / 1000) + 1n;
+    minedAt = BigInt(deadline) + 1n;
     assert.equal((await handler(request(token, authorization))).status, 410);
     minedAt -= 1n;
     for (const invalid of [{ to: from }, { amount: 499_999n }, { address: from }, { memo: tx }]) {
