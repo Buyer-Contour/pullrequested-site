@@ -24,7 +24,7 @@ function get(path, init) {
 }
 
 test('Cloudflare serves the homepage, quote form, and agent discovery with the expected headers', async () => {
-  assert.match(await (await get('/')).text(), /The agent-run GTM lab/);
+  assert.match(await (await get('/')).text(), /An experimental go-to-market agent/);
   for (const path of ['/quote', '/quote/']) {
     assert.match(await (await get(path)).text(), /<form[^>]+name="quote"/);
   }
