@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Challenge, Credential, Store } from 'mppx';
+import { Attribution } from 'mppx/tempo';
+import { encodeAbiParameters, encodeEventTopics, parseAbi } from 'viem';
 import { createPaymentHandlers } from '../lib/payments/handlers.mjs';
 import { createMppRail, mppBlobsStore, mppConfig, mppPath, tempoOusd } from '../lib/payments/mpp.mjs';
 import { makeQuote } from '../lib/payments/quotes.mjs';
@@ -72,6 +74,59 @@ test('MPP atomically rejects a replay, excludes other live rails, and isolates t
     assert.equal((await replay.json()).error, 'payment_replayed');
     assert.equal(values.has(`paid/${quote.id}`), !testnet);
     assert.equal(values.has(`mpp-testnet/paid/${quote.id}`), testnet);
+  }
+});
+
+test('late MPP push proofs credit only a bound transfer mined by the signed deadline', async (t) => {
+  const start = Math.floor(Date.now() / 1000) * 1000;
+  let now = start;
+  t.mock.method(Date, 'now', () => now);
+  const from = '0x0000000000000000000000000000000000000043';
+  const abi = parseAbi(['event TransferWithMemo(address indexed from, address indexed to, uint256 amount, bytes32 indexed memo)']);
+  for (const expiresIn of [60, 600]) {
+    now = start;
+    const { token } = makeQuote({ amount_cents: 50, description: 'Test quote', expiresIn }, signingSecret);
+    let receipt;
+    let minedAt;
+    const rpc = {
+      getTransactionReceipt: async ({ hash }) => { assert.equal(hash, tx); return receipt; },
+      getBlock: async ({ blockHash }) => { assert.equal(blockHash, tx); return { timestamp: minedAt }; },
+    };
+    const { handler } = setup(createMppRail({ origin, recipient, secretKey, testnet: true, store: Store.memory(), rpc }));
+    const challenge = Challenge.fromResponse(await handler(request(token)));
+    const authorization = Credential.serialize({ challenge, payload: { type: 'hash', hash: tx } });
+    const memo = Attribution.encode({ challengeId: challenge.id, serverId: origin.hostname });
+    const log = (overrides = {}) => {
+      const args = { from, to: recipient, memo, amount: 500_000n, address: tempoOusd, ...overrides };
+      return {
+        address: args.address,
+        topics: encodeEventTopics({ abi, eventName: 'TransferWithMemo', args }),
+        data: encodeAbiParameters([{ type: 'uint256' }], [args.amount]),
+      };
+    };
+    receipt = { status: 'success', transactionHash: tx, blockHash: tx, from, logs: [log()] };
+    const deadline = Date.parse(challenge.expires);
+    assert.equal(deadline, start + Math.min(expiresIn, 300) * 1000);
+    now = deadline + 2000;
+
+    minedAt = BigInt(deadline / 1000) + 1n;
+    assert.equal((await handler(request(token, authorization))).status, 410);
+    minedAt -= 1n;
+    for (const invalid of [{ to: from }, { amount: 499_999n }, { address: from }, { memo: tx }]) {
+      receipt.logs = [log(invalid)];
+      assert.equal((await handler(request(token, authorization))).status, 402);
+    }
+    receipt.logs = [log()];
+    const wrongQuote = makeQuote({ amount_cents: 50, description: 'Other quote' }, signingSecret, start / 1000);
+    assert.equal((await handler(request(wrongQuote.token, authorization))).status, 402);
+
+    const paid = await handler(request(token, authorization));
+    assert.equal(paid.status, 200);
+    assert.ok(paid.headers.get('Payment-Receipt'));
+    assert.equal((await paid.json()).payment_id, tx);
+    const replay = await handler(request(token, authorization));
+    assert.equal(replay.status, 409);
+    assert.equal((await replay.json()).error, 'payment_replayed');
   }
 });
 
