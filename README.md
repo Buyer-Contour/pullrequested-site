@@ -1,6 +1,6 @@
 # pullrequested.com
 
-Static go-to-market consulting site for `pullrequested.com`. There are no app dependencies.
+Static go-to-market consulting site for `pullrequested.com`, with Netlify Functions for quote payments.
 
 ## Structure
 
@@ -11,11 +11,12 @@ Static go-to-market consulting site for `pullrequested.com`. There are no app de
 - `public/robots.txt`, `public/sitemap.xml`: Crawler metadata.
 - `scripts/build-surge.js`: Builds a standalone Surge copy for interim hosting.
 - `netlify.toml`: Publish directory, route rewrite, and response headers.
+- `netlify/functions/`: Signed quote pages, Stripe Checkout, agent payments, and the Stripe webhook. See the [quote payment guide](docs/quote-payments.md).
 - `SPEND_LEDGER.md`: Budget and recorded spend.
 
 ## Local development
 
-Run `npm test` with Node.js 22 (no install required). To preview the site, run `python3 -m http.server 8080 --directory public` and open [http://localhost:8080](http://localhost:8080). The local server redirects `/quote` to `/quote/` and does not process forms or apply Netlify headers.
+Run `npm ci` and `npm test` with Node.js 22. To preview the static site, run `python3 -m http.server 8080 --directory public` and open [http://localhost:8080](http://localhost:8080). The static server does not process forms, apply Netlify headers, or run payment functions. See the payment guide for a local payment server.
 
 ## Interim Surge deploy
 

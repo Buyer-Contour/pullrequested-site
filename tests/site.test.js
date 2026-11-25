@@ -74,11 +74,29 @@ test('pending x402 manifest points to free resources without offering payment', 
   assert.equal(manifest.url, offer.url);
   assert.equal(manifest.payment, 'pending');
   assert.deepEqual(manifest.services, []);
+  assert.equal(manifest.pending_payment.path, '/api/x402/pay');
+  assert.equal(manifest.pending_payment.requires_issued_quote, true);
+  assert.equal(manifest.pending_payment.discovery_extension, 'bazaar');
   assert.ok(!('payTo' in manifest));
   assert.deepEqual(manifest.resources.map(({ method, path }) => [method, path]), [
     ['GET', '/offer.json'],
     ['GET', '/quote/'],
   ]);
+});
+
+test('offer and llms document issued-quote payment rails without claiming live availability', () => {
+  const offer = JSON.parse(read('public/offer.json'));
+  const { quote_payment } = JSON.parse(read('docs/offer-payments.fragment.json'));
+  const llms = read('public/llms.txt');
+
+  assert.equal(offer.payment, 'coming soon');
+  assert.deepEqual(offer.quote_payment, quote_payment);
+  assert.equal(offer.quote_payment.agent_usdc.status, 'pending');
+  assert.match(llms, /Stripe routes currently return HTTP 503/);
+  assert.match(llms, /Native x402 \/ Base USDC is pending on mainnet/);
+  for (const rail of ['human', 'agent', 'agent_usdc']) {
+    assert.ok(llms.includes(quote_payment[rail].url_template));
+  }
 });
 
 test('Surge copy routes human and agent requests to FormSubmit', (t) => {
@@ -107,6 +125,9 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(llms.includes(offer.quote_request.url));
   assert.ok(llms.includes('(' + siteUrl + 'offer.json)'));
   assert.ok(llms.includes('(' + offer.contact.url + ')'));
+  const canonicalOffer = JSON.parse(read('public/offer.json'));
+  assert.deepEqual(offer.quote_payment, canonicalOffer.quote_payment);
+  assert.ok(llms.includes(offer.quote_payment.agent.url_template));
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.contact.url + '</loc>'));
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
   assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));
