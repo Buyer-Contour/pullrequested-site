@@ -1,3 +1,6 @@
+import { quoteStatus, submitQuote, wantsQuoteReceipt } from './quote-intake.mjs';
+export { QuoteReceipts } from './quote-intake.mjs';
+
 const pages = new Map([
   ['/', '/index.html'],
   ['/quote', '/quote/index.html'],
@@ -7,7 +10,8 @@ const pages = new Map([
   ['/thanks', '/thanks/index.html'],
   ['/thanks/', '/thanks/index.html'],
 ]);
-const intakePaths = new Set(['/quote', '/quote/', '/thanks', '/thanks/']);
+const quotePaths = new Set(['/quote', '/quote/']);
+const intakePaths = new Set([...quotePaths, '/thanks', '/thanks/']);
 
 function netlify(request, { pathname, search }) {
   const url = new URL('https://phantompipe.netlify.app');
@@ -32,6 +36,10 @@ export default {
       return Response.redirect(url, 308);
     }
     const { pathname } = url;
+    if (request.method === 'POST' && quotePaths.has(pathname) && wantsQuoteReceipt(request)) {
+      return submitQuote(request, env, (submission) => netlify(submission, { pathname: '/thanks/', search: url.search }));
+    }
+    if (pathname.startsWith('/quote/status/')) return quoteStatus(request, env, pathname);
     if (pathname === '/agent-pay-test' || (request.method === 'POST' && intakePaths.has(pathname))) {
       return netlify(request, url);
     }

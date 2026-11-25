@@ -1,0 +1,6 @@
+account_id,account,claim,source_url,source_date,icp_signal
+cloudflare,Cloudflare,The project published Wrangler 4.12.0.,https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.12.0,2025-04-17,Edge runtime tooling
+fastly,Fastly,The project published Fastly CLI 10.18.0.,https://github.com/fastly/cli/releases/tag/v10.18.0,2025-01-29,Edge deployment tooling
+datadog,Datadog,The project published Datadog Agent 7.64.1.,https://github.com/DataDog/datadog-agent/releases/tag/7.64.1,2025-03-20,Infrastructure monitoring
+grafana-labs,Grafana Labs,The project published Grafana 11.6.0.,https://github.com/grafana/grafana/releases/tag/v11.6.0,2025-03-25,Observability dashboards
+elastic,Elastic,The project published Elasticsearch 9.0.0.,https://github.com/elastic/elasticsearch/releases/tag/v9.0.0,2025-04-15,Search and analytics

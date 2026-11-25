@@ -6,13 +6,17 @@ We offer pipeline research (ICP and enriched lists), GTM data operations (CRM cl
 
 Contact: dane@phantompipe.com (inbound inquiries).
 
-To submit a request programmatically, POST to https://phantompipe.com/quote with Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. The company field is optional; omit the honeypot field. Use a reply-to email that can receive follow-up. The POST does not return a quote and does not take payment.
+To submit a request programmatically, POST to https://phantompipe.com/quote with Accept: application/json and Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. You can also send a JSON object with Content-Type: application/json and omit form-name. The company field is optional; omit the honeypot field. A successful request returns HTTP 202 with request_id, status, response_window (48 hours), and status_url. GET status_url for the receipt for up to 30 days. It confirms receipt only; replies go to the supplied email. The POST does not return a quote or take payment.
 
 ## Services and quoting
 
-- [Machine-readable offer](https://phantompipe.com/offer.json): Service IDs, deliverables, engagement model, and complete quote request fields.
+- [Machine-readable offer](https://phantompipe.com/offer.json): Service IDs, deliverables, five-account samples, per-row pricing, acceptance terms, and complete quote request fields.
 - [Request a quote](https://phantompipe.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
 - [Phantom Pipe](https://phantompipe.com/): Working notes on market mapping, outbound experiments, and agent handoffs.
+
+Each free sample includes five example accounts, dated primary-source links, a CSV, and a receipt that lists gaps first. Samples don't count toward paid acceptance.
+
+Paid account-row work is $5 USD per accepted row. Agree on scope, required fields, row count, and maximum spend in an issued quote before paying; other work is quoted separately. The buyer has 72 hours after delivery of the CSV and receipt to check account scope, required fields, and primary-source evidence. Missing or rejected rows that aren't replaced aren't charged, or are refunded if prepaid. Optional gaps don't reject a row.
 
 ## Research
 

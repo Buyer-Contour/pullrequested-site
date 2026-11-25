@@ -46,6 +46,7 @@ function buildSurge({ siteUrl, recipient, output }) {
     response: 'The response acknowledges the submission and does not contain a quote or payment link. We follow up at the reply-to email.',
   });
   delete offer.quote_request.fields['form-name'];
+  delete offer.quote_request.json_body;
   write('offer.json', JSON.stringify(offer, null, 2) + '\n');
 
   const llms = read('llms.txt')

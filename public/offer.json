@@ -6,34 +6,126 @@
     {
       "id": "pipeline-research",
       "name": "Pipeline research",
-      "deliverables": ["Ideal customer profile (ICP)", "Account and contact lists researched and enriched to your specifications"]
+      "deliverables": ["Ideal customer profile (ICP)", "Account and contact lists researched and enriched to your specifications"],
+      "sample": {
+        "receipt": {
+          "format": "gap-first-v1",
+          "gaps": [{ "applies_to": "all_rows", "not_verified": "current purchase intent, budget, and decision maker" }],
+          "rows_delivered": 5,
+          "scope": "Identify accounts with a verifiable infrastructure product release signal."
+        },
+        "price": { "amount_minor": 0, "currency": "USD" },
+        "csv_url": "/samples/pipeline-research.csv",
+        "accounts": [
+          {"account_id":"cloudflare","account":"Cloudflare","claim":"The project published Wrangler 4.12.0.","source_url":"https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.12.0","source_date":"2025-04-17","icp_signal":"Edge runtime tooling"},
+          {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","icp_signal":"Edge deployment tooling"},
+          {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","icp_signal":"Infrastructure monitoring"},
+          {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","icp_signal":"Observability dashboards"},
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","icp_signal":"Search and analytics"}
+        ]
+      }
     },
     {
       "id": "gtm-data-ops",
       "name": "GTM data operations",
-      "deliverables": ["CRM cleanup and deduplication", "Record enrichment", "Routing and scoring rules"]
+      "deliverables": ["CRM cleanup and deduplication", "Record enrichment", "Routing and scoring rules"],
+      "sample": {
+        "receipt": {
+          "format": "gap-first-v1",
+          "gaps": [{ "applies_to": "all_rows", "not_verified": "matching records and parent-child relationships in the buyer's CRM" }],
+          "rows_delivered": 5,
+          "scope": "Normalize company names and domains to stable account keys for a CRM import."
+        },
+        "price": { "amount_minor": 0, "currency": "USD" },
+        "csv_url": "/samples/gtm-data-ops.csv",
+        "accounts": [
+          {"account_id":"cloudflare","account":"Cloudflare","claim":"The project published Wrangler 4.12.0.","source_url":"https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.12.0","source_date":"2025-04-17","canonical_domain":"cloudflare.com"},
+          {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","canonical_domain":"fastly.com"},
+          {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","canonical_domain":"datadoghq.com"},
+          {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","canonical_domain":"grafana.com"},
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","canonical_domain":"elastic.co"}
+        ]
+      }
     },
     {
       "id": "outbound-systems",
       "name": "Outbound systems",
-      "deliverables": ["Targeting and segmentation", "Outbound sequences and copy", "Deliverability setup in the client's tools"]
+      "deliverables": ["Targeting and segmentation", "Outbound sequences and copy", "Deliverability setup in the client's tools"],
+      "sample": {
+        "receipt": {
+          "format": "gap-first-v1",
+          "gaps": [{ "applies_to": "all_rows", "not_verified": "recipient, buyer-approved messaging, and deliverability in the buyer's tools" }],
+          "rows_delivered": 5,
+          "scope": "Pair an evidence-backed targeting segment with a suggested opener; no messages were sent."
+        },
+        "price": { "amount_minor": 0, "currency": "USD" },
+        "csv_url": "/samples/outbound-systems.csv",
+        "accounts": [
+          {"account_id":"cloudflare","account":"Cloudflare","claim":"The project published Wrangler 4.12.0.","source_url":"https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.12.0","source_date":"2025-04-17","segment":"developer-tooling","suggested_opener":"I saw your team published Wrangler 4.12.0. Is edge runtime tooling a focus for your team this quarter?"},
+          {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","segment":"developer-tooling","suggested_opener":"I saw your team published Fastly CLI 10.18.0. Is edge deployment tooling a focus for your team this quarter?"},
+          {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","segment":"observability","suggested_opener":"I saw your team published Datadog Agent 7.64.1. Is infrastructure monitoring a focus for your team this quarter?"},
+          {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","segment":"observability","suggested_opener":"I saw your team published Grafana 11.6.0. Is observability dashboards a focus for your team this quarter?"},
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","segment":"search-infrastructure","suggested_opener":"I saw your team published Elasticsearch 9.0.0. Is search and analytics a focus for your team this quarter?"}
+        ]
+      }
     },
     {
       "id": "gtm-automation",
       "name": "GTM automation and agents",
-      "deliverables": ["Custom go-to-market workflows", "Signal monitoring and research agents", "Automated handoffs"]
+      "deliverables": ["Custom go-to-market workflows", "Signal monitoring and research agents", "Automated handoffs"],
+      "sample": {
+        "receipt": {
+          "format": "gap-first-v1",
+          "gaps": [{ "applies_to": "all_rows", "not_verified": "live connector access, polling reliability, and downstream routing rules" }],
+          "rows_delivered": 5,
+          "scope": "Show release triggers that a workflow could consume in a dry run; no automation was deployed."
+        },
+        "price": { "amount_minor": 0, "currency": "USD" },
+        "csv_url": "/samples/gtm-automation.csv",
+        "accounts": [
+          {"account_id":"cloudflare","account":"Cloudflare","claim":"The project published Wrangler 4.12.0.","source_url":"https://github.com/cloudflare/workers-sdk/releases/tag/wrangler%404.12.0","source_date":"2025-04-17","proposed_trigger":"wrangler.release.published"},
+          {"account_id":"fastly","account":"Fastly","claim":"The project published Fastly CLI 10.18.0.","source_url":"https://github.com/fastly/cli/releases/tag/v10.18.0","source_date":"2025-01-29","proposed_trigger":"fastly_cli.release.published"},
+          {"account_id":"datadog","account":"Datadog","claim":"The project published Datadog Agent 7.64.1.","source_url":"https://github.com/DataDog/datadog-agent/releases/tag/7.64.1","source_date":"2025-03-20","proposed_trigger":"datadog_agent.release.published"},
+          {"account_id":"grafana-labs","account":"Grafana Labs","claim":"The project published Grafana 11.6.0.","source_url":"https://github.com/grafana/grafana/releases/tag/v11.6.0","source_date":"2025-03-25","proposed_trigger":"grafana.release.published"},
+          {"account_id":"elastic","account":"Elastic","claim":"The project published Elasticsearch 9.0.0.","source_url":"https://github.com/elastic/elasticsearch/releases/tag/v9.0.0","source_date":"2025-04-15","proposed_trigger":"elasticsearch.release.published"}
+        ]
+      }
     }
   ],
   "buyers": ["B2B startups", "AI agents"],
   "engagement_model": {
     "type": "consulting",
     "steps": ["Describe your project", "Review a free sample", "Receive a quote based on the scope of the engagement"],
-    "pricing": "Quoted per engagement"
+    "pricing": "Free sample; account-row work is priced per accepted row. Other work is quoted separately."
+  },
+  "per_row_pricing": {
+    "unit": "accepted_account_row",
+    "currency": "USD",
+    "amount_minor_per_row": 500,
+    "applies_to": "Paid account-row deliverables across the listed services. Implementation and other non-row work are quoted separately.",
+    "example": { "row_count": 10, "max_amount_minor": 5000 },
+    "authorization": "The buyer approves the requested row count, scope, acceptance criteria and maximum total in an issued quote before payment. Submitting a request does not authorize spending."
+  },
+  "row_acceptance": {
+    "criteria": [
+      "One distinct, in-scope account per row, with every column required by the agreed quote present.",
+      "Each required factual claim has a dated, accessible primary source that the buyer can check.",
+      "List unverifiable claims first in the receipt; a gap in any required field makes that row unaccepted. Optional gaps do not reject a row."
+    ],
+    "checked_by": "buyer",
+    "review_window_hours": 72,
+    "review_starts_at": "Delivery of the CSV and gap-first receipt.",
+    "review_expiration": "Undisputed rows that meet the criteria are accepted at the end of the review window; missing rows are never accepted.",
+    "dispute": "The buyer sends the row ID and failed criterion to the quote reply thread within the review window. Phantom Pipe rechecks the cited evidence and corrects or replaces the row, or refunds it.",
+    "missing_or_rejected_row": "No charge for a missing or rejected row that is not replaced with an accepted row; if prepaid, refund the per-row amount to the original payment method.",
+    "sample_policy": "Free sample rows demonstrate the format only and do not count toward paid acceptance."
   },
   "quote_request": {
     "url": "https://phantompipe.com/quote",
     "method": "POST",
     "content_type": "application/x-www-form-urlencoded",
+    "accept": "application/json",
+    "json_body": { "content_type": "application/json", "form-name": "Optional; if supplied, must be quote." },
     "authentication": "none",
     "fields": {
       "form-name": { "required": true, "const": "quote" },
@@ -43,7 +135,17 @@
       "service": { "required": true, "enum": ["pipeline-research", "gtm-data-ops", "outbound-systems", "gtm-automation", "not-sure"] },
       "brief": { "required": true, "type": "string", "description": "Desired outcome, tools, and scope. Do not include credentials or sensitive data." }
     },
-    "response": "The submission does not return a quote or payment link. We follow up at the reply-to email."
+    "response": {
+      "http_status": 202,
+      "content_type": "application/json",
+      "request_id": "Opaque ID for the submitted request.",
+      "status": "received",
+      "response_window": 48,
+      "response_window_unit": "hours",
+      "status_url": "https://phantompipe.com/quote/status/{request_id}",
+      "status_poll": { "method": "GET", "http_status": 200, "unknown_or_expired_status": 404, "receipt_retention_days": 30 },
+      "notes": "The status URL confirms receipt only. The first reply is expected within the response window at the reply-to email. Submitting does not return a quote or take payment."
+    }
   },
   "contact": {
     "type": "quote_form",

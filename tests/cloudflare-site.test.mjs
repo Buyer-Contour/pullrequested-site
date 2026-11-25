@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import site from '../workers/site.mjs';
+import site, { QuoteReceipts } from '../workers/site.mjs';
 
 const origin = 'https://phantompipe.com';
 const env = {
@@ -21,6 +21,23 @@ const env = {
 
 function get(path, init) {
   return site.fetch(new Request(origin + path, init), env);
+}
+
+function withQuoteReceipts() {
+  const receipts = new Map();
+  return (path, init) => site.fetch(new Request(origin + path, init), {
+    ...env,
+    QUOTE_RECEIPTS: {
+      getByName(id) {
+        if (!receipts.has(id)) {
+          const values = new Map();
+          const kv = { get: (key) => values.get(key), put: (key, value) => values.set(key, value) };
+          receipts.set(id, new QuoteReceipts({ storage: { kv, async setAlarm() {} } }));
+        }
+        return { fetch: (url, options) => receipts.get(id).fetch(new Request(url, options)) };
+      },
+    },
+  });
 }
 
 test('www redirects to the canonical apex without changing the path, query, or method', async () => {
@@ -100,6 +117,103 @@ test('browser and agent quote submissions keep their path, query, headers, body 
     }
   }
   assert.equal(upstream.mock.callCount(), 4);
+});
+
+test('quote POST returns a stored receipt for JSON requests and forwards the same ID to Netlify Forms', async (t) => {
+  const send = withQuoteReceipts();
+  const fields = { name: 'Agent', email: 'agent@example.com', service: 'pipeline-research', brief: 'Montréal' };
+  const offer = JSON.parse(await readFile(new URL('../public/offer.json', import.meta.url)));
+  const forwarded = [];
+  t.mock.method(globalThis, 'fetch', async (request) => {
+    assert.equal(request.url, 'https://phantompipe.netlify.app/thanks/');
+    const form = await request.formData();
+    for (const key of ['name', 'email', 'service']) assert.equal(form.get(key), fields[key]);
+    assert.equal(form.get('form-name'), 'quote');
+    const match = /^Montréal\n\nQuote request ID: (.+)$/.exec(form.get('brief'));
+    assert.ok(match);
+    forwarded.push(match[1]);
+    return forwarded.length === 1 ? new Response('Thanks') : Response.redirect(origin + '/thanks/', 303);
+  });
+
+  for (const [path, headers, body] of [
+    ['/quote', { 'Content-Type': 'application/json; charset=utf-8' }, JSON.stringify(fields)],
+    ['/quote/', { Accept: 'text/html, application/json;q=0.8' }, new URLSearchParams({ 'form-name': 'quote', ...fields })],
+  ]) {
+    const response = await send(path, { method: 'POST', headers, body });
+    assert.equal(response.status, 202);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    const result = await response.json();
+    const id = forwarded.at(-1);
+    const statusPath = '/quote/status/' + id;
+    assert.deepEqual(result, {
+      request_id: id,
+      status: 'received',
+      response_window: offer.quote_request.response.response_window,
+      status_url: origin + statusPath,
+    });
+    assert.equal(response.headers.get('Location'), result.status_url);
+    assert.deepEqual(await (await send(statusPath)).json(), result);
+    const head = await send(statusPath, { method: 'HEAD' });
+    assert.equal(head.status, 200);
+    assert.equal(await head.text(), '');
+    assert.equal((await send(statusPath, { method: 'POST' })).status, 405);
+  }
+  assert.equal(new Set(forwarded).size, 2);
+  assert.equal((await send('/quote/status/' + crypto.randomUUID())).status, 404);
+  assert.equal((await send('/quote/status/not-a-request-id')).status, 404);
+});
+
+test('invalid quotes and upstream failures do not return a receipt', async (t) => {
+  const upstream = t.mock.method(globalThis, 'fetch', async () => new Response('Offline', { status: 503 }));
+  const fields = { name: 'Agent', email: 'agent@example.com', service: 'not-sure', brief: 'Request' };
+  const headers = { 'Content-Type': 'application/json' };
+  const submit = (body) => get('/quote', { method: 'POST', headers, body });
+  assert.equal((await submit('{')).status, 400);
+  assert.equal((await submit(JSON.stringify({ ...fields, 'bot-field': 'spam' }))).status, 400);
+  assert.equal((await submit(JSON.stringify({ ...fields, service: 'unknown' }))).status, 400);
+  assert.equal((await get('/quote', {
+    method: 'POST', headers: { Accept: 'application/json' }, body: 'unsupported',
+  })).status, 415);
+  assert.equal(upstream.mock.callCount(), 0);
+  const unavailable = await submit(JSON.stringify(fields));
+  assert.equal(unavailable.status, 502);
+  assert.equal((await unavailable.json()).request_id, undefined);
+  assert.equal(upstream.mock.callCount(), 1);
+});
+
+test('quote intake rejects oversized bodies before parsing or forwarding', async (t) => {
+  const upstream = t.mock.method(globalThis, 'fetch');
+  let headerBodyReads = 0;
+  const oversizedHeader = await get('/quote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': '32769' },
+    body: new ReadableStream({ pull() { headerBodyReads++; } }, { highWaterMark: 0 }),
+    duplex: 'half',
+  });
+  assert.equal(oversizedHeader.status, 413);
+  assert.equal(headerBodyReads, 0);
+
+  for (const headers of [
+    { 'Content-Type': 'application/json' },
+    { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'Content-Length': '3' },
+  ]) {
+    const chunk = new TextEncoder().encode('é'.repeat(8193));
+    let reads = 0;
+    let cancelled = false;
+    const body = new ReadableStream({
+      pull(controller) {
+        if (reads++ < 2) controller.enqueue(chunk);
+        else controller.close();
+      },
+      cancel() { cancelled = true; },
+    }, { highWaterMark: 0 });
+    const response = await get('/quote', { method: 'POST', headers, body, duplex: 'half' });
+    assert.equal(response.status, 413);
+    assert.equal(reads, 2);
+    assert.equal(cancelled, true);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+  }
+  assert.equal(upstream.mock.callCount(), 0);
 });
 
 test('the legacy agent verification path retains its origin and other requests are not proxied', async (t) => {

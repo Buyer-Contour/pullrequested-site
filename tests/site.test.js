@@ -67,6 +67,38 @@ test('offer and agent instructions match the Netlify form', () => {
   assert.ok(llms.includes(`form-name=${fields['form-name'].const}`));
 });
 
+test('each service publishes a free five-account CSV and a gap-first receipt', () => {
+  const { services, per_row_pricing: pricing, row_acceptance: terms } = JSON.parse(read('public/offer.json'));
+  for (const { sample } of services) {
+    assert.equal(sample.price.amount_minor, 0);
+    assert.equal(sample.receipt.format, 'gap-first-v1');
+    assert.equal(Object.keys(sample.receipt)[1], 'gaps');
+    assert.ok(sample.receipt.gaps.length);
+    assert.equal(sample.receipt.rows_delivered, 5);
+    assert.equal(sample.accounts.length, 5);
+    assert.equal(new Set(sample.accounts.map(({ account_id }) => account_id)).size, 5);
+    for (const { claim, source_url, source_date } of sample.accounts) {
+      assert.ok(claim);
+      assert.equal(new URL(source_url).protocol, 'https:');
+      assert.match(source_date, /^\d{4}-\d{2}-\d{2}$/);
+    }
+    const columns = Object.keys(sample.accounts[0]);
+    const escape = (cell) => /[",\r\n]/.test(cell) ? '"' + cell.replaceAll('"', '""') + '"' : cell;
+    assert.equal(read('public' + sample.csv_url).trim(), [
+      columns.join(','),
+      ...sample.accounts.map((row) => columns.map((column) => escape(row[column])).join(',')),
+    ].join('\n'));
+  }
+  assert.equal(pricing.unit, 'accepted_account_row');
+  assert.equal(pricing.example.max_amount_minor, pricing.amount_minor_per_row * pricing.example.row_count);
+  assert.equal(terms.checked_by, 'buyer');
+  assert.equal(terms.review_window_hours, 72);
+  assert.match(terms.missing_or_rejected_row, /refund/);
+  const llms = read('public/llms.txt');
+  assert.ok(llms.includes(`$${pricing.amount_minor_per_row / 100} USD per accepted row`));
+  assert.ok(llms.includes(`${terms.review_window_hours} hours after delivery`));
+});
+
 test('the research site keeps human and agent entry points discoverable', () => {
   const home = read('public/index.html');
   const { description } = JSON.parse(read('public/offer.json'));
@@ -173,6 +205,8 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.equal(offer.contact.url, siteUrl + 'quote/');
   assert.equal(offer.quote_request.url, 'https://formsubmit.co/ajax/quotes@example.com');
   assert.equal(offer.quote_request.content_type, 'application/json');
+  assert.equal(offer.quote_request.json_body, undefined);
+  assert.doesNotMatch(llms, /status_url/);
   assert.deepEqual(Object.keys(offer.quote_request.fields), ['name', 'email', 'company', 'service', 'brief']);
   assert.ok(llms.includes(offer.quote_request.url));
   assert.ok(llms.includes('(' + siteUrl + 'offer.json)'));
