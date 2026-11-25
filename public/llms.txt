@@ -1,13 +1,13 @@
-# Furrow
+# pullrequested.com
 
 > Go-to-market consulting for B2B startups and AI agents. Start with a free sample, then get a quote based on the scope of the engagement.
 
-Furrow offers pipeline research (ICP and enriched lists), GTM data operations (CRM cleanup, enrichment, routing, and scoring), outbound systems in your own tools, and GTM workflow and agent builds.
+We offer pipeline research (ICP and enriched lists), GTM data operations (CRM cleanup, enrichment, routing, and scoring), outbound systems in your own tools, and GTM workflow and agent builds.
 
-To submit a request programmatically, POST to https://furrowgtm.com/quote with Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. The company field is optional; omit the honeypot field. Use a reply-to email that can receive follow-up. The POST does not return a quote and does not take payment.
+To submit a request programmatically, POST to https://pullrequested.com/quote with Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. The company field is optional; omit the honeypot field. Use a reply-to email that can receive follow-up. The POST does not return a quote and does not take payment.
 
 ## Services and quoting
 
-- [Machine-readable offer](https://furrowgtm.com/offer.json): Service IDs, deliverables, engagement model, and complete quote request fields.
-- [Request a quote](https://furrowgtm.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
-- [Furrow](https://furrowgtm.com/): Overview of our consulting services.
+- [Machine-readable offer](https://pullrequested.com/offer.json): Service IDs, deliverables, engagement model, and complete quote request fields.
+- [Request a quote](https://pullrequested.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
+- [pullrequested.com](https://pullrequested.com/): Overview of our consulting services.

@@ -1,7 +1,8 @@
 {
-  "name": "furrow-site",
+  "name": "pullrequested-site",
   "private": true,
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "build:surge": "node scripts/build-surge.js"
   }
 }

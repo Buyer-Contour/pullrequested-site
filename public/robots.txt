@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://furrowgtm.com/sitemap.xml
+Sitemap: https://pullrequested.com/sitemap.xml

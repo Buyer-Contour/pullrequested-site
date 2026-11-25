@@ -111,7 +111,6 @@ h3 { font-size: 1.35rem; letter-spacing: -.035em; }
 }
 
 @media (max-width: 28rem) {
-  .site-header nav { justify-content: flex-end; }
-  .site-footer { flex-wrap: wrap; }
+  .site-header, .site-footer { flex-wrap: wrap; }
   .service-grid { grid-template-columns: 1fr; }
 }

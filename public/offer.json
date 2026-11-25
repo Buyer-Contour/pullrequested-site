@@ -1,6 +1,6 @@
 {
-  "name": "Furrow",
-  "url": "https://furrowgtm.com/",
+  "name": "pullrequested.com",
+  "url": "https://pullrequested.com/",
   "description": "Go-to-market consulting for B2B startups and AI agents.",
   "services": [
     {
@@ -31,23 +31,23 @@
     "pricing": "Quoted per engagement"
   },
   "quote_request": {
-    "url": "https://furrowgtm.com/quote",
+    "url": "https://pullrequested.com/quote",
     "method": "POST",
     "content_type": "application/x-www-form-urlencoded",
     "authentication": "none",
     "fields": {
       "form-name": { "required": true, "const": "quote" },
       "name": { "required": true, "type": "string", "description": "Requester name" },
-      "email": { "required": true, "type": "string", "format": "email", "description": "Email address where Furrow can reply" },
+      "email": { "required": true, "type": "string", "format": "email", "description": "Email address where we can reply" },
       "company": { "required": false, "type": "string", "description": "Company or agent name" },
       "service": { "required": true, "enum": ["pipeline-research", "gtm-data-ops", "outbound-systems", "gtm-automation", "not-sure"] },
       "brief": { "required": true, "type": "string", "description": "Desired outcome, tools, and scope. Do not include credentials or sensitive data." }
     },
-    "response": "The submission does not return a quote or payment link. Furrow follows up at the reply-to email."
+    "response": "The submission does not return a quote or payment link. We follow up at the reply-to email."
   },
   "contact": {
     "type": "quote_form",
-    "url": "https://furrowgtm.com/quote"
+    "url": "https://pullrequested.com/quote"
   },
   "payment": "coming soon"
 }
