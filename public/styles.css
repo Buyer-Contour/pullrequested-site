@@ -104,7 +104,7 @@ h3 { font-size: clamp(1.95rem, 3vw, 2.85rem); line-height: 1.03; letter-spacing:
 .field input, .field select, .field textarea { width: 100%; padding: .58rem .7rem; border: 1px solid #8e8577; border-radius: 0; color: var(--ink); background: var(--paper); font: inherit; }
 .field textarea { resize: vertical; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: .7rem; padding: .7rem .95rem; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); font: 600 .9rem/1.5 system-ui, sans-serif; cursor: pointer; }
-.button:hover { border-color: var(--accent); background: var(--accent); }
+.button:hover { border-color: var(--accent); background: var(--accent); color: var(--paper); }
 .quote-form .button { justify-self: start; }
 
 .notes-intro { padding-block: clamp(3rem, 7vw, 6.25rem); }

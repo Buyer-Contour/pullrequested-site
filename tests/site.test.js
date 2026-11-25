@@ -112,6 +112,11 @@ test('lab notes are discoverable from the homepage and machine-readable indexes'
   assert.doesNotMatch(notes, /\bagent-run\b/i);
 });
 
+test('sample request link keeps a contrasting label on hover', () => {
+  assert.match(read('public/lab-notes/index.html'), /<a class="button"[^>]*>Request a free sample/);
+  assert.match(read('public/styles.css'), /\.button:hover\s*\{[^}]*background:\s*var\(--accent\);[^}]*color:\s*var\(--paper\);/);
+});
+
 test('legacy x402 manifest points to free resources without offering payment', () => {
   const manifest = JSON.parse(read('public/.well-known/x402.json'));
   const offer = JSON.parse(read('public/offer.json'));
