@@ -177,11 +177,18 @@ test('Cloudflare serves the homepage, quote form, and agent discovery with the e
   assert.equal((await get('/nonexistent')).status, 404);
 });
 
-test('Cloudflare serves the fixed-price catalog at both directory paths', async () => {
-  for (const path of ['/services', '/services/']) {
+test('Cloudflare serves the fixed-price catalog and dedicated offer pages at both directory paths', async () => {
+  for (const [path, heading] of [
+    ['/services', /Fixed-price services — Phantom Pipe/],
+    ['/services/', /Fixed-price services — Phantom Pipe/],
+    ['/agent-bill-audit', /AI agent API &amp; hosting bill audit — Phantom Pipe/],
+    ['/agent-bill-audit/', /AI agent API &amp; hosting bill audit — Phantom Pipe/],
+    ['/scraper-parser', /Fixed-price scraper \/ parser job — Phantom Pipe/],
+    ['/scraper-parser/', /Fixed-price scraper \/ parser job — Phantom Pipe/],
+  ]) {
     const response = await get(path);
     assert.equal(response.status, 200);
-    assert.match(await response.text(), /Fixed-price services — Phantom Pipe/);
+    assert.match(await response.text(), heading);
   }
 });
 

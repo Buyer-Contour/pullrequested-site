@@ -11,6 +11,10 @@ const pages = new Map([
   ['/lab-notes/', '/lab-notes/index.html'],
   ['/services', '/services/index.html'],
   ['/services/', '/services/index.html'],
+  ['/agent-bill-audit', '/agent-bill-audit/index.html'],
+  ['/agent-bill-audit/', '/agent-bill-audit/index.html'],
+  ['/scraper-parser', '/scraper-parser/index.html'],
+  ['/scraper-parser/', '/scraper-parser/index.html'],
   ['/thanks', '/thanks/index.html'],
   ['/thanks/', '/thanks/index.html'],
 ]);
@@ -65,7 +69,7 @@ async function taggedDiscovery(response, headers, url) {
     return Response.json(offer, { status: response.status, headers });
   }
   const text = await response.text();
-  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|services\/|q\/evidence-brief-10|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
+  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|services\/|agent-bill-audit\/|scraper-parser\/|q\/evidence-brief-10|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
   return new Response(text.replace(links, (link) => withVariant(link, url)), { status: response.status, headers });
 }
 
