@@ -179,13 +179,22 @@ test('fixed-price services use signed Stripe Checkout quotes and service-specifi
     assert.equal(params.metadata.service_slug, slug);
     assert.deepEqual(params.payment_intent_data.metadata, params.metadata);
     assert.equal(params.cancel_url, signed.href);
-    assert.equal(params.success_url, `${origin}/payment/submitted?service=${slug}&${tag}`);
+    const isCrm = slug === 'crm-dedupe-enrichment';
+    const quoteReference = isCrm ? `&quote_id=${quote.id}` : '';
+    assert.equal(params.success_url, `${origin}/payment/submitted?service=${slug}${quoteReference}&${tag}`);
 
     const submitted = await handlers.page(new Request(params.success_url + '&result=submitted'));
     const intake = await submitted.text();
     assert.match(intake, /Once Stripe confirms payment/);
     assert.match(intake, /mailto:dane@phantompipe.com/);
     assert.ok(intake.includes(`href="/quote?${tag}"`));
+    if (isCrm) {
+      assert.equal(params.client_reference_id, quote.id);
+      assert.match(intake, /Email your CSV or a share link/);
+      assert.ok(intake.includes(`quote ID (<strong>${quote.id}</strong>) in the subject`));
+    } else {
+      assert.doesNotMatch(intake, /Email your CSV/);
+    }
     const session = { id: sessionId, mode: 'payment', payment_status: 'paid', amount_total: amount, currency, metadata: params.metadata };
     assert.equal((await handlers.webhook(webhookRequest({ ...session, metadata: { ...params.metadata, service_slug: 'wrong-service' } }))).status, 200);
     assert.equal(entries.has(`paid/${quote.id}`), false);
