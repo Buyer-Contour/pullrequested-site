@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import worker from '../api/worker.js';
-import { comparePricing, extractPricing } from '../src/pricing.js';
+import { comparePricing, extractPricing, snapshotKey } from '../src/pricing.js';
 import { fetchPublicHtml, PageError, PublicUrlError, parsePublicUrl } from '../src/public-page.js';
 
 const page = (cost) => `<html><head><title>Plans</title></head><body>
@@ -47,6 +47,17 @@ test('establishes a baseline, normalizes spacing and reports changes against tex
   const byHash = await comparePricing(url, page(12), { contentHash: first.contentHash });
   assert.equal(byHash.changed, true);
   assert.deepEqual(byHash.addedLines, []);
+});
+
+test('scopes snapshots to a URL and its order-independent keyword list', async () => {
+  const url = 'https://example.com/pricing';
+  const keywords = ['seats', 'annual'];
+  const key = await snapshotKey(url, keywords);
+  assert.equal(await snapshotKey(url, ['annual', 'seats']), key);
+  assert.notEqual(await snapshotKey(url, ['annual']), key);
+  assert.notEqual(await snapshotKey(url, []), key);
+  assert.notEqual(await snapshotKey(url + '/other', keywords), key);
+  assert.deepEqual(keywords, ['seats', 'annual']);
 });
 
 test('rejects HTTP 200 HTML without visible text but accepts visible text without pricing', async () => {

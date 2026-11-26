@@ -2,7 +2,7 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import { Actor, log } from 'apify';
 import { Agent, fetch } from 'undici';
-import { comparePricing, failedCheck, hashText, validateSnapshot } from './pricing.js';
+import { comparePricing, failedCheck, snapshotKey, validateSnapshot } from './pricing.js';
 import { fetchPublicHtml, isPublicAddress, PageError, PublicUrlError } from './public-page.js';
 import { loadRunProgress, PAGE_CHECKED } from './run-progress.js';
 
@@ -60,7 +60,7 @@ await Actor.main(async () => {
 
   for (const url of new Set(urls)) {
     if (progress?.hasCharged(url)) continue;
-    const key = await hashText(url);
+    const key = await snapshotKey(url, keywords);
     const previous = Object.hasOwn(previousSnapshots, url) ? previousSnapshots[url] : await store.getValue(key);
     let result;
     try {

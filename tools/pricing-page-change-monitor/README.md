@@ -12,8 +12,8 @@ Track public competitor pricing without checking the same pages by hand. Phantom
 ```
 
 - **`urls`**: 1–100 public page URLs. Exact duplicates are checked once.
-- **`keywords`**: optional literal, case-insensitive terms. Use the same list across runs so your baseline is comparable.
-- **`previousSnapshots`**: optional object keyed by the exact URL in `urls`. A value may contain `contentHash`, `pricingText`, or both. An explicit entry overrides that URL's most recent successful saved snapshot in the Actor's named `pricing-monitor-state` store.
+- **`keywords`**: optional literal, case-insensitive terms. Saved snapshots are scoped to the URL and its keyword list, regardless of list order. Snapshots saved by older versions using only the URL are not reused.
+- **`previousSnapshots`**: optional object keyed by the exact URL in `urls`. A value may contain `contentHash`, `pricingText`, or both. An explicit entry overrides the saved snapshot for that URL and keyword list in the Actor's named `pricing-monitor-state` store.
 
 ## Output
 

@@ -84,6 +84,11 @@ export async function hashText(text) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+export async function snapshotKey(url, keywords) {
+  const keywordHash = await hashText(JSON.stringify([...keywords].sort()));
+  return hashText(JSON.stringify([url, keywordHash]));
+}
+
 function missingLines(source, other) {
   const counts = new Map();
   for (const line of other) counts.set(line, (counts.get(line) ?? 0) + 1);
