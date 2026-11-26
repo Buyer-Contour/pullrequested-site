@@ -15,6 +15,10 @@ const pages = new Map([
   ['/agent-bill-audit/', '/agent-bill-audit/index.html'],
   ['/scraper-parser', '/scraper-parser/index.html'],
   ['/scraper-parser/', '/scraper-parser/index.html'],
+  ['/receipts', '/receipts/index.html'],
+  ['/receipts/', '/receipts/index.html'],
+  ['/samples', '/receipts/index.html'],
+  ['/samples/', '/receipts/index.html'],
   ['/thanks', '/thanks/index.html'],
   ['/thanks/', '/thanks/index.html'],
 ]);

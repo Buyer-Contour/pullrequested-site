@@ -192,6 +192,21 @@ test('Cloudflare serves the fixed-price catalog and dedicated offer pages at bot
   }
 });
 
+test('Cloudflare serves the canonical receipts page and its samples aliases without masking sample CSVs', async () => {
+  const canonical = await get('/receipts/');
+  assert.equal(canonical.status, 200);
+  const page = await canonical.text();
+  assert.match(page, /rel="canonical" href="https:\/\/phantompipe\.com\/receipts\/"/);
+  for (const path of ['/receipts', '/samples', '/samples/']) {
+    const response = await get(path);
+    assert.equal(response.status, 200, path);
+    assert.equal(await response.text(), page, path);
+  }
+  const csv = await get('/samples/pipeline-research.csv');
+  assert.equal(csv.status, 200);
+  assert.doesNotMatch(await csv.text(), /<!doctype html>/i);
+});
+
 test('Cloudflare serves the lab notes at both directory paths', async () => {
   for (const path of ['/lab-notes', '/lab-notes/']) {
     const response = await get(path);
