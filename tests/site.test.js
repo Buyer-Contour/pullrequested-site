@@ -9,7 +9,8 @@ const read = (path) => readFileSync(resolve(__dirname, '..', path), 'utf8');
 
 test('all public assets exist and are nonempty', () => {
   for (const path of [
-    'index.html', 'quote/index.html', 'services/index.html', 'thanks/index.html', 'styles.css', 'favicon.svg',
+    'index.html', 'quote/index.html', 'services/index.html', 'agent-bill-audit/index.html', 'scraper-parser/index.html',
+    'thanks/index.html', 'styles.css', 'favicon.svg',
     'fonts/newsreader-roman.woff2', 'fonts/newsreader-italic.woff2', 'fonts/OFL-Newsreader.txt',
     'offer.json', 'ledger.json', 'llms.txt', 'robots.txt', 'sitemap.xml',
     '.well-known/x402.json',
@@ -20,15 +21,17 @@ test('all public assets exist and are nonempty', () => {
 
 test('public assets and payment fragments use the Phantom Pipe brand', () => {
   for (const path of [
-    'public/index.html', 'public/quote/index.html', 'public/services/index.html', 'public/thanks/index.html',
+    'public/index.html', 'public/quote/index.html', 'public/services/index.html', 'public/agent-bill-audit/index.html',
+    'public/scraper-parser/index.html', 'public/thanks/index.html',
     'public/offer.json', 'public/llms.txt', 'public/.well-known/x402.json',
     'public/robots.txt', 'public/sitemap.xml',
     'docs/offer-payments.fragment.json', 'docs/llms-payments.fragment.txt',
   ]) {
     assert.doesNotMatch(read(path), /pullrequested/i, path);
   }
-  for (const path of ['index.html', 'quote/index.html', 'services/index.html', 'thanks/index.html']) {
+  for (const path of ['index.html', 'quote/index.html', 'services/index.html', 'agent-bill-audit/index.html', 'scraper-parser/index.html', 'thanks/index.html']) {
     assert.match(read(`public/${path}`), /aria-label="Phantom Pipe home"/, path);
+    assert.doesNotMatch(read(`public/${path}`), /\b(?:Clay|Matthew)\b/i, path);
   }
   assert.match(read('public/llms.txt'), /^# Phantom Pipe\n/);
   assert.ok(read('public/robots.txt').includes('Sitemap: https://phantompipe.com/sitemap.xml'));
@@ -43,11 +46,11 @@ test('the fixed-price catalog and agent discovery agree with the Stripe Checkout
   assert.equal(catalog.url, 'https://phantompipe.com/services/');
   assert.match(read('public/index.html'), /<nav[^>]*>.*href="\/services\/">Fixed-price services/);
   assert.ok(read('public/sitemap.xml').includes(`<loc>${catalog.url}</loc>`));
-  assert.equal(catalog.services.length, 5);
+  assert.equal(catalog.services.length, 7);
   assert.equal(catalog.delivery_hours_from_brief, 48);
   assert.equal(catalog.revisions_included, 1);
   assert.equal(catalog.refund_if_not_delivered, true);
-  for (const { id, name, price, deliverable, pay_url } of catalog.services) {
+  for (const { id, name, price, deliverable, pay_url, page_url, forward_to_human } of catalog.services) {
     const displayName = name.replaceAll('&', '&amp;');
     const displayPrice = '$' + price.amount_minor / 100;
     assert.deepEqual(microserviceFor(id), { amount_cents: price.amount_minor, description: name });
@@ -57,6 +60,15 @@ test('the fixed-price catalog and agent discovery agree with the Stripe Checkout
     assert.ok(services.includes(deliverable));
     assert.ok(services.includes(`href="${pay_url}"`));
     assert.ok(llms.includes(`[${name}](${pay_url}) — ${displayPrice} USD. ${deliverable}`));
+    if (page_url) {
+      const pagePath = new URL(page_url).pathname;
+      const pageHtml = read(`public${pagePath}index.html`);
+      assert.ok(read('public/sitemap.xml').includes(`<loc>${page_url}</loc>`));
+      assert.ok(pageHtml.includes(`rel="canonical" href="${page_url}"`));
+      assert.ok(pageHtml.includes(`href="${pay_url}"`));
+      assert.ok(pageHtml.includes(forward_to_human.replaceAll('&', '&amp;')));
+      assert.ok(llms.includes(`(${page_url})`));
+    }
   }
 });
 

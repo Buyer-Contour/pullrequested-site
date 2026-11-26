@@ -156,6 +156,8 @@ test('fixed-price services use signed Stripe Checkout quotes and service-specifi
     ['competitor-teardown', 200, 'Competitor teardown'],
     ['podcast-newsletter-placement', 200, 'Podcast & newsletter placement list'],
     ['local-business-review-replies', 100, 'Local business review replies'],
+    ['agent-bill-audit', 100, 'AI agent API & hosting bill audit'],
+    ['scraper-parser', 200, 'Fixed-price scraper / parser job'],
   ]) {
     const tag = `v=svc-${slug}`;
     const opened = await handlers.page(new Request(`${to('/q', slug)}&${tag}&amount_cents=1`));

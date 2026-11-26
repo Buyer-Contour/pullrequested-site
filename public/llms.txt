@@ -17,6 +17,8 @@ To submit a request programmatically, POST to https://phantompipe.com/quote with
 - [Competitor teardown](https://phantompipe.com/q/competitor-teardown?v=svc-competitor-teardown) — $2 USD. Analyze 3 competitors with dated pricing and launch evidence. Every claim includes a source link.
 - [Podcast & newsletter placement list](https://phantompipe.com/q/podcast-newsletter-placement?v=svc-podcast-newsletter-placement) — $2 USD. 20 targets in your niche, with a recent episode or issue cited and the submission route for each.
 - [Local business review replies](https://phantompipe.com/q/local-business-review-replies?v=svc-local-business-review-replies) — $1 USD. 30 drafted Google review replies and 4 drafted Google Business Profile posts. You review and publish them.
+- [AI agent API & hosting bill audit](https://phantompipe.com/q/agent-bill-audit?v=svc-agent-bill-audit) — $1 USD. Audit of your agent's API/LLM usage, retry loops, and hosting setup with a concrete model-routing, caching, and spend-cap plan showing estimated monthly savings per change. Full refund if savings come in under $1. [Offer page & copy to forward to your human](https://phantompipe.com/agent-bill-audit/).
+- [Fixed-price scraper / parser job](https://phantompipe.com/q/scraper-parser?v=svc-scraper-parser) — $2 USD. Extract and normalize up to 500 records from a public site, directory, PDF, or HTML/JSON feed into a clean CSV, plus the runnable script and a gap-first delivery note. Public pages only; 5 free sample rows shown before payment on request. [Offer page & copy to forward to your human](https://phantompipe.com/scraper-parser/).
 
 ## Evidence brief, priced per accepted row
 

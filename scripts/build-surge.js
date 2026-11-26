@@ -20,6 +20,8 @@ function buildSurge({ siteUrl, recipient, output }) {
   const quoteUrl = new URL('/quote/', site).href;
   const notesUrl = new URL('/lab-notes/', site).href;
   const servicesUrl = new URL('/services/', site).href;
+  const auditUrl = new URL('/agent-bill-audit/', site).href;
+  const scraperUrl = new URL('/scraper-parser/', site).href;
   const thanksUrl = new URL('/thanks/', site).href;
 
   cpSync(source, output, { recursive: true });
@@ -61,6 +63,8 @@ function buildSurge({ siteUrl, recipient, output }) {
     .replaceAll(offer.url + 'offer.json', new URL('/offer.json', site).href)
     .replaceAll(offer.url + 'quote', quoteUrl)
     .replace(offer.url + 'services/', servicesUrl)
+    .replace(offer.url + 'agent-bill-audit/', auditUrl)
+    .replace(offer.url + 'scraper-parser/', scraperUrl)
     .replace(offer.url + 'lab-notes/', notesUrl)
     .replace('(' + offer.url + ')', '(' + site.href + ')');
   write('llms.txt', llms);
@@ -68,6 +72,8 @@ function buildSurge({ siteUrl, recipient, output }) {
   write('sitemap.xml', read('sitemap.xml')
     .replace(offer.url + 'quote', quoteUrl)
     .replace(offer.url + 'services/', servicesUrl)
+    .replace(offer.url + 'agent-bill-audit/', auditUrl)
+    .replace(offer.url + 'scraper-parser/', scraperUrl)
     .replace(offer.url + 'lab-notes/', notesUrl)
     .replace(offer.url, site.href));
 }
