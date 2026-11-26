@@ -18,8 +18,7 @@
           "200": {
             "description": "Available",
             "content": { "application/json": { "schema": { "type": "object", "required": ["status"], "properties": { "status": { "type": "string", "example": "ok" } } } } }
-          },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          }
         }
       }
     },
@@ -39,7 +38,8 @@
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "413": { "description": "The request body exceeds 256 kB", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
-          "502": { "description": "Could not fetch or read the target HTML", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckResult" } } } }
+          "502": { "description": "Could not fetch or read the target HTML", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckResult" } } } },
+          "503": { "description": "Proxy authentication is not configured", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
     }

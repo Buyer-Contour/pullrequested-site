@@ -67,10 +67,14 @@ test('Worker health and invalid inputs do not fetch an upstream page', async () 
   const health = await worker.fetch(new Request(base + '/health'), {});
   assert.equal(health.status, 200);
   assert.deepEqual(await health.json(), { status: 'ok' });
-  const missingProxy = await worker.fetch(new Request(base + '/health'), { RAPIDAPI_PROXY_SECRET: 'fixture-value' });
-  assert.equal(missingProxy.status, 401);
+  const proxyEnv = { RAPIDAPI_PROXY_SECRET: 'fixture-value', ALLOW_UNAUTHENTICATED: '1' };
+  assert.equal((await worker.fetch(new Request(base + '/health'), proxyEnv)).status, 200);
+  const checkRequest = () => new Request(base + '/v1/check', { method: 'POST' });
+  assert.equal((await worker.fetch(checkRequest(), {})).status, 503);
+  assert.equal((await worker.fetch(checkRequest(), { ALLOW_UNAUTHENTICATED: 'true' })).status, 503);
+  assert.equal((await worker.fetch(checkRequest(), proxyEnv)).status, 401);
   for (const body of ['not JSON', '{"url":"http://127.0.0.1/"}', '{"url":"https://example.com","previousHash":"bad"}']) {
-    const result = await worker.fetch(new Request(base + '/v1/check', { method: 'POST', body }), {});
+    const result = await worker.fetch(new Request(base + '/v1/check', { method: 'POST', body }), { ALLOW_UNAUTHENTICATED: '1' });
     assert.equal(result.status, 400);
     assert.equal(typeof (await result.json()).error, 'string');
   }

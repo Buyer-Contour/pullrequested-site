@@ -5,7 +5,6 @@ const MAX_INPUT_BYTES = 256_000;
 const encoder = new TextEncoder();
 
 async function proxyAuthorized(request, secret) {
-  if (!secret) return true;
   const provided = request.headers.get('X-RapidAPI-Proxy-Secret');
   if (provided === null) return false;
   const [a, b] = await Promise.all([provided, secret].map((value) =>
@@ -78,14 +77,18 @@ export default {
     if (pathname !== '/health' && pathname !== '/v1/check') {
       return Response.json({ error: 'Not found.' }, { status: 404 });
     }
-    if (!await proxyAuthorized(request, env.RAPIDAPI_PROXY_SECRET)) {
-      return Response.json({ error: 'Unauthorized.' }, { status: 401 });
-    }
     const method = pathname === '/health' ? 'GET' : 'POST';
     if (request.method !== method) {
       return Response.json({ error: 'Method not allowed.' }, { status: 405, headers: { Allow: method } });
     }
     if (pathname === '/health') return Response.json({ status: 'ok' });
+    const secret = env.RAPIDAPI_PROXY_SECRET;
+    if (!secret && env.ALLOW_UNAUTHENTICATED !== '1') {
+      return Response.json({ error: 'Proxy authentication is not configured.' }, { status: 503 });
+    }
+    if (secret && !await proxyAuthorized(request, secret)) {
+      return Response.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
     let input;
     try {
       input = await readInput(request);

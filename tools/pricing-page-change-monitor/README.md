@@ -64,12 +64,12 @@ The Cloudflare Worker exposes `GET /health` and `POST /v1/check`. The API does n
 
 ```sh
 cd api
-npx wrangler@4 dev
+npx wrangler@4 dev --var ALLOW_UNAUTHENTICATED:1
 curl -s http://127.0.0.1:8787/health
 curl -s http://127.0.0.1:8787/v1/check -H 'Content-Type: application/json' \
   -d '{"url":"https://linear.app/pricing"}'
 ```
 
-Wrangler 4 requires Node.js 22.12 or higher. Before publishing on RapidAPI, configure its proxy to use the same `RAPIDAPI_PROXY_SECRET` as the Worker. Keep the strict public egress flag enabled, don't attach private upstream access, and don't expose the local development server. Import [`api/openapi.json`](api/openapi.json) into RapidAPI; it already points to the deployed Worker.
+Wrangler 4 requires Node.js 22.12 or higher. `GET /health` is public. `POST /v1/check` requires the configured RapidAPI proxy secret and returns 503 if none is configured. For local development only, use the opt-out above or set `ALLOW_UNAUTHENTICATED=1` in `api/.dev.vars`. Never set it on the deployed Worker. Keep the strict public egress flag enabled, don't attach private upstream access, and don't expose the local development server. Import [`api/openapi.json`](api/openapi.json) into RapidAPI; it already points to the deployed Worker.
 
 Support: [dane@phantompipe.com](mailto:dane@phantompipe.com).
