@@ -145,6 +145,55 @@ test('the durable card link issues new fixed-price quotes without opening Checko
   assert.equal((await handlers.page(new Request(to('/q', 'other-product')))).status, 400);
 });
 
+test('fixed-price services use signed Stripe Checkout quotes and service-specific intake', async () => {
+  const { handlers, calls, entries, webhookRequest } = fixture({ testMode: false });
+  for (const [slug, amount, name] of [
+    ['icp-lead-list', 14_900, 'ICP lead list'],
+    ['crm-dedupe-enrichment', 19_900, 'CRM dedupe + enrichment'],
+    ['competitor-teardown', 9_900, 'Competitor teardown'],
+    ['podcast-newsletter-placement', 7_900, 'Podcast & newsletter placement list'],
+    ['local-business-review-replies', 4_900, 'Local business review replies'],
+  ]) {
+    const tag = `v=svc-${slug}`;
+    const opened = await handlers.page(new Request(`${to('/q', slug)}&${tag}&amount_cents=1`));
+    assert.equal(opened.status, 303);
+    const signed = new URL(opened.headers.get('Location'), origin);
+    assert.equal(signed.search, '?' + tag);
+    const token = signed.pathname.slice(3);
+    const quote = readQuote(token, signingSecret, { now: testNow });
+    assert.equal(quote.service_slug, slug);
+    assert.equal(quote.amount_cents, amount);
+    const page = await handlers.page(new Request(`${to('/q', token)}&${tag}`));
+    assert.match(await page.text(), /Continue to Stripe Checkout/);
+    assert.equal((await handlers.pay(getPayment(token))).status, 422);
+
+    const checkout = await handlers.checkout(new Request(`${to('/api/checkout', token)}&${tag}`, { method: 'POST' }));
+    assert.equal(checkout.status, 303);
+    assert.equal(new URL(checkout.headers.get('Location')).origin, 'https://checkout.stripe.com');
+    const { params } = calls.checkout.at(-1);
+    const { unit_amount, currency, product_data } = params.line_items[0].price_data;
+    assert.equal(unit_amount, amount);
+    assert.equal(currency, 'usd');
+    assert.equal(product_data.name, name);
+    assert.equal(params.metadata.source, 'phantompipe-microservices');
+    assert.equal(params.metadata.service_slug, slug);
+    assert.deepEqual(params.payment_intent_data.metadata, params.metadata);
+    assert.equal(params.cancel_url, signed.href);
+    assert.equal(params.success_url, `${origin}/payment/submitted?service=${slug}&${tag}`);
+
+    const submitted = await handlers.page(new Request(params.success_url + '&result=submitted'));
+    const intake = await submitted.text();
+    assert.match(intake, /Once Stripe confirms payment/);
+    assert.match(intake, /mailto:dane@phantompipe.com/);
+    assert.ok(intake.includes(`href="/quote?${tag}"`));
+    const session = { id: sessionId, mode: 'payment', payment_status: 'paid', amount_total: amount, currency, metadata: params.metadata };
+    assert.equal((await handlers.webhook(webhookRequest({ ...session, metadata: { ...params.metadata, service_slug: 'wrong-service' } }))).status, 200);
+    assert.equal(entries.has(`paid/${quote.id}`), false);
+    assert.equal((await handlers.webhook(webhookRequest(session))).status, 200);
+    assert.equal(entries.get(`paid/${quote.id}`).status, 'paid');
+  }
+});
+
 test('the Netlify quote page renders with Tempo configured and no Stripe credentials', async (t) => {
   const originalEnv = process.env;
   process.env = {

@@ -86,7 +86,7 @@ h3 { font-size: clamp(1.95rem, 3vw, 2.85rem); line-height: 1.03; letter-spacing:
 .note-index span { color: var(--muted); }
 .note-index span::before { margin-inline-end: .65rem; content: "/"; }
 .note h3 { margin-block: .58rem .42rem; }
-.note > p:last-child { max-width: 56ch; margin: 0; color: var(--muted); font: 400 clamp(1.15rem, 1.55vw, 1.34rem)/1.43 var(--serif); }
+.note > p:last-child, .note > p:not(.eyebrow):has(+ .notes-actions) { max-width: 56ch; margin: 0; color: var(--muted); font: 400 clamp(1.15rem, 1.55vw, 1.34rem)/1.43 var(--serif); }
 
 .participate { align-items: end; padding-block: clamp(2.7rem, 5vw, 4.4rem); }
 .participate h2 { font-size: clamp(2.65rem, 4vw, 3.4rem); text-wrap: balance; }

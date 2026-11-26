@@ -31,6 +31,8 @@ The first valid payment attempt reserves its path for that quote. GETting a chal
 
 The service uses a per-quote Stripe idempotency key and limits quote validity to less than Stripe's minimum idempotency-key retention. An atomic conditional create reserves the path before a charge and records the first valid receipt; Stripe metadata is only used to verify the quote binding, not as an atomic lock. Keep the same payment origin, Stripe account, signer, and state store throughout a quote's lifetime. Test and live state are separate.
 
+Fixed-price service links in `/services/` issue signed, Checkout-only quotes. Their Checkout sessions and PaymentIntents carry `source=phantompipe-microservices` and `service_slug`. The webhook checks that both match the reserved quote before recording a paid receipt. Returning from Stripe shows brief intake instructions; it is not proof of payment.
+
 ## Cloudflare Workers
 
 Deploy with Wrangler using the repository's `wrangler.toml`. The payment Worker uses SQLite-backed Durable Objects on Workers Free. It serves payment routes only. When using the [Cloudflare site Worker](../README.md#deploy-the-site-to-cloudflare), retain the existing more specific routes to `phantompipe-payments` for `/q/*`, `/payment/submitted*`, `/api/checkout*`, `/api/pay*`, `/api/mpp/pay*`, and `/api/stripe-webhook*`. The legacy `/agent-pay-test` apex path retains its existing Netlify backend.

@@ -8,6 +8,16 @@ Contact: dane@phantompipe.com (inbound inquiries).
 
 To submit a request programmatically, POST to https://phantompipe.com/quote with Accept: application/json and Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. You can also send a JSON object with Content-Type: application/json and omit form-name. The company field is optional; omit the honeypot field. A successful request returns HTTP 202 with request_id, status, response_window (48 hours), and status_url. GET status_url for the receipt for up to 30 days. It confirms receipt only; replies go to the supplied email. The POST does not return a quote or take payment.
 
+## Fixed-price services
+
+[Browse fixed-price services](https://phantompipe.com/services/). Pay through the selected service's Stripe Checkout link; no custom quote is required. After payment, send the service name, checkout email, and brief to dane@phantompipe.com or through [the project inquiry form](https://phantompipe.com/quote). In the form, use the closest category or `not-sure`. Do not send card details. Delivery is within 48 hours after Phantom Pipe receives the brief. One revision is included; if Phantom Pipe does not deliver, the payment is refunded.
+
+- [ICP lead list](https://phantompipe.com/q/icp-lead-list?v=svc-icp-lead-list) — $149 USD. 50 leads with an email address, a LinkedIn URL, and a sourced reason each lead is high-signal.
+- [CRM dedupe + enrichment](https://phantompipe.com/q/crm-dedupe-enrichment?v=svc-crm-dedupe-enrichment) — $199 USD. Send a CSV of up to 2,000 records. Get a deduplicated, enriched CSV and a change log.
+- [Competitor teardown](https://phantompipe.com/q/competitor-teardown?v=svc-competitor-teardown) — $99 USD. Analyze 3 competitors with dated pricing and launch evidence. Every claim includes a source link.
+- [Podcast & newsletter placement list](https://phantompipe.com/q/podcast-newsletter-placement?v=svc-podcast-newsletter-placement) — $79 USD. 20 targets in your niche, with a recent episode or issue cited and the submission route for each.
+- [Local business review replies](https://phantompipe.com/q/local-business-review-replies?v=svc-local-business-review-replies) — $49 USD. 30 drafted Google review replies and 4 drafted Google Business Profile posts. You review and publish them.
+
 ## Evidence brief, priced per accepted row
 
 **$0.10 USD per accepted row. Try 3 rows free first**, with no payment or obligation. Send a quote request with service `pipeline-research`; ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total (agreed rows × $0.10 USD).
@@ -34,7 +44,7 @@ For an agreed marketplace batch of 10 accepted paid rows, pay once: [forward the
 
 The published service samples each include five example accounts, dated primary-source links, a CSV, and a receipt that lists gaps first. Samples don't count toward paid acceptance.
 
-Outside the evidence brief, paid account-row work is $5 USD per accepted row. Agree on scope, required fields, row count, and maximum spend in an issued quote before paying; other work is quoted separately. The buyer has 72 hours after delivery of the CSV and receipt to check account scope, required fields, and primary-source evidence. Missing or rejected rows that aren't replaced aren't charged, or are refunded if prepaid. Optional gaps don't reject a row.
+Outside the evidence brief and fixed-price services, paid account-row work is $5 USD per accepted row. Agree on scope, required fields, row count, and maximum spend in an issued quote before paying; other custom work is quoted separately. The buyer has 72 hours after delivery of the CSV and receipt to check account scope, required fields, and primary-source evidence. Missing or rejected rows that aren't replaced aren't charged, or are refunded if prepaid. Optional gaps don't reject a row.
 
 ## Research
 

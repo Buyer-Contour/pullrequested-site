@@ -69,6 +69,7 @@ test('variant stats report only successful tagged discovery fetches and forwarde
     ['a[href="/quote"]', 'href', '/quote?v=media-1'],
     ['a[href="/offer.json"]', 'href', '/offer.json?v=media-1'],
     ['a[href="/llms.txt"]', 'href', '/llms.txt?v=media-1'],
+    ['a[href="/services/"]', 'href', '/services/?v=media-1'],
     ['form[name="quote"]', 'action', '/thanks/?v=media-1'],
   ]);
   const offerResponse = await request('/offer.json?v=media-1');
@@ -77,6 +78,10 @@ test('variant stats report only successful tagged discovery fetches and forwarde
   const quoteUrl = new URL(offer.quote_request.url);
   assert.equal(quoteUrl.href, origin + '/quote?v=media-1');
   assert.equal(offer.contact.url, quoteUrl.href);
+  assert.equal(offer.fixed_price_services.url, origin + '/services/?v=media-1');
+  assert.equal(offer.fixed_price_services.intake.url, quoteUrl.href);
+  const leadListPayUrl = origin + '/q/icp-lead-list?v=svc-icp-lead-list';
+  assert.equal(offer.fixed_price_services.services[0].pay_url, leadListPayUrl);
   const { card_url, mpp_url } = offer.evidence_brief.marketplace_payment;
   assert.equal(card_url, origin + '/q/evidence-brief-10?v=media-1');
   assert.equal(mpp_url, origin + '/api/mpp/pay?product=evidence-brief-10&v=media-1');
@@ -85,6 +90,8 @@ test('variant stats report only successful tagged discovery fetches and forwarde
     assert.ok(llms.includes(url.replace('v=media-1', 'v=_untagged')));
   }
   assert.ok(llms.includes(origin + '/offer.json?v=_untagged'));
+  assert.ok(llms.includes(origin + '/services/?v=_untagged'));
+  assert.ok(llms.includes(leadListPayUrl));
   assert.ok(llms.includes(origin + '/q/{signed_quote_token}'));
   assert.ok(!llms.includes('invalid@example.com'));
   await request('/offer.json');
@@ -168,6 +175,14 @@ test('Cloudflare serves the homepage, quote form, and agent discovery with the e
   assert.equal(await llms.text(), '');
   assert.equal((await get('/.well-known/x402.json')).headers.get('Content-Type'), 'application/json; charset=utf-8');
   assert.equal((await get('/nonexistent')).status, 404);
+});
+
+test('Cloudflare serves the fixed-price catalog at both directory paths', async () => {
+  for (const path of ['/services', '/services/']) {
+    const response = await get(path);
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /Fixed-price services — Phantom Pipe/);
+  }
 });
 
 test('Cloudflare serves the lab notes at both directory paths', async () => {
