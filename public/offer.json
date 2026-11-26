@@ -63,7 +63,7 @@
         "id": "agent-bill-audit",
         "name": "AI agent API & hosting bill audit",
         "price": { "amount_minor": 100, "currency": "USD" },
-        "deliverable": "Audit of your agent's API/LLM usage, retry loops, and hosting setup with a concrete model-routing, caching, and spend-cap plan showing estimated monthly savings per change. Full refund if savings come in under $1.",
+        "deliverable": "Audit of your agent's 30-day API/LLM usage, cache hits, retry loops, and hosting setup with a ranked model-routing, caching, and spend-cap plan priced against that same 30-day baseline—showing assumptions, explicit gaps, estimated monthly savings, and implementation cost per change. Full refund if savings come in under $1.",
         "guarantee": "Full refund if identified monthly savings come in under the $1 price or if not delivered within 48 hours.",
         "page_url": "https://phantompipe.com/agent-bill-audit/",
         "pay_url": "https://phantompipe.com/q/agent-bill-audit?v=svc-agent-bill-audit",
