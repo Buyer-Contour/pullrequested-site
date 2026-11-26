@@ -4,8 +4,7 @@ import { Actor, log } from 'apify';
 import { Agent, fetch } from 'undici';
 import { comparePricing, failedCheck, hashText, validateSnapshot } from './pricing.js';
 import { fetchPublicHtml, isPublicAddress, PageError, PublicUrlError } from './public-page.js';
-
-const PAGE_CHECKED = 'page-checked';
+import { loadRunProgress, PAGE_CHECKED } from './run-progress.js';
 
 if (process.env.APIFY_LOCAL_STORAGE_DIR && !process.env.CRAWLEE_STORAGE_DIR) {
   process.env.CRAWLEE_STORAGE_DIR = process.env.APIFY_LOCAL_STORAGE_DIR;
@@ -55,8 +54,12 @@ await Actor.main(async () => {
   if (shouldCharge && !Object.hasOwn(pricing.perEventPrices, PAGE_CHECKED)) {
     throw new Error(`The ${PAGE_CHECKED} billable event must be configured for this Actor.`);
   }
+  const progress = shouldCharge
+    ? await loadRunProgress(await Actor.openKeyValueStore(), (options) => Actor.charge(options))
+    : undefined;
 
   for (const url of new Set(urls)) {
+    if (progress?.hasCharged(url)) continue;
     const key = await hashText(url);
     const previous = Object.hasOwn(previousSnapshots, url) ? previousSnapshots[url] : await store.getValue(key);
     let result;
@@ -67,8 +70,8 @@ await Actor.main(async () => {
       continue;
     }
     let chargeLimitReached = false;
-    if (shouldCharge) {
-      const { chargedCount, eventChargeLimitReached } = await Actor.charge({ eventName: PAGE_CHECKED });
+    if (progress) {
+      const { chargedCount, eventChargeLimitReached } = await progress.chargePage(url);
       if (!chargedCount) {
         log.info('Charge limit reached. No more URLs will be checked.');
         break;
