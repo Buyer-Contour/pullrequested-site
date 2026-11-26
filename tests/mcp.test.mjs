@@ -85,7 +85,7 @@ test('MCP enforces transport and JSON-RPC rules without executing notifications'
     method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', ...headers }, body,
   });
   const send = (method, params, id = 1) => post(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
-  const get = await fetch(endpoint);
+  const get = await fetch(endpoint, { headers: { Accept: 'text/event-stream' } });
   assert.equal(get.status, 405);
   assert.equal(get.headers.get('Allow'), 'POST');
   assert.equal((await post('{}', { Origin: 'https://example.com' })).status, 403);
@@ -137,4 +137,29 @@ test('MCP 2025-03-26 batches return only request responses and reject empty batc
     assert.equal(rejected.status, 400);
     assert.equal((await rejected.json()).error.code, -32600);
   }
+});
+
+test('MCP GET describes the endpoint to browsers and JSON clients but declines event streams', async () => {
+  const fetch = workerFetch();
+  const docs = '/docs/#mcp';
+  const serverCard = '/.well-known/mcp.json';
+  for (const accept of [undefined, 'application/json, text/event-stream;q=0']) {
+    const response = await fetch(endpoint, accept ? { headers: { Accept: accept } } : undefined);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('Content-Type'), /^application\/json/);
+    assert.equal(response.headers.get('Vary'), 'Accept');
+    const body = await response.json();
+    assert.equal(body.docs, docs);
+    assert.equal(body.server_card, serverCard);
+  }
+  const browser = await fetch(endpoint, { headers: { Accept: 'text/html,application/xhtml+xml,*/*;q=0.8' } });
+  assert.equal(browser.status, 200);
+  assert.match(browser.headers.get('Content-Type'), /^text\/html/);
+  const html = await browser.text();
+  for (const url of [docs, serverCard]) assert.ok(html.includes(`href="${url}"`));
+
+  const sse = await fetch(endpoint, { headers: { Accept: 'application/json, text/event-stream' } });
+  assert.equal(sse.status, 405);
+  assert.equal(sse.headers.get('Allow'), 'POST');
+  assert.equal(sse.headers.get('Vary'), 'Accept');
 });

@@ -853,13 +853,32 @@
     },
     "/mcp": {
       "get": {
-        "summary": "Server event streams are not supported",
+        "summary": "Read the MCP endpoint description",
+        "description": "Returns HTML for browsers and JSON otherwise. Clients requesting a server event stream with Accept: text/event-stream receive 405.",
         "responses": {
+          "200": {
+            "description": "Endpoint description and discovery links.",
+            "content": {
+              "text/html": {"schema":{"type":"string"}},
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["name", "description", "docs", "server_card"],
+                  "properties": {
+                    "name": {"const":"phantom-pipe"},
+                    "description": {"type":"string"},
+                    "docs": {"type":"string", "format":"uri-reference"},
+                    "server_card": {"type":"string", "format":"uri-reference"}
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Origin not allowed.",
             "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
           },
-          "405": {"description":"Use POST.", "headers":{"Allow":{"description":"POST", "schema":{"type":"string"}}}}
+          "405": {"description":"No event stream; use POST.", "headers":{"Allow":{"description":"POST", "schema":{"type":"string"}}}}
         }
       },
       "post": {

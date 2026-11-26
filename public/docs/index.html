@@ -82,7 +82,7 @@ curl -i 'https://phantompipe.com/api/mpp/pay?quote=SIGNED_QUOTE_TOKEN' \
     }
   }
 }</code></pre>
-        <p><strong>Generic HTTP client:</strong> send <code>initialize</code>, then <code>notifications/initialized</code>, and use the negotiated <code>MCP-Protocol-Version</code> header with <code>tools/list</code> and <code>tools/call</code>. Only protocol version <code>2025-03-26</code> supports JSON-RPC batches; newer versions accept one message per request. Use <code>Content-Type: application/json</code> and <code>Accept: application/json, text/event-stream</code>. GET returns <code>405</code> because the server does not offer an event stream.</p>
+        <p><strong>Generic HTTP client:</strong> send <code>initialize</code>, then <code>notifications/initialized</code>, and use the negotiated <code>MCP-Protocol-Version</code> header with <code>tools/list</code> and <code>tools/call</code>. Only protocol version <code>2025-03-26</code> supports JSON-RPC batches; newer versions accept one message per request. Use <code>Content-Type: application/json</code> and <code>Accept: application/json, text/event-stream</code> for POST. GET shows a short endpoint description, or returns <code>405</code> if the client requests an event stream.</p>
         <pre><code>curl -fsS https://phantompipe.com/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \

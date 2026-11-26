@@ -140,20 +140,44 @@ async function readMessage(request) {
   }
 }
 
+function accepts(header, types) {
+  return header?.split(',').some((entry) => {
+    const [type, ...params] = entry.toLowerCase().split(';').map((part) => part.trim());
+    return types.includes(type)
+      && !params.some((param) => /^q\s*=/.test(param) && Number(param.split('=')[1]) === 0);
+  });
+}
+
+function describeMcp(accept) {
+  const responseHeaders = { ...headers, Vary: 'Accept' };
+  if (accepts(accept, ['text/event-stream'])) {
+    return new Response(null, { status: 405, headers: { ...responseHeaders, Allow: 'POST' } });
+  }
+  const docs = '/docs/#mcp';
+  const serverCard = '/.well-known/mcp.json';
+  const description = 'Connect an MCP client using Streamable HTTP. Send JSON-RPC requests by POST to /mcp.';
+  if (accepts(accept, ['text/html'])) {
+    return new Response(
+      `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Phantom Pipe MCP</title><link rel="stylesheet" href="/styles.css"><main class="wrap"><h1>Phantom Pipe MCP</h1><p>${description}</p><p><a href="${docs}">MCP setup guide</a> · <a href="${serverCard}">Server card</a></p></main></html>`,
+      { headers: { ...responseHeaders, 'Content-Type': 'text/html; charset=utf-8' } },
+    );
+  }
+  return Response.json({ name: 'phantom-pipe', description, docs, server_card: serverCard }, { headers: responseHeaders });
+}
+
 export async function handleMcp(request, siteRequest) {
   const origin = request.headers.get('Origin');
   if (origin !== null && origin !== new URL(request.url).origin) {
     return rpcError(null, -32000, 'Origin not allowed.', 403);
   }
-  if (request.method !== 'POST') return new Response(null, { status: 405, headers: { ...headers, Allow: 'POST' } });
+  const accept = request.headers.get('Accept');
+  if (request.method === 'GET') return describeMcp(accept);
+  if (request.method !== 'POST') return new Response(null, { status: 405, headers: { ...headers, Allow: 'GET, POST' } });
   const contentType = request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase();
   if (contentType !== 'application/json') return rpcError(null, -32000, 'Use application/json.', 415);
-  const accept = request.headers.get('Accept');
-  if (accept && !accept.split(',').some((entry) => {
-    const [type, ...params] = entry.toLowerCase().split(';').map((part) => part.trim());
-    return ['application/json', 'application/*', '*/*'].includes(type)
-      && !params.some((param) => /^q\s*=/.test(param) && Number(param.split('=')[1]) === 0);
-  })) return rpcError(null, -32000, 'Accept application/json.', 406);
+  if (accept && !accepts(accept, ['application/json', 'application/*', '*/*'])) {
+    return rpcError(null, -32000, 'Accept application/json.', 406);
+  }
   const version = request.headers.get('MCP-Protocol-Version') ?? defaultProtocolVersion;
   if (!protocolVersions.includes(version)) return rpcError(null, -32000, 'Unsupported MCP protocol version.', 400);
 
