@@ -22,6 +22,7 @@ function buildSurge({ siteUrl, recipient, output }) {
   const servicesUrl = new URL('/services/', site).href;
   const auditUrl = new URL('/agent-bill-audit/', site).href;
   const scraperUrl = new URL('/scraper-parser/', site).href;
+  const receiptsUrl = new URL(offer.receipts_url, site).href;
   const thanksUrl = new URL('/thanks/', site).href;
 
   cpSync(source, output, { recursive: true });
@@ -70,6 +71,7 @@ function buildSurge({ siteUrl, recipient, output }) {
     .replace(offer.url + 'services/', servicesUrl)
     .replace(offer.url + 'agent-bill-audit/', auditUrl)
     .replace(offer.url + 'scraper-parser/', scraperUrl)
+    .replace(offer.url + 'receipts/', receiptsUrl)
     .replace(offer.url + 'lab-notes/', notesUrl)
     .replace('(' + offer.url + ')', '(' + site.href + ')');
   write('llms.txt', llms);
@@ -79,6 +81,7 @@ function buildSurge({ siteUrl, recipient, output }) {
     .replace(offer.url + 'services/', servicesUrl)
     .replace(offer.url + 'agent-bill-audit/', auditUrl)
     .replace(offer.url + 'scraper-parser/', scraperUrl)
+    .replace(offer.url + 'receipts/', receiptsUrl)
     .replace(offer.url + 'lab-notes/', notesUrl)
     .replace(offer.url, site.href));
 }

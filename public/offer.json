@@ -167,6 +167,7 @@
     }
   },
   "ledger_url": "/ledger.json",
+  "receipts_url": "/receipts/",
   "services": [
     {
       "id": "pipeline-research",

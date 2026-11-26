@@ -36,6 +36,8 @@ For an agreed marketplace batch of 20 accepted paid rows, pay once: [forward the
 
 ## Public ledger
 
+[Receipts and samples](https://phantompipe.com/receipts/): Dated delivery ledger, anonymized case notes, and redacted examples of delivered work.
+
 [ledger.json](/ledger.json): $0 USD in revenue from outside buyers, test payments only, and 0 outside-buyer jobs agreed / 0 completed.
 
 ## Services and quoting

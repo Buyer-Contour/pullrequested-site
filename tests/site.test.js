@@ -38,6 +38,36 @@ test('public assets and payment fragments use the Phantom Pipe brand', () => {
   assert.ok(read('public/sitemap.xml').includes('<loc>https://phantompipe.com/quote</loc>'));
 });
 
+test('the receipts ledger is discoverable, dated, and reflects the anonymized samples', () => {
+  const path = '/receipts/';
+  const url = 'https://phantompipe.com' + path;
+  const page = read('public/receipts/index.html');
+  for (const entry of ['public/index.html', 'public/services/index.html']) {
+    assert.ok(read(entry).includes(`href="${path}"`), entry);
+  }
+  assert.equal(JSON.parse(read('public/offer.json')).receipts_url, path);
+  assert.ok(read('public/llms.txt').includes(`(${url})`));
+  assert.ok(read('public/sitemap.xml').includes(`<loc>${url}</loc>`));
+  for (const [label, value] of [
+    ['Paid orders', '0'], ['Revenue', '$0 USD'], ['Free samples delivered', '2'],
+    ['Rows accepted', '3 of 3 on the one sample reviewed'], ['Rows rejected', '0'], ['Refunds', '0'],
+  ]) assert.ok(page.includes(`<dt>${label}</dt><dd>${value}</dd>`), label);
+  const times = [...page.matchAll(/datetime="(2026-[^"]+T[^"]+Z)"/g)].map(([, time]) => Date.parse(time));
+  const [firstRequest, firstDelivery, acceptance, secondRequest, secondDelivery] = times;
+  assert.equal(times.length, 5);
+  assert.ok(acceptance > firstDelivery);
+  const medianMinutes = Math.round((firstDelivery - firstRequest + secondDelivery - secondRequest) / 120_000);
+  assert.ok(page.includes(`Median request-to-delivery time</dt><dd>${Math.floor(medianMinutes / 60)} hour ${medianMinutes % 60} minutes`));
+  const rows = page.split('id="sample-heading"')[1].match(/<article class="note">[\s\S]*?<\/article>/g);
+  assert.equal(rows.length, 3);
+  for (const row of rows) {
+    assert.match(row, /Price observed 2026-11-26/);
+    assert.match(row, /Dated evidence/);
+    for (const claim of row.match(/<li>.*?<\/li>/g)) assert.match(claim, /Last checked: 2026-11-26/);
+  }
+  assert.doesNotMatch(page, /cinnabar|plot 64|aethergrid|thecolony\.ai|clay/i);
+});
+
 test('the fixed-price catalog and agent discovery agree with the Stripe Checkout products', async () => {
   const { microserviceFor } = await import('../lib/payments/quotes.mjs');
   const { fixed_price_services: catalog } = JSON.parse(read('public/offer.json'));
@@ -325,6 +355,9 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.deepEqual(offer.fixed_price_services.services, expectedServices);
   assert.ok(llms.includes('(' + offer.fixed_price_services.url + ')'));
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.fixed_price_services.url + '</loc>'));
+  assert.equal(asset(offer.receipts_url.slice(1) + 'index.html'), read('public/receipts/index.html'));
+  assert.ok(llms.includes('(' + siteUrl + 'receipts/)'));
+  assert.ok(asset('sitemap.xml').includes('<loc>' + siteUrl + 'receipts/</loc>'));
   assert.ok(asset('lab-notes/index.html').includes('href="/quote/"'));
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
   assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));
