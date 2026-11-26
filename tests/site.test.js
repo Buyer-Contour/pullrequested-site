@@ -317,7 +317,12 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(asset('sitemap.xml').includes('<loc>' + siteUrl + 'lab-notes/</loc>'));
   assert.equal(offer.fixed_price_services.url, siteUrl + 'services/');
   assert.equal(offer.fixed_price_services.intake.url, offer.contact.url);
-  assert.deepEqual(offer.fixed_price_services.services, canonicalOffer.fixed_price_services.services);
+  const expectedServices = canonicalOffer.fixed_price_services.services.map((service) => (
+    service.page_url && service.page_url.startsWith(canonicalOffer.url)
+      ? { ...service, page_url: new URL(service.page_url.slice(canonicalOffer.url.length), siteUrl).href }
+      : service
+  ));
+  assert.deepEqual(offer.fixed_price_services.services, expectedServices);
   assert.ok(llms.includes('(' + offer.fixed_price_services.url + ')'));
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.fixed_price_services.url + '</loc>'));
   assert.ok(asset('lab-notes/index.html').includes('href="/quote/"'));

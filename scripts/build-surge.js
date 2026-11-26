@@ -44,6 +44,11 @@ function buildSurge({ siteUrl, recipient, output }) {
   offer.contact.url = quoteUrl;
   offer.fixed_price_services.url = servicesUrl;
   offer.fixed_price_services.intake.url = quoteUrl;
+  for (const service of offer.fixed_price_services.services || []) {
+    if (service.page_url && service.page_url.startsWith(offer.url)) {
+      service.page_url = new URL(service.page_url.slice(offer.url.length), site).href;
+    }
+  }
   Object.assign(offer.quote_request, {
     url: inboxJson,
     content_type: 'application/json',
