@@ -12,11 +12,11 @@ To submit a request programmatically, POST to https://phantompipe.com/quote with
 
 [Browse fixed-price services](https://phantompipe.com/services/). Pay through the selected service's Stripe Checkout link; no custom quote is required. After payment, send the service name, checkout email, and brief to dane@phantompipe.com or through [the project inquiry form](https://phantompipe.com/quote). In the form, use the closest category or `not-sure`. Do not send card details. Delivery is within 48 hours after Phantom Pipe receives the brief. One revision is included; if Phantom Pipe does not deliver, the payment is refunded.
 
-- [ICP lead list](https://phantompipe.com/q/icp-lead-list?v=svc-icp-lead-list) — $149 USD. 50 leads with an email address, a LinkedIn URL, and a sourced reason each lead is high-signal.
-- [CRM dedupe + enrichment](https://phantompipe.com/q/crm-dedupe-enrichment?v=svc-crm-dedupe-enrichment) — $199 USD. Send a CSV of up to 2,000 records. Get a deduplicated, enriched CSV and a change log.
-- [Competitor teardown](https://phantompipe.com/q/competitor-teardown?v=svc-competitor-teardown) — $99 USD. Analyze 3 competitors with dated pricing and launch evidence. Every claim includes a source link.
-- [Podcast & newsletter placement list](https://phantompipe.com/q/podcast-newsletter-placement?v=svc-podcast-newsletter-placement) — $79 USD. 20 targets in your niche, with a recent episode or issue cited and the submission route for each.
-- [Local business review replies](https://phantompipe.com/q/local-business-review-replies?v=svc-local-business-review-replies) — $49 USD. 30 drafted Google review replies and 4 drafted Google Business Profile posts. You review and publish them.
+- [ICP lead list](https://phantompipe.com/q/icp-lead-list?v=svc-icp-lead-list) — $14 USD. 50 leads with an email address, a LinkedIn URL, and a sourced reason each lead is high-signal.
+- [CRM dedupe + enrichment](https://phantompipe.com/q/crm-dedupe-enrichment?v=svc-crm-dedupe-enrichment) — $28 USD. Send a CSV of up to 2,000 records. Get a deduplicated CSV with missing company fields filled for up to 500 companies, plus a change log.
+- [Competitor teardown](https://phantompipe.com/q/competitor-teardown?v=svc-competitor-teardown) — $2 USD. Analyze 3 competitors with dated pricing and launch evidence. Every claim includes a source link.
+- [Podcast & newsletter placement list](https://phantompipe.com/q/podcast-newsletter-placement?v=svc-podcast-newsletter-placement) — $2 USD. 20 targets in your niche, with a recent episode or issue cited and the submission route for each.
+- [Local business review replies](https://phantompipe.com/q/local-business-review-replies?v=svc-local-business-review-replies) — $1 USD. 30 drafted Google review replies and 4 drafted Google Business Profile posts. You review and publish them.
 
 ## Evidence brief, priced per accepted row
 
@@ -44,7 +44,7 @@ For an agreed marketplace batch of 20 accepted paid rows, pay once: [forward the
 
 The published service samples each include five example accounts, dated primary-source links, a CSV, and a receipt that lists gaps first. Samples don't count toward paid acceptance.
 
-Outside the evidence brief and fixed-price services, paid account-row work is $5 USD per accepted row. Agree on scope, required fields, row count, and maximum spend in an issued quote before paying; other custom work is quoted separately. The buyer has 72 hours after delivery of the CSV and receipt to check account scope, required fields, and primary-source evidence. Missing or rejected rows that aren't replaced aren't charged, or are refunded if prepaid. Optional gaps don't reject a row.
+Outside the evidence brief and fixed-price services, paid account-row work is $0.25 USD per accepted row. Agree on scope, required fields, row count, and maximum spend in an issued quote before paying; other custom work is quoted separately. The buyer has 72 hours after delivery of the CSV and receipt to check account scope, required fields, and primary-source evidence. Missing or rejected rows that aren't replaced aren't charged, or are refunded if prepaid. Optional gaps don't reject a row.
 
 ## Research
 
