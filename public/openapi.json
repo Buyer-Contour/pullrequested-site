@@ -48,6 +48,34 @@
       },
       "head": {"summary":"Read response headers", "responses":{"200":{"description":"Alias for /services/"}}}
     },
+    "/agent-bill-audit/": {
+      "get": {
+        "summary": "Fixed-price AI agent API and hosting bill audit offer",
+        "responses": {"200":{"description":"Offer terms, card link, and brief instructions.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Bill audit offer page."}}}
+    },
+    "/agent-bill-audit": {
+      "get": {
+        "summary": "Alias for /agent-bill-audit/",
+        "responses": {"200":{"description":"Bill audit offer page.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Bill audit offer page."}}}
+    },
+    "/scraper-parser/": {
+      "get": {
+        "summary": "Fixed-price scraper and parser offer",
+        "responses": {"200":{"description":"Offer terms, card link, and five-row sample instructions.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Scraper and parser offer page."}}}
+    },
+    "/scraper-parser": {
+      "get": {
+        "summary": "Alias for /scraper-parser/",
+        "responses": {"200":{"description":"Scraper and parser offer page.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Scraper and parser offer page."}}}
+    },
     "/lab-notes/": {
       "get": {
         "summary": "Phantom Pipe lab notes",

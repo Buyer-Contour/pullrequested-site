@@ -36,7 +36,8 @@ test('API and MCP discovery assets agree with the public site routes', async () 
     ['/docs/', '/openapi.json', '/.well-known/mcp.json', '/', '/llms.txt', '/sitemap.xml'].map((path) => get(path)),
   );
   for (const result of [docs, openapi, card, home, llms, sitemap]) assert.equal(result.status, 200);
-  assert.match(await docs.text(), /API &amp; <em>MCP docs/);
+  const docsHtml = await docs.text();
+  assert.match(docsHtml, /API &amp; <em>MCP docs/);
   for (const result of [openapi, card]) assert.match(result.headers.get('Content-Type'), /^application\/json/);
   const spec = await openapi.json();
   assert.match(spec.openapi, /^3\.1\./);
@@ -45,6 +46,14 @@ test('API and MCP discovery assets agree with the public site routes', async () 
     '/api/mpp/pay': ['get'], '/api/stripe-webhook': ['post'], '/api/stats/variants': ['get'] };
   for (const [path, verbs] of Object.entries(methods)) {
     for (const verb of verbs) assert.ok(spec.paths[path][verb].responses);
+  }
+  for (const { page_url } of offer.fixed_price_services.services.filter((item) => item.page_url)) {
+    const page = new URL(page_url).pathname;
+    assert.ok(docsHtml.includes(`href="${page}"`));
+    for (const path of [page, page.slice(0, -1)]) {
+      assert.ok(spec.paths[path].get.responses[200]);
+      assert.ok(spec.paths[path].head.responses[200]);
+    }
   }
   assert.deepEqual((await card.json()).remotes, [{ type: mcp.transport, url: mcp.url }]);
   const homepage = await home.text();
@@ -209,11 +218,18 @@ test('Cloudflare serves the homepage, quote form, and agent discovery with the e
   assert.equal((await get('/nonexistent')).status, 404);
 });
 
-test('Cloudflare serves the fixed-price catalog at both directory paths', async () => {
-  for (const path of ['/services', '/services/']) {
+test('Cloudflare serves the fixed-price catalog and dedicated offer pages at both directory paths', async () => {
+  for (const [path, heading] of [
+    ['/services', /Fixed-price services — Phantom Pipe/],
+    ['/services/', /Fixed-price services — Phantom Pipe/],
+    ['/agent-bill-audit', /AI agent API &amp; hosting bill audit — Phantom Pipe/],
+    ['/agent-bill-audit/', /AI agent API &amp; hosting bill audit — Phantom Pipe/],
+    ['/scraper-parser', /Fixed-price scraper \/ parser job — Phantom Pipe/],
+    ['/scraper-parser/', /Fixed-price scraper \/ parser job — Phantom Pipe/],
+  ]) {
     const response = await get(path);
     assert.equal(response.status, 200);
-    assert.match(await response.text(), /Fixed-price services — Phantom Pipe/);
+    assert.match(await response.text(), heading);
   }
 });
 
