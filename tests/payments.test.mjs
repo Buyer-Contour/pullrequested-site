@@ -87,13 +87,13 @@ test('quotes bind every field and expire even on their exact deadline', () => {
   assert.throws(() => quoteAt('Consulting', 24 * 60 * 60), /Invalid quote/);
 });
 
-test('a ten-cent quote offers only Tempo MPP and cannot reserve a Stripe payment', async () => {
-  const { token, quote } = makeQuote({ amount_cents: 10, description: 'Evidence brief row' }, signingSecret, testNow);
+test('a five-cent quote offers only Tempo MPP and cannot reserve a Stripe payment', async () => {
+  const { token, quote } = makeQuote({ amount_cents: 5, description: 'Evidence brief row' }, signingSecret, testNow);
   const { handlers, entries, calls } = fixture();
   const page = await handlers.page(new Request(to('/q', token)));
   assert.equal(page.status, 200);
   const body = await page.text();
-  assert.match(body, /Total: \$0\.10 USD/);
+  assert.match(body, /Total: \$0\.05 USD/);
   assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
   assert.doesNotMatch(body, /\/api\/checkout|Continue to Stripe Checkout/);
 
@@ -123,10 +123,12 @@ test('the durable card link issues new fixed-price quotes without opening Checko
   const firstToken = new URL(first.headers.get('Location'), origin).pathname.slice(3);
   const quote = readQuote(firstToken, signingSecret, { now: testNow });
   assert.equal(quote.amount_cents, 100);
-  assert.equal(quote.description, '10-row evidence brief (10 accepted rows at $0.10 each)');
+  assert.equal(quote.description, '20-row evidence brief (20 accepted rows at $0.05 each)');
   const page = await handlers.page(new Request(to('/q', firstToken)));
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /Total: \$1\.00 USD.*Continue to Stripe Checkout/);
+  const body = await page.text();
+  assert.ok(body.includes(quote.description));
+  assert.match(body, /Total: \$1\.00 USD.*Continue to Stripe Checkout/);
 
   tick(24 * 60 * 60);
   assert.equal((await handlers.page(new Request(to('/q', firstToken)))).status, 410);
@@ -142,6 +144,7 @@ test('the durable card link issues new fixed-price quotes without opening Checko
   const checkout = await handlers.checkout(new Request(to('/api/checkout', laterToken), { method: 'POST' }));
   assert.equal(checkout.status, 303);
   assert.equal(calls.checkout[0].params.line_items[0].price_data.unit_amount, 100);
+  assert.equal(calls.checkout[0].params.line_items[0].price_data.product_data.name, quote.description);
   assert.equal((await handlers.page(new Request(to('/q', 'other-product')))).status, 400);
 });
 
@@ -213,11 +216,11 @@ test('the Netlify quote page renders with Tempo configured and no Stripe credent
     MPP_SECRET_KEY: 'test MPP secret at least 32 bytes',
   };
   t.after(() => { process.env = originalEnv; });
-  const { token } = makeQuote({ amount_cents: 10, description: 'Evidence brief row' }, signingSecret);
+  const { token } = makeQuote({ amount_cents: 5, description: 'Evidence brief row' }, signingSecret);
   const response = await netlifyQuotePage(new Request(to('/q', token)));
   assert.equal(response.status, 200);
   const body = await response.text();
-  assert.match(body, /Total: \$0\.10 USD/);
+  assert.match(body, /Total: \$0\.05 USD/);
   assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
   assert.doesNotMatch(body, /\/api\/checkout/);
 });

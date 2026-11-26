@@ -53,13 +53,13 @@
   },
   "evidence_brief": {
     "name": "Evidence brief, priced per accepted row",
-    "price": { "unit": "accepted_account_row", "currency": "USD", "amount_minor_per_row": 10 },
+    "price": { "unit": "accepted_account_row", "currency": "USD", "amount_minor_per_row": 5 },
     "sample": { "row_count": 3, "amount_minor": 0, "currency": "USD", "counts_toward_paid_rows": false },
     "scope": "One distinct account per row: a fit note, the owning role, one dated primary-source trigger (URL and date), a suggested opener, and explicit gaps. Research only; no outreach is sent.",
     "request": {
       "service": "pipeline-research",
       "brief": "Ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell.",
-      "before_work": "Try three sample rows free, with no payment or obligation. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total at $0.10 USD times the agreed row count."
+      "before_work": "Try three sample rows free, with no payment or obligation. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total at $0.05 USD times the agreed row count."
     },
     "acceptance": {
       "checked_by": "buyer_or_buyer_agent",
@@ -83,16 +83,16 @@
       "rail": "tempo_mpp",
       "quote_granularity": "one_per_accepted_paid_row",
       "funds_holder": "The buyer holds all funds through review; no deposit or escrow. At settlement funds go directly to Phantom Pipe.",
-      "amount": "$0.10 USD per accepted paid row, settled as a separate 0.10 OUSD payment on Tempo. Sample, missing, and unaccepted rows are not charged.",
+      "amount": "$0.05 USD per accepted paid row, settled as a separate 0.05 OUSD payment on Tempo. Sample, missing, and unaccepted rows are not charged.",
       "settlement": "Only after acceptance is final, Phantom Pipe issues a separate signed quote for each accepted paid row, payable only via Tempo MPP at /api/mpp/pay. Stripe's card minimum rules out Stripe for these quotes. Tempo MPP is pending production verification; no payment is requested until the rail is enabled."
     },
     "marketplace_payment": {
       "product_id": "evidence-brief-10",
-      "accepted_row_count": 10,
+      "accepted_row_count": 20,
       "price": { "amount_minor": 100, "currency": "USD" },
       "card_url": "https://phantompipe.com/q/evidence-brief-10",
       "mpp_url": "https://phantompipe.com/api/mpp/pay?product=evidence-brief-10",
-      "instructions": "Use one link to settle an agreed batch of 10 accepted paid rows, not the free sample. Each GET redirects to a fresh signed quote. MPP clients should follow the redirect and retry the final URL with the payment credential. If resuming payment, reuse that signed quote rather than reopening the listing link."
+      "instructions": "Use one link to settle an agreed batch of 20 accepted paid rows, not the free sample. Each GET redirects to a fresh signed quote. MPP clients should follow the redirect and retry the final URL with the payment credential. If resuming payment, reuse that signed quote rather than reopening the listing link."
     },
     "receipt_schema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

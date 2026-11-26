@@ -52,10 +52,10 @@ test('MPP requires an explicitly configured network and emits a quote-bound Temp
   assert.equal((await wrongQuote.json()).error, 'payment_not_verified');
 });
 
-test('separate ten-cent row quotes create distinct 0.10 OUSD Tempo challenges', async () => {
-  const { handler } = setup(createMppRail({ origin, recipient, secretKey, testnet: true, store: Store.memory() }));
+test('separate five-cent row quotes create distinct 0.05 OUSD challenges on Tempo mainnet', async () => {
+  const { handler } = setup(createMppRail({ origin, recipient, secretKey, testnet: false, store: Store.memory() }));
   const rows = ['row-1', 'row-2'].map((row) =>
-    makeQuote({ amount_cents: 10, description: `Evidence brief: ${row}` }, signingSecret));
+    makeQuote({ amount_cents: 5, description: `Evidence brief: ${row}` }, signingSecret));
   const challenges = [];
   for (const { token } of rows) {
     const response = await handler(request(token));
@@ -63,7 +63,8 @@ test('separate ten-cent row quotes create distinct 0.10 OUSD Tempo challenges', 
     const challenge = Challenge.fromResponse(response);
     assert.equal(challenge.method, 'tempo');
     assert.equal(challenge.request.currency.toLowerCase(), tempoOusd);
-    assert.equal(challenge.request.amount, '100000');
+    assert.equal(challenge.request.amount, '50000');
+    assert.equal(challenge.request.methodDetails.chainId, 4217);
     challenges.push(challenge);
   }
   assert.notEqual(challenges[0].id, challenges[1].id);
@@ -82,6 +83,7 @@ test('the durable MPP link redirects to a fixed-price quote for a 1.00 OUSD chal
   assert.equal(final.searchParams.has('product'), false);
   const quote = readQuote(final.searchParams.get('quote'), signingSecret);
   assert.equal(quote.amount_cents, 100);
+  assert.equal(quote.description, '20-row evidence brief (20 accepted rows at $0.05 each)');
   const challengeResponse = await handler(new Request(final));
   assert.equal(challengeResponse.status, 402);
   const challenge = Challenge.fromResponse(challengeResponse);
