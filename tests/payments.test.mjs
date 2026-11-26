@@ -148,11 +148,11 @@ test('the durable card link issues new fixed-price quotes without opening Checko
 test('fixed-price services use signed Stripe Checkout quotes and service-specific intake', async () => {
   const { handlers, calls, entries, webhookRequest } = fixture({ testMode: false });
   for (const [slug, amount, name] of [
-    ['icp-lead-list', 14_900, 'ICP lead list'],
-    ['crm-dedupe-enrichment', 19_900, 'CRM dedupe + enrichment'],
-    ['competitor-teardown', 9_900, 'Competitor teardown'],
-    ['podcast-newsletter-placement', 7_900, 'Podcast & newsletter placement list'],
-    ['local-business-review-replies', 4_900, 'Local business review replies'],
+    ['icp-lead-list', 1_400, 'ICP lead list'],
+    ['crm-dedupe-enrichment', 2_800, 'CRM dedupe + enrichment'],
+    ['competitor-teardown', 200, 'Competitor teardown'],
+    ['podcast-newsletter-placement', 200, 'Podcast & newsletter placement list'],
+    ['local-business-review-replies', 100, 'Local business review replies'],
   ]) {
     const tag = `v=svc-${slug}`;
     const opened = await handlers.page(new Request(`${to('/q', slug)}&${tag}&amount_cents=1`));

@@ -38,7 +38,7 @@ The first successful check establishes a baseline and reports `changed: false`. 
 
 ## Pricing
 
-**$0.01 per successfully checked page** when the Actor is published with pay-per-event pricing. Failed fetches aren't billed. To configure monetization, create only the `page-checked` event at $0.01 per event; don't add a separate dataset-item charge.
+**$0.002 per successfully checked page** when the Actor is published with pay-per-event pricing. Failed fetches aren't billed. To configure monetization, create only the `page-checked` event at $0.002 per event; don't add a separate dataset-item charge.
 
 ## Run locally
 
