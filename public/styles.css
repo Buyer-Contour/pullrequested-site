@@ -119,6 +119,7 @@ h3 { font-size: clamp(1.95rem, 3vw, 2.85rem); line-height: 1.03; letter-spacing:
 .notes-theses .note { border-top: 1px solid var(--line); padding-block: 1.35rem 0; }
 .notes-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .85rem 1.3rem; margin-top: 1.5rem; }
 .notes-actions .button { text-decoration: none; }
+.api-docs pre { max-width: 76ch; overflow-x: auto; padding: 1rem; border: 1px solid var(--line); font: .85rem/1.6 var(--mono); }
 
 @media (max-width: 64rem) {
   .hero { gap: 2rem; }

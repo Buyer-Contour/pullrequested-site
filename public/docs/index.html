@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API &amp; MCP documentation — Phantom Pipe</title>
+  <meta name="description" content="Find offers, request a free sample, and integrate Phantom Pipe quote intake and payments with HTTP or MCP.">
+  <meta name="theme-color" content="#f7f5ef">
+  <link rel="canonical" href="https://phantompipe.com/docs/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header wrap">
+    <a class="wordmark" href="/" aria-label="Phantom Pipe home"><img src="/favicon.svg" alt="" width="28" height="28">Phantom Pipe</a>
+    <nav aria-label="Main navigation"><a href="/services/">Fixed-price services</a><a href="/docs/" aria-current="page">API docs</a><a href="/quote">Project inquiries</a></nav>
+  </header>
+
+  <main class="wrap">
+    <article class="api-docs" aria-labelledby="headline">
+      <header class="notes-intro">
+        <p class="eyebrow"><span class="registration" aria-hidden="true">✳</span> Integration guide</p>
+        <h1 id="headline">API &amp; <em>MCP docs.</em></h1>
+        <p class="lede">Find a service, ask for a sample or a quote, and pay using the rail specified for your order. No Phantom Pipe account or API key is needed.</p>
+        <nav aria-label="On this page" class="notes-actions"><a class="text-link" href="/openapi.json">OpenAPI 3.1 <span aria-hidden="true">↗</span></a><a class="text-link" href="#quotes">Quotes</a><a class="text-link" href="#payments">Payments</a><a class="text-link" href="#mcp">MCP</a><a class="text-link" href="#errors">Limits and errors</a></nav>
+      </header>
+
+      <section class="notes-section notes-prose" aria-labelledby="quotes">
+        <p class="eyebrow">01 / Intake</p>
+        <h2 id="quotes">Find an offer. Send a brief.</h2>
+        <p>Read <a href="/offer.json">offer.json</a> for prices, deliverables, acceptance criteria, and links. Fixed-price services already have Stripe Checkout links. For scoped work, send a brief and wait for a reply with the terms and, when applicable, a signed quote. For the free sample, ask for three evidence-brief rows and include your target accounts or criteria and roles.</p>
+        <pre><code>curl -fsS https://phantompipe.com/offer.json
+
+# This POST sends a real inquiry. Replace the example fields first.
+curl -i https://phantompipe.com/quote \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Your name","email":"you@example.com","service":"pipeline-research","brief":"Please send the three free evidence-brief sample rows for our target accounts: …"}'
+
+# Replace with the status_url returned by POST /quote.
+curl -i 'https://phantompipe.com/quote/status/REQUEST_ID'</code></pre>
+        <p>A successful POST returns <code>202 Accepted</code> and a receipt: <code>request_id</code>, <code>status: "received"</code>, <code>response_window: 48</code> (hours), and <code>status_url</code>. The receipt is available for up to 30 days and confirms intake only. Replies go to the supplied email; there is no endpoint for retrieving a signed quote by request ID.</p>
+        <p>Supported <code>service</code> values are <code>pipeline-research</code>, <code>gtm-data-ops</code>, <code>outbound-systems</code>, <code>gtm-automation</code>, and <code>not-sure</code>. <code>company</code> is optional. For form-encoded requests include <code>form-name=quote</code> and <code>Accept: application/json</code> to get a receipt. Do not send card details or confidential data.</p>
+      </section>
+
+      <section class="notes-section notes-prose" aria-labelledby="payments">
+        <p class="eyebrow">02 / Settlement</p>
+        <h2 id="payments">Pay an issued quote.</h2>
+        <p><strong>Stripe Checkout:</strong> Open the published card link for a fixed-price service, or use the issued <code>/q/{signed_quote_token}</code> link for an eligible custom quote. Follow the page to Stripe Checkout and keep the Stripe receipt. After payment for a fixed-price service, send the service name, checkout email, and brief.</p>
+        <pre><code>curl -i 'https://phantompipe.com/q/SIGNED_QUOTE_TOKEN'
+
+# For a Stripe-eligible quote, creates or resumes Checkout; does not charge.
+curl -i -X POST 'https://phantompipe.com/api/checkout?quote=SIGNED_QUOTE_TOKEN'</code></pre>
+        <p><strong>Tempo MPP:</strong> For a quote that specifies MPP, fetch the signed payment URL to obtain a <code>402</code> challenge in <code>WWW-Authenticate</code>. An MPP-compatible Tempo wallet signs a credential. Retry the same signed URL with <code>Authorization: Payment …</code>. A successful settlement returns <code>200</code>, a JSON receipt, and <code>Payment-Receipt</code>. MPP can be unavailable (<code>503</code>); never switch rails without confirming which your quote permits.</p>
+        <pre><code>curl -i 'https://phantompipe.com/api/mpp/pay?quote=SIGNED_QUOTE_TOKEN'
+
+# This retry can settle a real payment. Only use a buyer-approved credential.
+curl -i 'https://phantompipe.com/api/mpp/pay?quote=SIGNED_QUOTE_TOKEN' \
+  -H 'Authorization: Payment MPP_CREDENTIAL'</code></pre>
+        <p>If the published MPP link has <code>?product=</code>, the first request redirects to a freshly signed URL. Save that URL and use it for the challenge, retry, or resume. Do not reopen the listing to resume, and do not send a credential to the listing URL. The evidence-brief marketplace batch is for agreed, accepted rows, not the free sample.</p>
+        <p><strong>Stripe agent payments:</strong> On an eligible quote, <code>GET /api/pay?quote=…</code> returns a <code>quote-pay-v1</code> challenge. The challenge specifies the nonce and accepted Stripe token types. POST one eligible Stripe token and the nonce; then redeem the resulting PaymentIntent ID with <code>X-PAYMENT</code> as shown in the <a href="/openapi.json">OpenAPI reference</a>. Never POST raw card data.</p>
+        <p><strong>x402:</strong> Not supported as a payment rail. The <a href="/.well-known/x402.json">legacy manifest</a> lists free resources only. Neither MPP nor the Stripe agent <code>402</code> challenge is x402. Quote tokens and payment credentials authorize payment operations; treat them as private. There is no standalone payment-status endpoint. Use the receipt from the payment rail, not the intake receipt or the Checkout return page.</p>
+      </section>
+
+      <section class="notes-section notes-prose" aria-labelledby="mcp">
+        <p class="eyebrow">03 / Model Context Protocol</p>
+        <h2 id="mcp">Connect an MCP client.</h2>
+        <p>Use <a href="/mcp">https://phantompipe.com/mcp</a> with the stateless Streamable HTTP transport. No authentication, session ID, or server event stream is required. A Streamable HTTP client sends JSON-RPC requests by POST and receives JSON responses. The <a href="/.well-known/mcp.json">server card</a> provides the endpoint for discovery.</p>
+        <p><strong>Cursor with native remote MCP:</strong> add this entry to your <code>mcpServers</code> config.</p>
+        <pre><code>{
+  "mcpServers": {
+    "phantom-pipe": {
+      "url": "https://phantompipe.com/mcp"
+    }
+  }
+}</code></pre>
+        <p><strong>Claude Desktop or Cursor via a local bridge:</strong> if you use a local command-based MCP config, add this entry to <code>mcpServers</code>. It requires Node.js and <code>npx</code>.</p>
+        <pre><code>{
+  "mcpServers": {
+    "phantom-pipe": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://phantompipe.com/mcp"]
+    }
+  }
+}</code></pre>
+        <p><strong>Generic HTTP client:</strong> send <code>initialize</code>, then <code>notifications/initialized</code>, and use the negotiated <code>MCP-Protocol-Version</code> header with <code>tools/list</code> and <code>tools/call</code>. The endpoint accepts one message per request. Use <code>Content-Type: application/json</code> and <code>Accept: application/json, text/event-stream</code>. GET returns <code>405</code> because the server does not offer an event stream.</p>
+        <pre><code>curl -fsS https://phantompipe.com/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"example","version":"1.0"}}}'</code></pre>
+        <ul>
+          <li><code>list_offers</code> and <code>get_offer</code>: read prices, samples, deliverables, and available payment links.</li>
+          <li><code>submit_brief</code>: with buyer permission, send the same inquiry as <code>POST /quote</code>. To request the free sample, choose <code>pipeline-research</code> and ask for the three free rows in the brief.</li>
+          <li><code>get_quote_request_status</code>: check whether an intake receipt is still available.</li>
+          <li><code>get_quote_payment_links</code>: build links for an already-issued quote token; does not issue or validate a token, initiate payment, or check settlement.</li>
+        </ul>
+      </section>
+
+      <section class="notes-section notes-prose" aria-labelledby="errors">
+        <p class="eyebrow">04 / Operational details</p>
+        <h2 id="errors">Limits, errors, and related APIs.</h2>
+        <p>The application does not set a requests-per-minute limit for these endpoints. Quote intake accepts up to 32 KiB per request; MCP accepts up to 64 KiB. The Stripe agent payment POST parses JSON bodies up to 2,048 characters. Hosts and payment providers may enforce their own limits.</p>
+        <p>Intake returns <code>400</code> for invalid fields, <code>413</code> for a body over the limit, <code>415</code> for unsupported content types, and <code>502</code> if intake cannot confirm forwarding. A <code>503</code> with a <code>request_id</code> means the brief was forwarded but the receipt could not be saved; contact <a href="mailto:dane@phantompipe.com">dane@phantompipe.com</a> with that ID rather than submitting again. An invalid or expired receipt returns <code>404</code>.</p>
+        <p>In payment flows <code>402</code> can be a challenge or a rejected payment, <code>409</code> means paid, reserved, or replayed, <code>410</code> means the quote expired or is too close to expiry, and <code>422</code> indicates the wrong rail. Save the final signed URL and any payment receipt; don’t open a fresh listing or retry a charge blindly. MCP distinguishes protocol errors (<code>error</code>) from tool failures (<code>result.isError</code>).</p>
+        <p>The separate <a href="https://rapidapi.com/phantompipe/api/pricing-page-change-monitor">Pricing Page Change Monitor</a> uses RapidAPI authentication and plan limits. It is not a Phantom Pipe MCP tool.</p>
+      </section>
+    </article>
+  </main>
+  <footer class="site-footer wrap">
+    <span>Phantom Pipe · Experimental go-to-market agent</span>
+    <nav aria-label="Integration resources"><a href="/offer.json">Offer catalog</a><a href="/openapi.json">OpenAPI</a><a href="/.well-known/mcp.json">MCP server card</a></nav>
+  </footer>
+</body>
+</html>

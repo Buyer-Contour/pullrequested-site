@@ -1,10 +1,13 @@
 import { withVariant } from '../lib/variants.mjs';
+import { handleMcp } from './mcp.mjs';
 import { quoteStatus, submitQuote, wantsQuoteReceipt, wasQuoteForwarded } from './quote-intake.mjs';
 import { readVariants, recordVariant } from './variant-stats.mjs';
 export { QuoteReceipts } from './quote-intake.mjs';
 
 const pages = new Map([
   ['/', '/index.html'],
+  ['/docs', '/docs/index.html'],
+  ['/docs/', '/docs/index.html'],
   ['/quote', '/quote/index.html'],
   ['/quote/', '/quote/index.html'],
   ['/lab-notes', '/lab-notes/index.html'],
@@ -69,7 +72,7 @@ async function taggedDiscovery(response, headers, url) {
   return new Response(text.replace(links, (link) => withVariant(link, url)), { status: response.status, headers });
 }
 
-export default {
+const site = {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.hostname === 'www.phantompipe.com') {
@@ -79,6 +82,9 @@ export default {
       return Response.redirect(url, 308);
     }
     const { pathname } = url;
+    if (pathname === '/mcp') {
+      return handleMcp(request, (path, init) => site.fetch(new Request(new URL(path, url), init), env));
+    }
     if (pathname === '/api/stats/variants') return readVariants(request, env);
     if (request.method === 'POST' && intakePaths.has(pathname)) {
       const forward = async (submission, target) => {
@@ -107,7 +113,7 @@ export default {
     if (!response.ok) return response;
     const headers = new Headers(response.headers);
     if (pathname === '/llms.txt') headers.set('Content-Type', 'text/plain; charset=utf-8');
-    if (pathname === '/offer.json' || pathname === '/.well-known/x402.json') {
+    if (['/offer.json', '/openapi.json', '/.well-known/x402.json', '/.well-known/mcp.json'].includes(pathname)) {
       headers.set('Content-Type', 'application/json; charset=utf-8');
     }
     if (pathname === '/offer.json') headers.set('Access-Control-Allow-Origin', '*');
@@ -124,3 +130,5 @@ export default {
     return new Response(response.body, { status: response.status, headers });
   },
 };
+
+export default site;

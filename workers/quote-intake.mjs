@@ -1,7 +1,7 @@
 const responseWindowHours = 48;
 const receiptLifetimeMs = 30 * 24 * 60 * 60 * 1000;
 const maxQuoteBodyBytes = 32 * 1024;
-const services = new Set(['pipeline-research', 'gtm-data-ops', 'outbound-systems', 'gtm-automation', 'not-sure']);
+export const quoteServices = Object.freeze(['pipeline-research', 'gtm-data-ops', 'outbound-systems', 'gtm-automation', 'not-sure']);
 const receiptPath = '/quote/status/';
 
 function mediaType(request) {
@@ -85,7 +85,7 @@ export async function submitQuote(request, env, forward) {
       if (typeof value !== 'string') throw new Error();
       fields.set(key, value.trim());
     }
-    if (!fields.get('name') || !fields.get('brief') || !services.has(fields.get('service')) ||
+    if (!fields.get('name') || !fields.get('brief') || !quoteServices.includes(fields.get('service')) ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.get('email')) || fields.get('bot-field')) throw new Error();
   } catch {
     return json({ error: 'Provide a name, reply-to email, supported service, and brief.' }, 400);
