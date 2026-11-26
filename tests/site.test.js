@@ -148,7 +148,7 @@ test('the evidence brief publishes its sample, buyer checks and post-acceptance 
   const home = read('public/index.html');
   const { price, sample, request, acceptance, payment, receipt_schema: receipt } = brief;
 
-  assert.deepEqual(price, { unit: 'accepted_account_row', currency: 'USD', amount_minor_per_row: 10 });
+  assert.deepEqual(price, { unit: 'accepted_account_row', currency: 'USD', amount_minor_per_row: 5 });
   assert.deepEqual(sample, { row_count: 3, amount_minor: 0, currency: 'USD', counts_toward_paid_rows: false });
   assert.ok(intake.fields.service.enum.includes(request.service));
   assert.match(request.before_work, /agree in writing.*maximum total/);
@@ -171,7 +171,7 @@ test('the evidence brief publishes its sample, buyer checks and post-acceptance 
   assert.deepEqual(row.required, ['account_domain', 'fit_note', 'owning_role', 'role_source_url', 'trigger', 'opener']);
   assert.deepEqual(row.properties.trigger.required, ['summary', 'source_url', 'date']);
 
-  for (const copy of [home, llms]) assert.ok(copy.includes('$0.10 USD per accepted row'));
+  for (const copy of [home, llms]) assert.ok(copy.includes('$0.05 USD per accepted row'));
   for (const phrase of ['3 rows free', '90 calendar days', '48 hours', '24 hours', '/api/mpp/pay', 'a separate signed quote for each accepted paid row', "Stripe's card minimum"]) {
     assert.ok(llms.includes(phrase), phrase);
   }
@@ -191,7 +191,10 @@ test('the linked public ledger separates test payments from outside-buyer work',
 test('marketplace payment discovery publishes the durable routes and fixed batch price', () => {
   const { evidence_brief: { marketplace_payment: batch, price }, url } = JSON.parse(read('public/offer.json'));
   const llms = read('public/llms.txt');
-  assert.equal(batch.accepted_row_count, 10);
+  assert.equal(batch.product_id, 'evidence-brief-10');
+  assert.equal(batch.accepted_row_count, 20);
+  assert.match(batch.instructions, /20 accepted paid rows/);
+  assert.match(llms, /20 accepted paid rows/);
   assert.deepEqual(batch.price, { amount_minor: 100, currency: 'USD' });
   assert.equal(batch.price.amount_minor, batch.accepted_row_count * price.amount_minor_per_row);
   assert.equal(batch.card_url, new URL(`/q/${batch.product_id}`, url).href);
@@ -257,7 +260,7 @@ test('offer and llms document issued-quote payment rails without claiming live a
   assert.deepEqual(offer.quote_payment, quote_payment);
   assert.equal(offer.quote_payment.agent_mpp.status, 'pending');
   assert.ok(!('agent_usdc' in offer.quote_payment));
-  assert.match(llms, /Individual \$0\.10 evidence brief quotes are Tempo MPP only/);
+  assert.match(llms, /Individual \$0\.05 evidence brief quotes are Tempo MPP only/);
   assert.match(llms, /Tempo MPP is pending production verification/);
   for (const rail of ['human', 'agent', 'agent_mpp']) {
     assert.ok(llms.includes(quote_payment[rail].url_template));
