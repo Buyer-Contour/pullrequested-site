@@ -19,6 +19,7 @@ function buildSurge({ siteUrl, recipient, output }) {
   const inboxJson = endpoint + '/ajax/' + address;
   const quoteUrl = new URL('/quote/', site).href;
   const notesUrl = new URL('/lab-notes/', site).href;
+  const servicesUrl = new URL('/services/', site).href;
   const thanksUrl = new URL('/thanks/', site).href;
 
   cpSync(source, output, { recursive: true });
@@ -39,6 +40,8 @@ function buildSurge({ siteUrl, recipient, output }) {
 
   offer.site_url = site.href;
   offer.contact.url = quoteUrl;
+  offer.fixed_price_services.url = servicesUrl;
+  offer.fixed_price_services.intake.url = quoteUrl;
   Object.assign(offer.quote_request, {
     url: inboxJson,
     content_type: 'application/json',
@@ -57,12 +60,14 @@ function buildSurge({ siteUrl, recipient, output }) {
     ].join(' '))
     .replaceAll(offer.url + 'offer.json', new URL('/offer.json', site).href)
     .replaceAll(offer.url + 'quote', quoteUrl)
+    .replace(offer.url + 'services/', servicesUrl)
     .replace(offer.url + 'lab-notes/', notesUrl)
     .replace('(' + offer.url + ')', '(' + site.href + ')');
   write('llms.txt', llms);
   write('robots.txt', read('robots.txt').replace(offer.url, site.href));
   write('sitemap.xml', read('sitemap.xml')
     .replace(offer.url + 'quote', quoteUrl)
+    .replace(offer.url + 'services/', servicesUrl)
     .replace(offer.url + 'lab-notes/', notesUrl)
     .replace(offer.url, site.href));
 }

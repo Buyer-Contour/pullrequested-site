@@ -9,7 +9,7 @@ const read = (path) => readFileSync(resolve(__dirname, '..', path), 'utf8');
 
 test('all public assets exist and are nonempty', () => {
   for (const path of [
-    'index.html', 'quote/index.html', 'thanks/index.html', 'styles.css', 'favicon.svg',
+    'index.html', 'quote/index.html', 'services/index.html', 'thanks/index.html', 'styles.css', 'favicon.svg',
     'fonts/newsreader-roman.woff2', 'fonts/newsreader-italic.woff2', 'fonts/OFL-Newsreader.txt',
     'offer.json', 'ledger.json', 'llms.txt', 'robots.txt', 'sitemap.xml',
     '.well-known/x402.json',
@@ -20,19 +20,44 @@ test('all public assets exist and are nonempty', () => {
 
 test('public assets and payment fragments use the Phantom Pipe brand', () => {
   for (const path of [
-    'public/index.html', 'public/quote/index.html', 'public/thanks/index.html',
+    'public/index.html', 'public/quote/index.html', 'public/services/index.html', 'public/thanks/index.html',
     'public/offer.json', 'public/llms.txt', 'public/.well-known/x402.json',
     'public/robots.txt', 'public/sitemap.xml',
     'docs/offer-payments.fragment.json', 'docs/llms-payments.fragment.txt',
   ]) {
     assert.doesNotMatch(read(path), /pullrequested/i, path);
   }
-  for (const path of ['index.html', 'quote/index.html', 'thanks/index.html']) {
+  for (const path of ['index.html', 'quote/index.html', 'services/index.html', 'thanks/index.html']) {
     assert.match(read(`public/${path}`), /aria-label="Phantom Pipe home"/, path);
   }
   assert.match(read('public/llms.txt'), /^# Phantom Pipe\n/);
   assert.ok(read('public/robots.txt').includes('Sitemap: https://phantompipe.com/sitemap.xml'));
   assert.ok(read('public/sitemap.xml').includes('<loc>https://phantompipe.com/quote</loc>'));
+});
+
+test('the fixed-price catalog and agent discovery agree with the Stripe Checkout products', async () => {
+  const { microserviceFor } = await import('../lib/payments/quotes.mjs');
+  const { fixed_price_services: catalog } = JSON.parse(read('public/offer.json'));
+  const services = read('public/services/index.html');
+  const llms = read('public/llms.txt');
+  assert.equal(catalog.url, 'https://phantompipe.com/services/');
+  assert.match(read('public/index.html'), /<nav[^>]*>.*href="\/services\/">Fixed-price services/);
+  assert.ok(read('public/sitemap.xml').includes(`<loc>${catalog.url}</loc>`));
+  assert.equal(catalog.services.length, 5);
+  assert.equal(catalog.delivery_hours_from_brief, 48);
+  assert.equal(catalog.revisions_included, 1);
+  assert.equal(catalog.refund_if_not_delivered, true);
+  for (const { id, name, price, deliverable, pay_url } of catalog.services) {
+    const displayName = name.replaceAll('&', '&amp;');
+    const displayPrice = '$' + price.amount_minor / 100;
+    assert.deepEqual(microserviceFor(id), { amount_cents: price.amount_minor, description: name });
+    assert.equal(price.currency, 'USD');
+    assert.equal(pay_url, `https://phantompipe.com/q/${id}?v=svc-${id}`);
+    assert.ok(services.includes(`<h3>${displayName}</h3>`));
+    assert.ok(services.includes(deliverable));
+    assert.ok(services.includes(`href="${pay_url}"`));
+    assert.ok(llms.includes(`[${name}](${pay_url}) — ${displayPrice} USD. ${deliverable}`));
+  }
 });
 
 test('offer and agent instructions match the Netlify form', () => {
@@ -275,6 +300,11 @@ test('Surge copy routes human and agent requests to FormSubmit', (t) => {
   assert.ok(asset('sitemap.xml').includes('<loc>' + offer.contact.url + '</loc>'));
   assert.ok(llms.includes('(' + siteUrl + 'lab-notes/)'));
   assert.ok(asset('sitemap.xml').includes('<loc>' + siteUrl + 'lab-notes/</loc>'));
+  assert.equal(offer.fixed_price_services.url, siteUrl + 'services/');
+  assert.equal(offer.fixed_price_services.intake.url, offer.contact.url);
+  assert.deepEqual(offer.fixed_price_services.services, canonicalOffer.fixed_price_services.services);
+  assert.ok(llms.includes('(' + offer.fixed_price_services.url + ')'));
+  assert.ok(asset('sitemap.xml').includes('<loc>' + offer.fixed_price_services.url + '</loc>'));
   assert.ok(asset('lab-notes/index.html').includes('href="/quote/"'));
   assert.ok(asset('robots.txt').includes('Sitemap: ' + siteUrl + 'sitemap.xml'));
   assert.equal(asset('.well-known/x402.json'), read('public/.well-known/x402.json'));

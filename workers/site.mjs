@@ -9,6 +9,8 @@ const pages = new Map([
   ['/quote/', '/quote/index.html'],
   ['/lab-notes', '/lab-notes/index.html'],
   ['/lab-notes/', '/lab-notes/index.html'],
+  ['/services', '/services/index.html'],
+  ['/services/', '/services/index.html'],
   ['/thanks', '/thanks/index.html'],
   ['/thanks/', '/thanks/index.html'],
 ]);
@@ -41,7 +43,7 @@ function asset(request, env, path, personalized) {
 function taggedPage(response, url) {
   const rewriter = new HTMLRewriter();
   if (url.pathname === '/') {
-    for (const path of ['/quote', '/offer.json', '/llms.txt']) {
+    for (const path of ['/quote', '/offer.json', '/llms.txt', '/services/']) {
       rewriter.on(`a[href="${path}"]`, { element: (el) => el.setAttribute('href', withVariant(path, url)) });
     }
   } else {
@@ -54,13 +56,16 @@ async function taggedDiscovery(response, headers, url) {
   if (url.pathname === '/offer.json') {
     const offer = await response.json();
     const payment = offer.evidence_brief.marketplace_payment;
-    for (const [section, key] of [[offer.quote_request, 'url'], [offer.contact, 'url'], [payment, 'card_url'], [payment, 'mpp_url']]) {
+    for (const [section, key] of [
+      [offer.quote_request, 'url'], [offer.contact, 'url'], [payment, 'card_url'], [payment, 'mpp_url'],
+      [offer.fixed_price_services, 'url'], [offer.fixed_price_services.intake, 'url'],
+    ]) {
       section[key] = withVariant(section[key], url);
     }
     return Response.json(offer, { status: response.status, headers });
   }
   const text = await response.text();
-  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|q\/evidence-brief-10|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
+  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|services\/|q\/evidence-brief-10|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
   return new Response(text.replace(links, (link) => withVariant(link, url)), { status: response.status, headers });
 }
 
