@@ -25,6 +25,15 @@ function get(path, init) {
   return site.fetch(new Request(origin + path, init), env);
 }
 
+test('Cloudflare serves the MCP Registry ownership proof as a plain-text Ed25519 record', async () => {
+  const response = await get('/.well-known/mcp-registry-auth', { headers: { Accept: 'text/plain', 'User-Agent': 'mcp-registry/1.0' } });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Content-Type'), 'text/plain; charset=utf-8');
+  const proof = (await response.text()).trim();
+  assert.match(proof, /^v=MCPv1; k=ed25519; p=[A-Za-z0-9+/]{43}=$/);
+  assert.equal(Buffer.from(proof.split('p=')[1], 'base64').length, 32);
+});
+
 test('API and MCP discovery assets agree with the public site routes', async () => {
   const offer = await (await get('/offer.json')).json();
   const { docs_url, openapi_url, mcp } = offer.integrations;
