@@ -108,3 +108,33 @@ test('MCP enforces transport and JSON-RPC rules without executing notifications'
   assert.equal(await notice.text(), '');
   assert.equal((await post(JSON.stringify({ jsonrpc: '2.0', id: 1, result: {} }))).status, 202);
 });
+
+test('MCP 2025-03-26 batches return only request responses and reject empty batches', async () => {
+  const fetch = workerFetch();
+  const notification = { jsonrpc: '2.0', method: 'notifications/initialized' };
+  const request = { jsonrpc: '2.0', id: 1, method: 'ping' };
+  const call = { jsonrpc: '2.0', id: 'offer', method: 'tools/call', params: { name: 'get_offer', arguments: { id: 'evidence-brief' } } };
+  const post = (entries, version = '2025-03-26') => fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'MCP-Protocol-Version': version },
+    body: JSON.stringify(entries),
+  });
+  const response = await post([notification, request, call, null]);
+  assert.equal(response.status, 200);
+  const [ping, offer, invalid, ...extra] = await response.json();
+  assert.deepEqual(ping, { jsonrpc: '2.0', id: 1, result: {} });
+  assert.equal(offer.id, 'offer');
+  assert.equal(offer.result.structuredContent.id, 'evidence-brief');
+  assert.equal(invalid.id, null);
+  assert.equal(invalid.error.code, -32600);
+  assert.deepEqual(extra, []);
+
+  const onlyNotifications = await post([notification, notification]);
+  assert.equal(onlyNotifications.status, 202);
+  assert.equal(await onlyNotifications.text(), '');
+  for (const [entries, version] of [[[], '2025-03-26'], [[request], '2025-06-18'], [[request], '2025-11-25']]) {
+    const rejected = await post(entries, version);
+    assert.equal(rejected.status, 400);
+    assert.equal((await rejected.json()).error.code, -32600);
+  }
+});

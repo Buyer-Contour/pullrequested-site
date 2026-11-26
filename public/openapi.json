@@ -864,7 +864,7 @@
       },
       "post": {
         "summary": "Send a stateless MCP JSON-RPC message",
-        "description": "Streamable HTTP with JSON responses only. Send Accept: application/json, text/event-stream. No session ID. Supported methods: initialize, notifications/initialized, ping, tools/list, tools/call. Quote intake is the only MCP action that sends an inquiry; no MCP tool pays or verifies settlement.",
+        "description": "Streamable HTTP with JSON responses only. Send Accept: application/json, text/event-stream. No session ID. Only protocol version 2025-03-26 accepts batches. Supported methods: initialize, notifications/initialized, ping, tools/list, tools/call. Quote intake is the only MCP action that sends an inquiry; no MCP tool pays or verifies settlement.",
         "parameters": [
           {
             "name": "MCP-Protocol-Version",
@@ -874,11 +874,20 @@
             "schema": {"type":"string", "enum":["2025-11-25", "2025-06-18", "2025-03-26"]}
           }
         ],
-        "requestBody": {"required":true, "content":{"application/json":{"schema":{"$ref":"#/components/schemas/RpcMessage"}}}},
+        "requestBody": {
+          "required": true,
+          "content": {"application/json":{"schema":{"oneOf":[
+            {"$ref":"#/components/schemas/RpcMessage"},
+            {"type":"array", "minItems":1, "items":{"$ref":"#/components/schemas/RpcMessage"}}
+          ]}}}
+        },
         "responses": {
           "200": {
             "description": "JSON-RPC result or method/parameter error.",
-            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
+            "content": {"application/json":{"schema":{"oneOf":[
+              {"$ref":"#/components/schemas/RpcResponse"},
+              {"type":"array", "minItems":1, "items":{"$ref":"#/components/schemas/RpcResponse"}}
+            ]}}}
           },
           "202": {"description":"Notification or JSON-RPC response accepted; no response body."},
           "400": {

@@ -46,8 +46,12 @@ const tools = [
   },
 ];
 
-function rpcError(id, code, message, status = 200) {
-  return Response.json({ jsonrpc: '2.0', id, error: { code, message } }, { status, headers });
+function rpcFailure(id, code, message) {
+  return { jsonrpc: '2.0', id, error: { code, message } };
+}
+
+function rpcError(id, code, message, status) {
+  return Response.json(rpcFailure(id, code, message), { status, headers });
 }
 
 function validArguments(args, schema) {
@@ -162,28 +166,48 @@ export async function handleMcp(request, siteRequest) {
   if (message === bodyTooLarge) {
     return rpcError(null, -32000, 'MCP body exceeds 64 KiB.', 413);
   }
+  if (Array.isArray(message)) {
+    if (version !== '2025-03-26' || !message.length) {
+      return rpcError(null, -32600, 'Invalid request.', 400);
+    }
+    const replies = [];
+    for (const entry of message) {
+      const reply = await dispatch(entry, siteRequest);
+      if (reply) replies.push(reply);
+    }
+    return replies.length
+      ? Response.json(replies, { headers })
+      : new Response(null, { status: 202, headers });
+  }
+  const reply = await dispatch(message, siteRequest);
+  return reply
+    ? Response.json(reply, { status: reply.error?.code === -32600 ? 400 : 200, headers })
+    : new Response(null, { status: 202, headers });
+}
+
+async function dispatch(message, siteRequest) {
   if (!object(message) || message.jsonrpc !== '2.0') {
-    return rpcError(null, -32600, 'Invalid request.', 400);
+    return rpcFailure(null, -32600, 'Invalid request.');
   }
   const { id, method, params } = message;
   const validId = typeof id === 'string' || Number.isSafeInteger(id);
   if (method === undefined && (validId || id === null)
     && ((object(message.result) && message.error === undefined)
       || (message.result === undefined && Number.isSafeInteger(message.error?.code) && typeof message.error.message === 'string'))) {
-    return new Response(null, { status: 202, headers });
+    return;
   }
   if (typeof method !== 'string' || !method || (Object.hasOwn(message, 'id') && !validId)
     || (id === undefined && params !== undefined && !object(params))) {
-    return rpcError(null, -32600, 'Invalid request.', 400);
+    return rpcFailure(null, -32600, 'Invalid request.');
   }
-  if (id === undefined) return new Response(null, { status: 202, headers });
-  if (params !== undefined && !object(params)) return rpcError(id, -32602, 'Invalid params.');
+  if (id === undefined) return;
+  if (params !== undefined && !object(params)) return rpcFailure(id, -32602, 'Invalid params.');
 
   let result;
   if (method === 'initialize') {
     if (typeof params?.protocolVersion !== 'string' || !object(params.capabilities)
       || typeof params.clientInfo?.name !== 'string' || typeof params.clientInfo?.version !== 'string') {
-      return rpcError(id, -32602, 'Invalid initialize params.');
+      return rpcFailure(id, -32602, 'Invalid initialize params.');
     }
     result = {
       protocolVersion: protocolVersions.includes(params.protocolVersion) ? params.protocolVersion : protocolVersions[0],
@@ -197,16 +221,16 @@ export async function handleMcp(request, siteRequest) {
     result = { tools };
   } else if (method === 'tools/call') {
     const tool = tools.find(({ name }) => name === params?.name);
-    if (!tool) return rpcError(id, -32602, 'Unknown tool.');
+    if (!tool) return rpcFailure(id, -32602, 'Unknown tool.');
     const args = params.arguments === undefined ? {} : params.arguments;
-    if (!validArguments(args, tool.inputSchema)) return rpcError(id, -32602, 'Invalid tool arguments.');
+    if (!validArguments(args, tool.inputSchema)) return rpcFailure(id, -32602, 'Invalid tool arguments.');
     try {
       result = await callTool(tool.name, args, siteRequest);
     } catch {
       result = toolResult({ error: 'The tool is temporarily unavailable.' }, true);
     }
   } else {
-    return rpcError(id, -32601, 'Method not found.');
+    return rpcFailure(id, -32601, 'Method not found.');
   }
-  return Response.json({ jsonrpc: '2.0', id, result }, { headers });
+  return { jsonrpc: '2.0', id, result };
 }
