@@ -25,6 +25,47 @@ function get(path, init) {
   return site.fetch(new Request(origin + path, init), env);
 }
 
+test('API and MCP discovery assets agree with the public site routes', async () => {
+  const offer = await (await get('/offer.json')).json();
+  const { docs_url, openapi_url, mcp } = offer.integrations;
+  assert.equal(docs_url, origin + '/docs/');
+  assert.equal(openapi_url, origin + '/openapi.json');
+  assert.equal(mcp.url, origin + '/mcp');
+  assert.equal(mcp.server_card_url, origin + '/.well-known/mcp.json');
+  const [docs, openapi, card, home, llms, sitemap] = await Promise.all(
+    ['/docs/', '/openapi.json', '/.well-known/mcp.json', '/', '/llms.txt', '/sitemap.xml'].map((path) => get(path)),
+  );
+  for (const result of [docs, openapi, card, home, llms, sitemap]) assert.equal(result.status, 200);
+  const docsHtml = await docs.text();
+  assert.match(docsHtml, /API &amp; <em>MCP docs/);
+  for (const result of [openapi, card]) assert.match(result.headers.get('Content-Type'), /^application\/json/);
+  const spec = await openapi.json();
+  assert.match(spec.openapi, /^3\.1\./);
+  const methods = { '/mcp': ['post'], '/quote': ['post'], '/quote/status/{request_id}': ['get'],
+    '/q/{quote_or_product}': ['get'], '/api/checkout': ['get', 'post'], '/api/pay': ['get', 'post'],
+    '/api/mpp/pay': ['get'], '/api/stripe-webhook': ['post'], '/api/stats/variants': ['get'] };
+  for (const [path, verbs] of Object.entries(methods)) {
+    for (const verb of verbs) assert.ok(spec.paths[path][verb].responses);
+  }
+  for (const { page_url } of offer.fixed_price_services.services.filter((item) => item.page_url)) {
+    const page = new URL(page_url).pathname;
+    assert.ok(docsHtml.includes(`href="${page}"`));
+    for (const path of [page, page.slice(0, -1)]) {
+      assert.ok(spec.paths[path].get.responses[200]);
+      assert.ok(spec.paths[path].head.responses[200]);
+    }
+  }
+  assert.deepEqual((await card.json()).remotes, [{ type: mcp.transport, url: mcp.url }]);
+  const homepage = await home.text();
+  const guide = await llms.text();
+  const sitemapXml = await sitemap.text();
+  for (const url of [docs_url, openapi_url, mcp.url]) {
+    assert.ok(homepage.includes(`href="${new URL(url).pathname}"`));
+    assert.ok(guide.includes(url));
+  }
+  for (const url of [docs_url, openapi_url, mcp.server_card_url]) assert.ok(sitemapXml.includes(`<loc>${url}</loc>`));
+});
+
 function withQuoteReceipts(paymentsState = stubStats) {
   const receipts = new Map();
   return (path, init) => site.fetch(new Request(origin + path, init), {

@@ -1,0 +1,10 @@
+{
+  "name": "phantom-pipe",
+  "title": "Phantom Pipe",
+  "description": "Find go-to-market services and prices, request a sample or quote, and look up an intake receipt.",
+  "version": "1.0.0",
+  "websiteUrl": "https://phantompipe.com/docs/",
+  "remotes": [
+    { "type": "streamable-http", "url": "https://phantompipe.com/mcp" }
+  ]
+}

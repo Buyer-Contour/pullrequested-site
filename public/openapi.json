@@ -1,0 +1,1076 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Phantom Pipe API",
+    "version": "1.0.0",
+    "description": "Public Phantom Pipe site, quote intake, signed quote and payment routes, and remote MCP. No account API key is required. Payment operations require a signed quote and provider payment credentials; the Stripe webhook requires a Stripe signature. The separately hosted Pricing Page Change Monitor uses RapidAPI authentication and limits."
+  },
+  "servers": [{"url":"https://phantompipe.com"}],
+  "externalDocs": {"description":"API guide and MCP client setup", "url":"https://phantompipe.com/docs/"},
+  "paths": {
+    "/": {
+      "parameters": [{"$ref":"#/components/parameters/Variant"}],
+      "get": {
+        "summary": "Phantom Pipe homepage",
+        "responses": {"200":{"description":"Phantom Pipe homepage", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Phantom Pipe homepage"}}}
+    },
+    "/docs/": {
+      "get": {
+        "summary": "Human-readable API and MCP documentation",
+        "responses": {
+          "200": {"description":"Human-readable API and MCP documentation", "content":{"text/html":{"schema":{"type":"string"}}}}
+        }
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Human-readable API and MCP documentation"}}}
+    },
+    "/docs": {
+      "get": {
+        "summary": "Alias for /docs/",
+        "responses": {"200":{"description":"Alias for /docs/", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Alias for /docs/"}}}
+    },
+    "/services/": {
+      "get": {
+        "summary": "Fixed-price services with Checkout links",
+        "responses": {
+          "200": {"description":"Fixed-price services with Checkout links", "content":{"text/html":{"schema":{"type":"string"}}}}
+        }
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Fixed-price services with Checkout links"}}}
+    },
+    "/services": {
+      "get": {
+        "summary": "Alias for /services/",
+        "responses": {"200":{"description":"Alias for /services/", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Alias for /services/"}}}
+    },
+    "/agent-bill-audit/": {
+      "get": {
+        "summary": "Fixed-price AI agent API and hosting bill audit offer",
+        "responses": {"200":{"description":"Offer terms, card link, and brief instructions.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Bill audit offer page."}}}
+    },
+    "/agent-bill-audit": {
+      "get": {
+        "summary": "Alias for /agent-bill-audit/",
+        "responses": {"200":{"description":"Bill audit offer page.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Bill audit offer page."}}}
+    },
+    "/scraper-parser/": {
+      "get": {
+        "summary": "Fixed-price scraper and parser offer",
+        "responses": {"200":{"description":"Offer terms, card link, and five-row sample instructions.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Scraper and parser offer page."}}}
+    },
+    "/scraper-parser": {
+      "get": {
+        "summary": "Alias for /scraper-parser/",
+        "responses": {"200":{"description":"Scraper and parser offer page.", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Scraper and parser offer page."}}}
+    },
+    "/lab-notes/": {
+      "get": {
+        "summary": "Phantom Pipe lab notes",
+        "responses": {"200":{"description":"Phantom Pipe lab notes", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Phantom Pipe lab notes"}}}
+    },
+    "/lab-notes": {
+      "get": {
+        "summary": "Alias for /lab-notes/",
+        "responses": {"200":{"description":"Alias for /lab-notes/", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Alias for /lab-notes/"}}}
+    },
+    "/offer.json": {
+      "get": {
+        "summary": "Offer catalog, prices, samples, and payment instructions",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "responses": {
+          "200": {
+            "description": "Offer catalog, prices, samples, and payment instructions",
+            "content": {"application/json":{"schema":{"type":"object"}}}
+          },
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "responses": {
+          "200": {"description":"Offer catalog, prices, samples, and payment instructions"},
+          "304": {"description":"Not modified"}
+        }
+      }
+    },
+    "/llms.txt": {
+      "get": {
+        "summary": "Integration and service guide for agents",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "responses": {
+          "200": {"description":"Integration and service guide for agents", "content":{"text/plain":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "responses": {"200":{"description":"Integration and service guide for agents"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "OpenAPI 3.1 document",
+        "responses": {
+          "200": {"description":"OpenAPI 3.1 document", "content":{"application/json":{"schema":{"type":"object"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"OpenAPI 3.1 document"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/.well-known/mcp.json": {
+      "get": {
+        "summary": "MCP server card with Streamable HTTP endpoint",
+        "responses": {
+          "200": {
+            "description": "MCP server card with Streamable HTTP endpoint",
+            "content": {"application/json":{"schema":{"type":"object"}}}
+          },
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"MCP server card with Streamable HTTP endpoint"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/.well-known/x402.json": {
+      "get": {
+        "summary": "Legacy x402 manifest listing free resources only; x402 payments are not offered",
+        "responses": {
+          "200": {
+            "description": "Legacy x402 manifest listing free resources only; x402 payments are not offered",
+            "content": {"application/json":{"schema":{"type":"object"}}}
+          },
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {
+          "200": {"description":"Legacy x402 manifest listing free resources only; x402 payments are not offered"},
+          "304": {"description":"Not modified"}
+        }
+      }
+    },
+    "/ledger.json": {
+      "get": {
+        "summary": "Public activity ledger",
+        "responses": {
+          "200": {"description":"Public activity ledger", "content":{"application/json":{"schema":{"type":"object"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Public activity ledger"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/samples/{file}": {
+      "parameters": [
+        {
+          "name": "file",
+          "in": "path",
+          "required": true,
+          "description": "Published service sample filename.",
+          "schema": {"type":"string", "enum":["gtm-automation.csv", "gtm-data-ops.csv", "outbound-systems.csv", "pipeline-research.csv"]}
+        }
+      ],
+      "get": {
+        "summary": "Published CSV sample",
+        "responses": {
+          "200": {"description":"Published CSV sample", "content":{"text/csv":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Published CSV sample"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/robots.txt": {
+      "get": {
+        "summary": "Crawler rules",
+        "responses": {
+          "200": {"description":"Crawler rules", "content":{"text/plain":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Crawler rules"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/sitemap.xml": {
+      "get": {
+        "summary": "Site sitemap",
+        "responses": {
+          "200": {"description":"Site sitemap", "content":{"application/xml":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Site sitemap"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/favicon.svg": {
+      "get": {
+        "summary": "Site icon",
+        "responses": {
+          "200": {"description":"Site icon", "content":{"image/svg+xml":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Site icon"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/styles.css": {
+      "get": {
+        "summary": "Site stylesheet",
+        "responses": {
+          "200": {"description":"Site stylesheet", "content":{"text/css":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Site stylesheet"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/fonts/OFL-Newsreader.txt": {
+      "get": {
+        "summary": "Newsreader font license",
+        "responses": {
+          "200": {"description":"Newsreader font license", "content":{"text/plain":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Newsreader font license"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/fonts/newsreader-roman.woff2": {
+      "get": {
+        "summary": "Newsreader roman font",
+        "responses": {
+          "200": {"description":"Newsreader roman font", "content":{"font/woff2":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Newsreader roman font"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/fonts/newsreader-italic.woff2": {
+      "get": {
+        "summary": "Newsreader italic font",
+        "responses": {
+          "200": {"description":"Newsreader italic font", "content":{"font/woff2":{"schema":{"type":"string"}}}},
+          "304": {"description":"Not modified"}
+        }
+      },
+      "head": {
+        "summary": "Read response headers",
+        "responses": {"200":{"description":"Newsreader italic font"}, "304":{"description":"Not modified"}}
+      }
+    },
+    "/quote": {
+      "get": {
+        "summary": "Browser quote request form",
+        "responses": {"200":{"description":"Browser quote request form", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Browser quote request form"}}},
+      "post": {
+        "summary": "Submit a brief or request a free sample",
+        "description": "JSON requests always get a JSON receipt. For URL-encoded form requests, send Accept: application/json to get a receipt; otherwise, the submission is forwarded as a browser form. This endpoint does not issue a signed quote or take payment.",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {"schema":{"$ref":"#/components/schemas/Brief"}},
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "allOf": [
+                  {"$ref":"#/components/schemas/Brief"},
+                  {"type":"object", "properties":{"form-name":{"const":"quote"}}, "required":["form-name"]}
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Request forwarded and receipt saved.",
+            "headers": {"Location":{"description":"Quote request status URL.", "schema":{"type":"string"}}},
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/QuoteReceipt"}}}
+          },
+          "303": {
+            "description": "Browser form may redirect to the thank-you page; upstream response is forwarded.",
+            "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
+          },
+          "400": {
+            "description": "Invalid or missing intake fields.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "413": {
+            "description": "JSON receipt request body exceeds 32 KiB.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "415": {
+            "description": "Unsupported content type for a JSON receipt.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "502": {
+            "description": "Quote intake could not confirm forwarding.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "503": {
+            "description": "Forwarded, but receipt could not be saved. Contact Phantom Pipe with the request ID rather than resubmitting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {"error":{"type":"string"}, "request_id":{"type":"string", "format":"uuid"}},
+                  "required": ["error", "request_id"]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Without JSON content or Accept: application/json, the response comes from the browser form intake backend."
+          }
+        }
+      }
+    },
+    "/quote/": {
+      "get": {
+        "summary": "Browser quote request form",
+        "responses": {"200":{"description":"Browser quote request form", "content":{"text/html":{"schema":{"type":"string"}}}}}
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Browser quote request form"}}},
+      "post": {
+        "summary": "Submit a brief or request a free sample",
+        "description": "JSON requests always get a JSON receipt. For URL-encoded form requests, send Accept: application/json to get a receipt; otherwise, the submission is forwarded as a browser form. This endpoint does not issue a signed quote or take payment.",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {"schema":{"$ref":"#/components/schemas/Brief"}},
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "allOf": [
+                  {"$ref":"#/components/schemas/Brief"},
+                  {"type":"object", "properties":{"form-name":{"const":"quote"}}, "required":["form-name"]}
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Request forwarded and receipt saved.",
+            "headers": {"Location":{"description":"Quote request status URL.", "schema":{"type":"string"}}},
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/QuoteReceipt"}}}
+          },
+          "303": {
+            "description": "Browser form may redirect to the thank-you page; upstream response is forwarded.",
+            "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
+          },
+          "400": {
+            "description": "Invalid or missing intake fields.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "413": {
+            "description": "JSON receipt request body exceeds 32 KiB.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "415": {
+            "description": "Unsupported content type for a JSON receipt.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "502": {
+            "description": "Quote intake could not confirm forwarding.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "503": {
+            "description": "Forwarded, but receipt could not be saved. Contact Phantom Pipe with the request ID rather than resubmitting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {"error":{"type":"string"}, "request_id":{"type":"string", "format":"uuid"}},
+                  "required": ["error", "request_id"]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Without JSON content or Accept: application/json, the response comes from the browser form intake backend."
+          }
+        }
+      }
+    },
+    "/thanks/": {
+      "get": {
+        "summary": "Browser quote intake confirmation page",
+        "responses": {
+          "200": {"description":"Browser quote intake confirmation page", "content":{"text/html":{"schema":{"type":"string"}}}}
+        }
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Browser quote intake confirmation page"}}},
+      "post": {
+        "summary": "Forward a browser quote form",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "allOf": [
+                  {"$ref":"#/components/schemas/Brief"},
+                  {"type":"object", "properties":{"form-name":{"const":"quote"}}, "required":["form-name"]}
+                ]
+              }
+            }
+          }
+        },
+        "responses": {"default":{"description":"Browser form backend response; no JSON receipt is generated."}}
+      }
+    },
+    "/thanks": {
+      "get": {
+        "summary": "Browser quote intake confirmation page",
+        "responses": {
+          "200": {"description":"Browser quote intake confirmation page", "content":{"text/html":{"schema":{"type":"string"}}}}
+        }
+      },
+      "head": {"summary":"Read response headers", "responses":{"200":{"description":"Browser quote intake confirmation page"}}},
+      "post": {
+        "summary": "Forward a browser quote form",
+        "parameters": [{"$ref":"#/components/parameters/Variant"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "allOf": [
+                  {"$ref":"#/components/schemas/Brief"},
+                  {"type":"object", "properties":{"form-name":{"const":"quote"}}, "required":["form-name"]}
+                ]
+              }
+            }
+          }
+        },
+        "responses": {"default":{"description":"Browser form backend response; no JSON receipt is generated."}}
+      }
+    },
+    "/quote/status/{request_id}": {
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "description": "Intake receipt ID from POST /quote.",
+          "schema": {"type":"string", "format":"uuid"}
+        }
+      ],
+      "get": {
+        "summary": "Read a quote intake receipt",
+        "responses": {
+          "200": {
+            "description": "Receipt is available. Does not confirm a reply, issued quote, or payment.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/QuoteReceipt"}}}
+          },
+          "404": {
+            "description": "No receipt: invalid, unknown, or expired. Receipts expire after 30 days.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "503": {
+            "description": "Receipt lookup is unavailable.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          }
+        }
+      },
+      "head": {
+        "summary": "Check receipt availability without a response body",
+        "responses": {"200":{"description":"Available"}, "404":{"description":"Not found"}, "503":{"description":"Unavailable"}}
+      }
+    },
+    "/q/{quote_or_product}": {
+      "get": {
+        "summary": "Open a quote payment page or fixed-price card listing",
+        "parameters": [
+          {
+            "name": "quote_or_product",
+            "in": "path",
+            "required": true,
+            "description": "Signed quote token, a fixed-price service ID, or the card marketplace product ID in offer.json.",
+            "schema": {"type":"string"}
+          },
+          {"$ref":"#/components/parameters/Variant"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Signed quote, price, and applicable payment link or Checkout form.",
+            "content": {"text/html":{"schema":{"type":"string"}}}
+          },
+          "303": {
+            "description": "Fixed-price listing opens a fresh signed quote. Retain the resulting URL when resuming.",
+            "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
+          },
+          "400": {"$ref":"#/components/responses/InvalidQuote"},
+          "410": {"$ref":"#/components/responses/ExpiredQuote"},
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      }
+    },
+    "/payment/submitted": {
+      "get": {
+        "summary": "Return page after Stripe Checkout",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "description": "Optional fixed-price service ID.",
+            "schema": {"type":"string"}
+          },
+          {
+            "name": "quote_id",
+            "in": "query",
+            "required": false,
+            "description": "Optional CRM dedupe + enrichment quote reference.",
+            "schema": {"type":"string", "format":"uuid"}
+          },
+          {"$ref":"#/components/parameters/Variant"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Checkout return instructions, not proof of payment.",
+            "content": {"text/html":{"schema":{"type":"string"}}}
+          },
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      }
+    },
+    "/api/checkout": {
+      "parameters": [{"$ref":"#/components/parameters/SignedQuote"}, {"$ref":"#/components/parameters/Variant"}],
+      "get": {
+        "summary": "Open or resume a Stripe Checkout session",
+        "description": "Same operation as POST. Can create a Checkout session; does not itself charge.",
+        "responses": {
+          "303": {
+            "description": "Stripe Checkout URL.",
+            "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
+          },
+          "400": {"$ref":"#/components/responses/InvalidQuote"},
+          "409": {
+            "description": "Quote already paid or reserved for another payment.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "410": {
+            "description": "Quote expired or too close to expiry for Checkout.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "422": {"$ref":"#/components/responses/MppRequired"},
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      },
+      "post": {
+        "summary": "Create or resume a Stripe Checkout session",
+        "description": "Same operation as POST. Can create a Checkout session; does not itself charge.",
+        "responses": {
+          "303": {
+            "description": "Stripe Checkout URL.",
+            "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
+          },
+          "400": {"$ref":"#/components/responses/InvalidQuote"},
+          "409": {
+            "description": "Quote already paid or reserved for another payment.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "410": {
+            "description": "Quote expired or too close to expiry for Checkout.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "422": {"$ref":"#/components/responses/MppRequired"},
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      }
+    },
+    "/api/pay": {
+      "parameters": [{"$ref":"#/components/parameters/SignedQuote"}],
+      "get": {
+        "summary": "Request a Stripe agent challenge or redeem a Stripe PaymentIntent",
+        "parameters": [
+          {
+            "name": "X-PAYMENT",
+            "in": "header",
+            "required": false,
+            "description": "Existing Stripe PaymentIntent ID from POST /api/pay. When supplied, the request redeems proof instead of returning a challenge or processing the body.",
+            "schema": {"type":"string"}
+          }
+        ],
+        "description": "Custom quote-pay-v1 protocol, not x402 or MPP. The X-PAYMENT header redeems proof; omitting it requests a challenge.",
+        "responses": {
+          "200": {
+            "description": "Verified redemption receipt.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/PaymentReceipt"}}}
+          },
+          "400": {
+            "description": "Invalid quote, JSON, proof, or credential.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "402": {
+            "description": "quote-pay-v1 challenge when no credential is submitted, or error if proof or payment was not accepted.",
+            "content": {
+              "application/json": {"schema":{"oneOf":[{"$ref":"#/components/schemas/StripeChallenge"}, {"$ref":"#/components/schemas/Error"}]}}
+            }
+          },
+          "409": {
+            "description": "Already paid, reserved, or replayed.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "410": {"$ref":"#/components/responses/ExpiredQuote"},
+          "422": {
+            "description": "Quote requires Tempo MPP or Stripe Checkout instead.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      },
+      "post": {
+        "summary": "Pay an eligible signed quote with a Stripe credential",
+        "parameters": [
+          {
+            "name": "X-PAYMENT",
+            "in": "header",
+            "required": false,
+            "description": "Existing Stripe PaymentIntent ID from POST /api/pay. When supplied, the request redeems proof instead of returning a challenge or processing the body.",
+            "schema": {"type":"string"}
+          }
+        ],
+        "description": "Send the quote nonce and one eligible Stripe credential. JSON bodies over 2,048 characters are rejected. With no body or proof this returns a challenge. Never send raw card details.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {"nonce":{"type":"string"}, "shared_payment_token":{"type":"string"}, "payment_method":{"type":"string"}},
+                "required": ["nonce"],
+                "oneOf": [{"required":["shared_payment_token"]}, {"required":["payment_method"]}]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PaymentIntent ID after charge, or receipt when redeeming proof.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {"type":"object", "properties":{"payment_intent_id":{"type":"string"}}, "required":["payment_intent_id"]},
+                    {"$ref":"#/components/schemas/PaymentReceipt"}
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid quote, JSON, proof, or credential.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "402": {
+            "description": "quote-pay-v1 challenge when no credential is submitted, or error if proof or payment was not accepted.",
+            "content": {
+              "application/json": {"schema":{"oneOf":[{"$ref":"#/components/schemas/StripeChallenge"}, {"$ref":"#/components/schemas/Error"}]}}
+            }
+          },
+          "409": {
+            "description": "Already paid, reserved, or replayed.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "410": {"$ref":"#/components/responses/ExpiredQuote"},
+          "415": {
+            "description": "Payment credential body must be application/json.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "422": {
+            "description": "Quote requires Tempo MPP or Stripe Checkout instead.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      }
+    },
+    "/api/mpp/pay": {
+      "get": {
+        "summary": "Request or settle a Tempo MPP charge",
+        "description": "Use either product (discovery only) or quote (challenge/settlement). Send a wallet-generated credential only to the final signed quote URL. No x402 support.",
+        "security": [{}, {"MppCredential":[]}],
+        "parameters": [
+          {
+            "name": "quote",
+            "in": "query",
+            "required": false,
+            "description": "Signed quote token; omit if resolving a product listing.",
+            "schema": {"type":"string"}
+          },
+          {
+            "name": "product",
+            "in": "query",
+            "required": false,
+            "description": "MPP marketplace product ID from offer.json; omit when using the signed quote.",
+            "schema": {"type":"string"}
+          },
+          {"$ref":"#/components/parameters/Variant"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Settled payment",
+            "headers": {"Payment-Receipt":{"description":"MPP payment receipt.", "schema":{"type":"string"}}},
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/PaymentReceipt"}}}
+          },
+          "303": {
+            "description": "Product listing resolves to a fresh signed MPP quote. Retain the final URL for challenge and retry.",
+            "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
+          },
+          "400": {
+            "description": "Invalid quote or credential, or listing called with a quote or payment credential.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "402": {
+            "description": "Challenge (WWW-Authenticate) without a credential, or rejected payment. Challenge body is produced by the MPP provider.",
+            "headers": {"WWW-Authenticate":{"description":"Payment challenge when requesting a charge.", "schema":{"type":"string"}}}
+          },
+          "404": {
+            "description": "Unknown MPP product.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "409": {
+            "description": "Quote already paid, reserved, or payment is a replay.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "410": {"$ref":"#/components/responses/ExpiredQuote"},
+          "422": {
+            "description": "Fixed-price service quote requires Stripe Checkout instead.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      }
+    },
+    "/api/stripe-webhook": {
+      "post": {
+        "summary": "Receive signed Stripe Checkout completion events",
+        "parameters": [
+          {
+            "name": "Stripe-Signature",
+            "in": "header",
+            "required": true,
+            "description": "Stripe-generated signature for the original request body.",
+            "schema": {"type":"string"}
+          }
+        ],
+        "requestBody": {"required":true, "content":{"application/json":{"schema":{"type":"object"}}}},
+        "responses": {
+          "200": {
+            "description": "Event acknowledged (unrelated events can also be acknowledged).",
+            "content": {"application/json":{"schema":{"type":"object", "properties":{"received":{"const":true}}, "required":["received"]}}}
+          },
+          "400": {
+            "description": "Invalid Stripe signature.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      }
+    },
+    "/agent-pay-test": {
+      "get": {
+        "summary": "Legacy Stripe agent verification page",
+        "parameters": [{"$ref":"#/components/parameters/SignedQuote"}],
+        "description": "Legacy route proxied to the old backend on the apex; not used by normal buyers.",
+        "responses": {
+          "200": {
+            "description": "Verification page for the matching live verification quote.",
+            "content": {"text/html":{"schema":{"type":"string"}}}
+          },
+          "400": {"$ref":"#/components/responses/InvalidQuote"},
+          "404": {
+            "description": "Verification quote not found.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          },
+          "410": {"$ref":"#/components/responses/ExpiredQuote"},
+          "502": {"$ref":"#/components/responses/PaymentUnavailable"},
+          "503": {"$ref":"#/components/responses/PaymentUnavailable"}
+        }
+      }
+    },
+    "/api/stats/variants": {
+      "get": {
+        "summary": "Read aggregate UTC daily pitch-variant event counts",
+        "responses": {
+          "200": {
+            "description": "Event totals, not unique visitors or settled payments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "counts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "day": {"type":"string", "format":"date"},
+                          "event": {"type":"string", "enum":["card_open", "mpp_challenge", "quote_request", "homepage_fetch", "offer_fetch", "llms_fetch"]},
+                          "variant": {"type":"string"},
+                          "count": {"type":"integer"}
+                        },
+                        "required": ["day", "event", "variant", "count"]
+                      }
+                    }
+                  },
+                  "required": ["counts"]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Variant stats unavailable.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "get": {
+        "summary": "Read the MCP endpoint description",
+        "description": "Returns HTML for browsers and JSON otherwise. Clients requesting a server event stream with Accept: text/event-stream receive 405.",
+        "responses": {
+          "200": {
+            "description": "Endpoint description and discovery links.",
+            "content": {
+              "text/html": {"schema":{"type":"string"}},
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["name", "description", "docs", "server_card"],
+                  "properties": {
+                    "name": {"const":"phantom-pipe"},
+                    "description": {"type":"string"},
+                    "docs": {"type":"string", "format":"uri-reference"},
+                    "server_card": {"type":"string", "format":"uri-reference"}
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin not allowed.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
+          },
+          "405": {"description":"No event stream; use POST.", "headers":{"Allow":{"description":"POST", "schema":{"type":"string"}}}}
+        }
+      },
+      "post": {
+        "summary": "Send a stateless MCP JSON-RPC message",
+        "description": "Streamable HTTP with JSON responses only. Send Accept: application/json, text/event-stream. No session ID. Only protocol version 2025-03-26 accepts batches. Supported methods: initialize, notifications/initialized, ping, tools/list, tools/call. Quote intake is the only MCP action that sends an inquiry; no MCP tool pays or verifies settlement.",
+        "parameters": [
+          {
+            "name": "MCP-Protocol-Version",
+            "in": "header",
+            "required": false,
+            "description": "Negotiated protocol version. Without the header the server accepts the 2025-03-26 default.",
+            "schema": {"type":"string", "enum":["2025-11-25", "2025-06-18", "2025-03-26"]}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json":{"schema":{"oneOf":[
+            {"$ref":"#/components/schemas/RpcMessage"},
+            {"type":"array", "minItems":1, "items":{"$ref":"#/components/schemas/RpcMessage"}}
+          ]}}}
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-RPC result or method/parameter error.",
+            "content": {"application/json":{"schema":{"oneOf":[
+              {"$ref":"#/components/schemas/RpcResponse"},
+              {"type":"array", "minItems":1, "items":{"$ref":"#/components/schemas/RpcResponse"}}
+            ]}}}
+          },
+          "202": {"description":"Notification or JSON-RPC response accepted; no response body."},
+          "400": {
+            "description": "Parse error, invalid envelope, or unsupported protocol-version header.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
+          },
+          "403": {
+            "description": "Origin header does not match the endpoint origin.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
+          },
+          "406": {
+            "description": "Client does not accept JSON.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
+          },
+          "413": {
+            "description": "Request body exceeds 64 KiB.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
+          },
+          "415": {
+            "description": "Content-Type must be application/json.",
+            "content": {"application/json":{"schema":{"$ref":"#/components/schemas/RpcResponse"}}}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "MppCredential": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Supply the full value Payment <wallet-generated credential> on the signed URL only (at most 16,384 characters). This is not a Phantom Pipe API key."
+      }
+    },
+    "parameters": {
+      "Variant": {
+        "name": "v",
+        "in": "query",
+        "required": false,
+        "description": "Optional lowercase pitch variant (1–40 letters, digits, or hyphens). Tagged discovery and payment counts are aggregate.",
+        "schema": {"type":"string"}
+      },
+      "SignedQuote": {
+        "name": "quote",
+        "in": "query",
+        "required": true,
+        "description": "Private signed quote token issued by Phantom Pipe.",
+        "schema": {"type":"string"}
+      }
+    },
+    "responses": {
+      "InvalidQuote": {
+        "description": "Missing or invalid signed quote token.",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+      },
+      "ExpiredQuote": {"description":"Quote expired.", "content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}},
+      "MppRequired": {
+        "description": "Quote amount requires Tempo MPP instead of Stripe.",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+      },
+      "PaymentUnavailable": {
+        "description": "Payment service or rail unavailable.",
+        "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
+      }
+    },
+    "schemas": {
+      "Brief": {
+        "type": "object",
+        "properties": {
+          "name": {"type":"string"},
+          "email": {"type":"string", "format":"email"},
+          "service": {"type":"string", "enum":["pipeline-research", "gtm-data-ops", "outbound-systems", "gtm-automation", "not-sure"]},
+          "brief": {"type":"string"},
+          "company": {"type":"string"},
+          "form-name": {"const":"quote"}
+        },
+        "required": ["name", "email", "service", "brief"]
+      },
+      "QuoteReceipt": {
+        "type": "object",
+        "properties": {
+          "request_id": {"type":"string", "format":"uuid"},
+          "status": {"const":"received"},
+          "response_window": {"const":48, "description":"Expected response window in hours."},
+          "status_url": {"type":"string", "format":"uri"}
+        },
+        "required": ["request_id", "status", "response_window", "status_url"]
+      },
+      "Error": {"type":"object", "properties":{"error":{"type":"string"}}, "required":["error"]},
+      "PaymentReceipt": {
+        "type": "object",
+        "properties": {
+          "quote_id": {"type":"string", "format":"uuid"},
+          "payment_id": {"type":"string"},
+          "channel": {"type":"string", "enum":["agent", "mpp"]},
+          "status": {"const":"paid"},
+          "paid_at": {"type":"string", "format":"date-time"}
+        },
+        "required": ["quote_id", "payment_id", "channel", "status", "paid_at"]
+      },
+      "StripeChallenge": {
+        "type": "object",
+        "properties": {
+          "protocol": {"const":"quote-pay-v1"},
+          "quote_id": {"type":"string", "format":"uuid"},
+          "amount_cents": {"type":"integer"},
+          "currency": {"const":"usd"},
+          "nonce": {"type":"string"},
+          "expires_at": {"type":"integer", "description":"UNIX time in seconds."},
+          "payment": {"type":"object"},
+          "redeem": {"type":"object"}
+        },
+        "required": ["protocol", "quote_id", "amount_cents", "currency", "nonce", "expires_at", "payment", "redeem"]
+      },
+      "RpcMessage": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {"jsonrpc":{"const":"2.0"}, "id":{"type":["integer", "string"]}, "method":{"type":"string"}, "params":{"type":"object"}},
+            "required": ["jsonrpc", "method"]
+          },
+          {"$ref":"#/components/schemas/RpcResponse"}
+        ]
+      },
+      "RpcResponse": {
+        "type": "object",
+        "properties": {
+          "jsonrpc": {"const":"2.0"},
+          "id": {"type":["integer", "string", "null"]},
+          "result": {"type":"object"},
+          "error": {"type":"object", "properties":{"code":{"type":"integer"}, "message":{"type":"string"}}, "required":["code", "message"]}
+        },
+        "required": ["jsonrpc", "id"],
+        "oneOf": [{"required":["result"]}, {"required":["error"]}]
+      }
+    }
+  }
+}

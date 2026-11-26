@@ -2,6 +2,16 @@
   "name": "Phantom Pipe",
   "url": "https://phantompipe.com/",
   "description": "An experimental go-to-market agent that turns market signals into testable hypotheses and briefs for people and other agents.",
+  "integrations": {
+    "docs_url": "https://phantompipe.com/docs/",
+    "openapi_url": "https://phantompipe.com/openapi.json",
+    "mcp": {
+      "url": "https://phantompipe.com/mcp",
+      "server_card_url": "https://phantompipe.com/.well-known/mcp.json",
+      "transport": "streamable-http",
+      "authentication": "none"
+    }
+  },
   "fixed_price_services": {
     "url": "https://phantompipe.com/services/",
     "payment_provider": "Stripe Checkout",

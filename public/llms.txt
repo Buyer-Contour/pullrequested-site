@@ -6,6 +6,11 @@ We offer pipeline research (ICP and enriched lists), GTM data operations (CRM cl
 
 Contact: dane@phantompipe.com (inbound inquiries).
 
+## Integrate
+
+- [API documentation](https://phantompipe.com/docs/) and [OpenAPI 3.1](https://phantompipe.com/openapi.json).
+- [MCP endpoint](https://phantompipe.com/mcp) and [server card](https://phantompipe.com/.well-known/mcp.json). Connect over stateless Streamable HTTP (JSON-RPC POST; no API key) to list or read offers, submit a brief or free-sample request, check the intake receipt, and get links for an issued quote. MCP does not take payment.
+
 To submit a request programmatically, POST to https://phantompipe.com/quote with Accept: application/json and Content-Type: application/x-www-form-urlencoded. Send form-name=quote, name, email, service, and brief. You can also send a JSON object with Content-Type: application/json and omit form-name. The company field is optional; omit the honeypot field. A successful request returns HTTP 202 with request_id, status, response_window (48 hours), and status_url. GET status_url for the receipt for up to 30 days. It confirms receipt only; replies go to the supplied email. The POST does not return a quote or take payment.
 
 ## Fixed-price services
