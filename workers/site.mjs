@@ -120,7 +120,9 @@ const site = {
     const response = await asset(request, env, pages.get(pathname) ?? pathname, personalized);
     if (!response.ok) return response;
     const headers = new Headers(response.headers);
-    if (pathname === '/llms.txt') headers.set('Content-Type', 'text/plain; charset=utf-8');
+    if (pathname === '/llms.txt' || pathname === '/.well-known/mcp-registry-auth') {
+      headers.set('Content-Type', 'text/plain; charset=utf-8');
+    }
     if (['/offer.json', '/openapi.json', '/.well-known/x402.json', '/.well-known/mcp.json'].includes(pathname)) {
       headers.set('Content-Type', 'application/json; charset=utf-8');
     }
