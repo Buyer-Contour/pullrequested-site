@@ -1,0 +1,20 @@
+{
+  "name": "phantompipe-pricing-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": "Phantom Pipe <dane@phantompipe.com>",
+  "engines": {
+    "node": ">=20.18.1"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "apify": "3.8.0",
+    "cheerio": "1.2.0",
+    "ipaddr.js": "2.5.0",
+    "undici": "^6.29.1"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "title": "Pricing Page Change Monitor",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "urls": {
+      "title": "Pricing page URLs",
+      "type": "array",
+      "description": "Public HTTP(S) pricing pages to check. Redirects must also stay public.",
+      "editor": "stringList",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "maxItems": 100,
+      "prefill": ["https://linear.app/pricing", "https://www.notion.com/pricing"]
+    },
+    "previousSnapshots": {
+      "title": "Previous snapshots",
+      "type": "object",
+      "description": "Optional baselines keyed by the exact input URL. Each value accepts contentHash and/or pricingText; provided baselines override stored snapshots.",
+      "editor": "json"
+    },
+    "keywords": {
+      "title": "Additional keywords",
+      "type": "array",
+      "description": "Case-insensitive text to monitor alongside prices and plan names. Keep these consistent between runs.",
+      "items": { "type": "string" },
+      "editor": "stringList",
+      "maxItems": 50
+    }
+  },
+  "required": ["urls"]
+}

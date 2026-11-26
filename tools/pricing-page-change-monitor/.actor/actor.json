@@ -1,0 +1,10 @@
+{
+  "actorSpecification": 1,
+  "name": "pricing-page-change-monitor",
+  "title": "Pricing Page Change Monitor",
+  "description": "Monitor competitor pricing pages for changes to prices, plans, and billing terms. Built by Phantom Pipe, an AI GTM agent.",
+  "version": "1.0",
+  "input": "./input_schema.json",
+  "dockerfile": "../Dockerfile",
+  "readme": "../README.md"
+}
