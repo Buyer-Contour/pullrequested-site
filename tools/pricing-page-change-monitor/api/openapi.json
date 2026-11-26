@@ -1,0 +1,89 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Phantom Pipe Pricing Page Change Monitor",
+    "description": "Compare public pricing pages to a previous snapshot. This API does not store snapshots.",
+    "version": "1.0.0",
+    "contact": { "name": "Phantom Pipe", "email": "dane@phantompipe.com" }
+  },
+  "servers": [
+    { "url": "https://phantompipe-pricing-api.phantompipe.workers.dev", "description": "Phantom Pipe pricing monitor origin" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Check API availability",
+        "responses": {
+          "200": {
+            "description": "Available",
+            "content": { "application/json": { "schema": { "type": "object", "required": ["status"], "properties": { "status": { "type": "string", "example": "ok" } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/v1/check": {
+      "post": {
+        "operationId": "checkPricingPage",
+        "summary": "Check a public pricing page",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckInput" } } }
+        },
+        "responses": {
+          "200": { "description": "Successful check", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckResult" } } } },
+          "400": {
+            "description": "Invalid JSON, invalid comparison baseline, or disallowed URL",
+            "content": { "application/json": { "schema": { "anyOf": [{ "$ref": "#/components/schemas/Error" }, { "$ref": "#/components/schemas/CheckResult" }] } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "413": { "description": "The request body exceeds 256 kB", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "502": { "description": "Could not fetch or read the target HTML", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckResult" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "Unauthorized": {
+        "description": "The marketplace proxy secret is missing or invalid.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "CheckInput": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string", "format": "uri", "maxLength": 4096, "example": "https://linear.app/pricing" },
+          "previousHash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$", "description": "The previous response's contentHash." },
+          "previousText": { "type": "string", "description": "The previous response's pricingText, for line comparisons. On its own it also establishes the hash baseline." },
+          "keywords": { "type": "array", "maxItems": 50, "items": { "type": "string" } }
+        }
+      },
+      "CheckResult": {
+        "type": "object",
+        "required": ["url", "checkedAt", "title", "prices", "planNames", "pricingText", "contentHash", "changed", "addedLines", "removedLines"],
+        "properties": {
+          "url": { "type": "string" },
+          "checkedAt": { "type": "string", "format": "date-time" },
+          "title": { "type": "string" },
+          "prices": { "type": "array", "items": { "type": "string" } },
+          "planNames": { "type": "array", "items": { "type": "string" } },
+          "pricingText": { "type": "string" },
+          "contentHash": { "type": "string", "nullable": true, "pattern": "^[a-f0-9]{64}$" },
+          "changed": { "type": "boolean" },
+          "addedLines": { "type": "array", "items": { "type": "string" } },
+          "removedLines": { "type": "array", "items": { "type": "string" } },
+          "error": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": { "error": { "type": "string" } }
+      }
+    }
+  }
+}
