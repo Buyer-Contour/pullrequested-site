@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import worker from '../api/worker.js';
 import { comparePricing, extractPricing } from '../src/pricing.js';
-import { fetchPublicHtml, PublicUrlError, parsePublicUrl } from '../src/public-page.js';
+import { fetchPublicHtml, PageError, PublicUrlError, parsePublicUrl } from '../src/public-page.js';
 
 const page = (cost) => `<html><head><title>Plans</title></head><body>
   <nav>$500</nav><main><h1>Pricing</h1><section>
@@ -47,6 +47,20 @@ test('establishes a baseline, normalizes spacing and reports changes against tex
   const byHash = await comparePricing(url, page(12), { contentHash: first.contentHash });
   assert.equal(byHash.changed, true);
   assert.deepEqual(byHash.addedLines, []);
+});
+
+test('rejects HTTP 200 HTML without visible text but accepts visible text without pricing', async () => {
+  const url = 'https://example.com/pricing';
+  for (const html of ['', '   ', '<head><title>Pricing</title></head>',
+    '<main><script>price="$20"</script><div hidden>$10</div><span style="display: none">$30</span>&nbsp;</main>']) {
+    const fetched = await fetchPublicHtml(url, async () => ({
+      response: new Response(html, { headers: { 'content-type': 'text/html' } }),
+    }));
+    await assert.rejects(comparePricing(url, fetched, { pricingText: '$5' }), PageError);
+  }
+  const result = await comparePricing(url, '<main><p>Plans are coming soon.</p></main>', { pricingText: '$5' });
+  assert.equal(result.changed, true);
+  assert.deepEqual(result.removedLines, ['$5']);
 });
 
 test('rejects non-web URLs and private addresses, including redirect targets', async () => {

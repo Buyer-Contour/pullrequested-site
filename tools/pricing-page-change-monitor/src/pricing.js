@@ -1,4 +1,5 @@
 import { load } from 'cheerio/slim';
+import { PageError } from './public-page.js';
 
 const PRICE = /(?:[$€£]\s*\d[\d.,]*|\d[\d.,]*\s*[€£$]|\b(?:USD|EUR|GBP)\s*\d[\d.,]*|\b\d[\d.,]*\s*(?:USD|EUR|GBP)\b)/gi;
 const CADENCE = /(?:\/\s*(?:mo(?:nth)?|yr|year|seat|user)\b|\bper\s+(?:mo(?:nth)?|year|seat|user)\b|\bbilled\s+(?:monthly|annually|yearly)\b)/i;
@@ -36,10 +37,15 @@ function isPricingSignal(line) {
 export function extractPricing(html, keywords = []) {
   const $ = load(html);
   const title = normalize($('title').first().text() || $('h1').first().text());
-  $('script,style,noscript,template,svg,nav,footer,[hidden],[aria-hidden="true"],[inert]').remove();
+  $('head,title,script,style,noscript,template,svg,[hidden],[aria-hidden="true"],[inert]').remove();
   $('[style]').filter((_, node) => /(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:!important\s*)?(?:;|$)/i.test($(node).attr('style'))).remove();
+  const body = $('body').first();
+  if (!linesOf(body.length ? body : $.root().contents()).length) {
+    throw new PageError('The page has no visible text.');
+  }
+  $('nav,footer').remove();
   const main = $('main,[role="main"]').first();
-  const root = main.length ? main : $('body').first().length ? $('body').first() : $.root().children();
+  const root = main.length ? main : body.length ? body : $.root().contents();
   const visibleLines = linesOf(root);
   const candidates = root.find(HEADING).toArray().flatMap((node) => {
     const heading = $(node);
