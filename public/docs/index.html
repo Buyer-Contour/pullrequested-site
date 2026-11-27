@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>API &amp; MCP documentation — Phantom Pipe</title>
-  <meta name="description" content="Find offers, request a free sample, and integrate Phantom Pipe quote intake and payments with HTTP or MCP.">
+  <meta name="description" content="Find offers, request a scoped quote, and integrate Phantom Pipe quote intake and Tempo MPP payments with HTTP or MCP.">
   <meta name="theme-color" content="#f7f5ef">
   <link rel="canonical" href="https://phantompipe.com/docs/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -28,14 +28,14 @@
       <section class="notes-section notes-prose" aria-labelledby="quotes">
         <p class="eyebrow">01 / Intake</p>
         <h2 id="quotes">Find an offer. Send a brief.</h2>
-        <p>Read <a href="/offer.json">offer.json</a> for prices, deliverables, acceptance criteria, and links. Fixed-price services already have Stripe Checkout links. For scoped work, send a brief and wait for a reply with the terms and, when applicable, a signed quote. For the free sample, ask for three evidence-brief rows and include your target accounts or criteria and roles.</p>
-        <p>The <a href="/agent-bill-audit/">AI agent API &amp; hosting bill audit</a> and <a href="/scraper-parser/">fixed-price scraper / parser job</a> use card checkout. To preview the scraper output for free, send a brief with <code>service: "not-sure"</code>, your public target URL, and desired fields, and ask for five sample rows before paying.</p>
+        <p>Read <a href="/offer.json">offer.json</a> for prices, deliverables, acceptance criteria, and links. Fixed-price services are paid up front at cost via Tempo MPP. For scoped work, send a brief and wait for a reply with the terms and, when applicable, a signed quote.</p>
+        <p>The <a href="/agent-bill-audit/">AI agent API &amp; hosting bill audit</a> ($1 / 1.00 OUSD) and <a href="/scraper-parser/">fixed-price scraper / parser job</a> ($2 / 2.00 OUSD) settle via Tempo MPP at <code>/api/mpp/pay?product=…</code>, or you can request a quote via <code>POST /quote</code>.</p>
         <pre><code>curl -fsS https://phantompipe.com/offer.json
 
 # This POST sends a real inquiry. Replace the example fields first.
 curl -i https://phantompipe.com/quote \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Your name","email":"you@example.com","service":"pipeline-research","brief":"Please send the three free evidence-brief sample rows for our target accounts: …"}'
+  -d '{"name":"Your name","email":"you@example.com","service":"pipeline-research","brief":"Scope inquiry for an evidence brief covering our target accounts: …"}'
 
 # Replace with the status_url returned by POST /quote.
 curl -i 'https://phantompipe.com/quote/status/REQUEST_ID'</code></pre>
@@ -46,18 +46,15 @@ curl -i 'https://phantompipe.com/quote/status/REQUEST_ID'</code></pre>
       <section class="notes-section notes-prose" aria-labelledby="payments">
         <p class="eyebrow">02 / Settlement</p>
         <h2 id="payments">Pay an issued quote.</h2>
-        <p><strong>Stripe Checkout:</strong> Open the published card link for a fixed-price service, or use the issued <code>/q/{signed_quote_token}</code> link for an eligible custom quote. Follow the page to Stripe Checkout and keep the Stripe receipt. After payment for a fixed-price service, send the service name, checkout email, and brief.</p>
-        <pre><code>curl -i 'https://phantompipe.com/q/SIGNED_QUOTE_TOKEN'
-
-# For a Stripe-eligible quote, creates or resumes Checkout; does not charge.
-curl -i -X POST 'https://phantompipe.com/api/checkout?quote=SIGNED_QUOTE_TOKEN'</code></pre>
+        <p><strong>Quote page (<code>/q/{signed_quote_token}</code>):</strong> Opening a quote page displays the quote total, its Tempo MPP payment URL (<code>/api/mpp/pay?quote=…</code>), and a link to request a quote by email. Card checkout is disabled.</p>
+        <pre><code>curl -i 'https://phantompipe.com/q/SIGNED_QUOTE_TOKEN'</code></pre>
         <p><strong>Tempo MPP:</strong> For a quote that specifies MPP, fetch the signed payment URL to obtain a <code>402</code> challenge in <code>WWW-Authenticate</code>. An MPP-compatible Tempo wallet signs a credential. Retry the same signed URL with <code>Authorization: Payment …</code>. A successful settlement returns <code>200</code>, a JSON receipt, and <code>Payment-Receipt</code>. MPP can be unavailable (<code>503</code>); never switch rails without confirming which your quote permits.</p>
         <pre><code>curl -i 'https://phantompipe.com/api/mpp/pay?quote=SIGNED_QUOTE_TOKEN'
 
 # This retry can settle a real payment. Only use a buyer-approved credential.
 curl -i 'https://phantompipe.com/api/mpp/pay?quote=SIGNED_QUOTE_TOKEN' \
   -H 'Authorization: Payment MPP_CREDENTIAL'</code></pre>
-        <p>If the published MPP link has <code>?product=</code>, the first request redirects to a freshly signed URL. Save that URL and use it for the challenge, retry, or resume. Do not reopen the listing to resume, and do not send a credential to the listing URL. The evidence-brief marketplace batch is for agreed, accepted rows, not the free sample.</p>
+        <p>If the published MPP link has <code>?product=</code> (for example <code>?product=agent-bill-audit</code>, <code>?product=scraper-parser</code>, or <code>?product=evidence-brief-10</code>), the first request redirects to a freshly signed URL. Save that URL and use it for the challenge, retry, or resume. Do not reopen the listing to resume, and do not send a credential to the listing URL.</p>
         <p><strong>Stripe agent payments:</strong> On an eligible quote, <code>GET /api/pay?quote=…</code> returns a <code>quote-pay-v1</code> challenge. The challenge specifies the nonce and accepted Stripe token types. POST one eligible Stripe token and the nonce; then redeem the resulting PaymentIntent ID with <code>X-PAYMENT</code> as shown in the <a href="/openapi.json">OpenAPI reference</a>. Never POST raw card data.</p>
         <p><strong>x402:</strong> Not supported as a payment rail. The <a href="/.well-known/x402.json">legacy manifest</a> lists free resources only. Neither MPP nor the Stripe agent <code>402</code> challenge is x402. Quote tokens and payment credentials authorize payment operations; treat them as private. There is no standalone payment-status endpoint. Use the receipt from the payment rail, not the intake receipt or the Checkout return page.</p>
       </section>
@@ -105,9 +102,9 @@ mcp_post '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_of
         <p>Tool data is in <code>result.structuredContent</code>. Check <code>error</code> and <code>result.isError</code> before using it.</p>
         <ul>
           <li><code>list_offers</code> takes no arguments. Pass a returned offer's <code>id</code> to <code>get_offer</code> for details. Fixed-price offers have a <code>pay_url</code>; they do not require a custom quote.</li>
-          <li><code>submit_brief</code>: with buyer permission, pass <code>name</code>, <code>email</code>, <code>service</code>, <code>brief</code>, and optionally <code>company</code>. The catalog's <code>quote_request</code> describes direct HTTP intake; MCP ignores its <code>form-name</code> field if supplied. For the free sample, choose <code>pipeline-research</code> and ask for the three free rows in <code>brief</code>.</li>
+          <li><code>submit_brief</code>: with buyer permission, pass <code>name</code>, <code>email</code>, <code>service</code>, <code>brief</code>, and optionally <code>company</code>. The catalog's <code>quote_request</code> describes direct HTTP intake; MCP ignores its <code>form-name</code> field if supplied.</li>
           <li><code>get_quote_request_status</code>: pass the <code>request_id</code> from <code>submit_brief</code> to look up the intake receipt. It cannot tell you whether a quote was issued or paid.</li>
-          <li><code>get_quote_payment_links</code>: skip this for free samples or while waiting for a quote. If Phantom Pipe sends a signed quote to your reply-to email, pass its token as <code>signed_quote_token</code>, not the receipt's <code>request_id</code> or the full URL. The tool formats links without validating the token, initiating payment, or checking settlement. Keep signed links private and use only the rail specified for the quote.</li>
+          <li><code>get_quote_payment_links</code>: skip this while waiting for a quote. If Phantom Pipe sends a signed quote to your reply-to email, pass its token as <code>signed_quote_token</code>, not the receipt's <code>request_id</code> or the full URL. The tool formats links without validating the token, initiating payment, or checking settlement. Keep signed links private and use only the rail specified for the quote.</li>
         </ul>
       </section>
 

@@ -130,13 +130,13 @@ test('variant stats report only successful tagged discovery fetches and forwarde
   assert.equal(offer.contact.url, quoteUrl.href);
   assert.equal(offer.fixed_price_services.url, origin + '/services/?v=media-1');
   assert.equal(offer.fixed_price_services.intake.url, quoteUrl.href);
-  const leadListPayUrl = origin + '/q/icp-lead-list?v=svc-icp-lead-list';
+  const leadListPayUrl = origin + '/api/mpp/pay?product=icp-lead-list&v=svc-icp-lead-list';
   assert.equal(offer.fixed_price_services.services[0].pay_url, leadListPayUrl);
-  const { card_url, mpp_url } = offer.evidence_brief.marketplace_payment;
-  assert.equal(card_url, origin + '/q/evidence-brief-10?v=media-1');
+  const { mpp_url } = offer.evidence_brief.marketplace_payment;
+  assert.equal(offer.evidence_brief.marketplace_payment.card_url, undefined);
   assert.equal(mpp_url, origin + '/api/mpp/pay?product=evidence-brief-10&v=media-1');
   const llms = await (await request('/llms.txt?v=invalid%40example.com')).text();
-  for (const url of [quoteUrl.href, card_url, mpp_url]) {
+  for (const url of [quoteUrl.href, mpp_url]) {
     assert.ok(llms.includes(url.replace('v=media-1', 'v=_untagged')));
   }
   assert.ok(llms.includes(origin + '/offer.json?v=_untagged'));

@@ -62,12 +62,13 @@ test('MCP SDK discovers offers, reads payment URLs, and submits and reads an int
     const service = list.structuredContent.fixed_price_services.find((item) => item.id === id);
     assert.ok(service?.forward_to_human);
     assert.equal(new URL(service.page_url).pathname, `/${id}/`);
-    assert.equal(new URL(service.pay_url).pathname, `/q/${id}`);
+    assert.equal(new URL(service.pay_url).pathname, '/api/mpp/pay');
+    assert.equal(new URL(service.pay_url).searchParams.get('product'), id);
     assert.deepEqual((await call('get_offer', { id })).structuredContent, service);
   }
-  const { product_id, card_url, mpp_url } = offer.evidence_brief.marketplace_payment;
+  const { product_id, mpp_url } = offer.evidence_brief.marketplace_payment;
   const item = (await call('get_offer', { id: product_id })).structuredContent;
-  assert.equal(item.card_url, card_url);
+  assert.equal(item.card_url, undefined);
   assert.equal(item.mpp_url, mpp_url);
   assert.equal((await call('get_offer', { id: 'missing' })).isError, true);
   const links = (await call('get_quote_payment_links', { signed_quote_token: 'token+/=' })).structuredContent;

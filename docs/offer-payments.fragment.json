@@ -2,8 +2,8 @@
   "quote_payment": {
     "requires_issued_quote": true,
     "human": {
-      "provider": "Stripe Checkout",
-      "methods": ["card", "Link when eligible"],
+      "provider": "Tempo MPP / quote request",
+      "methods": ["tempo_mpp", "quote_request"],
       "url_template": "https://phantompipe.com/q/{signed_quote_token}"
     },
     "agent": {

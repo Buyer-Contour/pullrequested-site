@@ -23,7 +23,7 @@ const tools = [
   },
   {
     name: 'submit_brief',
-    description: 'Send an inquiry with the buyer’s permission. The HTTP form-name field is optional and ignored. To request the free evidence-brief sample, choose pipeline-research and explicitly ask for the three free rows in brief. Returns an intake receipt, not a signed quote; does not collect payment. Do not send confidential material or payment credentials.',
+    description: 'Send an inquiry with the buyer’s permission. The HTTP form-name field is optional and ignored. Returns an intake receipt, not a signed quote; does not collect payment. Do not send confidential material or payment credentials.',
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
