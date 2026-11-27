@@ -68,15 +68,15 @@ async function taggedDiscovery(response, headers, url) {
     const offer = await response.json();
     const payment = offer.evidence_brief.marketplace_payment;
     for (const [section, key] of [
-      [offer.quote_request, 'url'], [offer.contact, 'url'], [payment, 'card_url'], [payment, 'mpp_url'],
+      [offer.quote_request, 'url'], [offer.contact, 'url'], [payment, 'mpp_url'],
       [offer.fixed_price_services, 'url'], [offer.fixed_price_services.intake, 'url'],
     ]) {
-      section[key] = withVariant(section[key], url);
+      if (section?.[key]) section[key] = withVariant(section[key], url);
     }
     return Response.json(offer, { status: response.status, headers });
   }
   const text = await response.text();
-  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|services\/|agent-bill-audit\/|scraper-parser\/|q\/evidence-brief-10|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
+  const links = /https:\/\/phantompipe\.com\/(?:quote\/?|offer\.json|services\/|agent-bill-audit\/|scraper-parser\/|api\/mpp\/pay\?product=evidence-brief-10)?(?=[\s)]|$)/g;
   return new Response(text.replace(links, (link) => withVariant(link, url)), { status: response.status, headers });
 }
 

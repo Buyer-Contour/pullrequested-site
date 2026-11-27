@@ -1,7 +1,7 @@
 {
   "x402Version": 2,
   "name": "Phantom Pipe",
-  "description": "Go-to-market consulting for B2B startups and AI agents. Start with a free sample, then receive a quote based on scope.",
+  "description": "Go-to-market consulting for B2B startups and AI agents. Offers are priced at cost and paid up front via Tempo MPP or scoped quote.",
   "url": "https://phantompipe.com/",
   "payment": "removed",
   "services": [],
@@ -15,7 +15,7 @@
     {
       "method": "GET",
       "path": "/quote/",
-      "description": "Request a free sample and a scoped quote. No payment is collected.",
+      "description": "Request a scoped quote. No payment is collected.",
       "mimeType": "text/html"
     }
   ]

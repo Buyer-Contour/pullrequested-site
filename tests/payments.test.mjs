@@ -97,10 +97,12 @@ test('a five-cent quote offers only Tempo MPP and cannot reserve a Stripe paymen
   assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}"`));
   assert.doesNotMatch(body, /\/api\/checkout|Continue to Stripe Checkout/);
 
+  const checkoutGet = await handlers.checkout(new Request(to('/api/checkout', token), { method: 'GET' }));
+  assert.equal(checkoutGet.status, 303);
+  assert.equal(checkoutGet.headers.get('Location'), `/q/${token}`);
+
   const { nonce } = readQuote(token, signingSecret, { now: testNow });
   for (const response of await Promise.all([
-    handlers.checkout(new Request(to('/api/checkout', token), { method: 'GET' })),
-    handlers.checkout(new Request(to('/api/checkout', token), { method: 'POST' })),
     handlers.pay(getPayment(token)),
     handlers.pay(getPayment(token, intentId)),
     handlers.pay(postPayment(token, { nonce, payment_method: 'pm_card_visa' })),
@@ -112,7 +114,7 @@ test('a five-cent quote offers only Tempo MPP and cannot reserve a Stripe paymen
   assert.deepEqual(calls, { checkout: [], agent: [], methods: [] });
 });
 
-test('the durable card link issues new fixed-price quotes without opening Checkout', async () => {
+test('the durable quote link issues new fixed-price quotes for Tempo MPP without opening Stripe Checkout', async () => {
   const { handlers, entries, calls, tick } = fixture();
   const product = 'evidence-brief-10';
   const open = () => handlers.page(new Request(`${to('/q', product)}&amount_cents=1`));
@@ -128,7 +130,9 @@ test('the durable card link issues new fixed-price quotes without opening Checko
   assert.equal(page.status, 200);
   const body = await page.text();
   assert.ok(body.includes(quote.description));
-  assert.match(body, /Total: \$1\.00 USD.*Continue to Stripe Checkout/);
+  assert.match(body, /Total: \$1\.00 USD \(1\.00 OUSD on Tempo\)/);
+  assert.ok(body.includes(`href="/api/mpp/pay?quote=${firstToken}"`));
+  assert.doesNotMatch(body, /Stripe Checkout|checkout\.stripe\.com/i);
 
   tick(24 * 60 * 60);
   assert.equal((await handlers.page(new Request(to('/q', firstToken)))).status, 410);
@@ -143,21 +147,21 @@ test('the durable card link issues new fixed-price quotes without opening Checko
   assert.equal(calls.checkout.length, 0);
   const checkout = await handlers.checkout(new Request(to('/api/checkout', laterToken), { method: 'POST' }));
   assert.equal(checkout.status, 303);
-  assert.equal(calls.checkout[0].params.line_items[0].price_data.unit_amount, 100);
-  assert.equal(calls.checkout[0].params.line_items[0].price_data.product_data.name, quote.description);
+  assert.equal(checkout.headers.get('Location'), `/q/${laterToken}`);
+  assert.equal(calls.checkout.length, 0);
   assert.equal((await handlers.page(new Request(to('/q', 'other-product')))).status, 400);
 });
 
-test('fixed-price services use signed Stripe Checkout quotes and service-specific intake', async () => {
-  const { handlers, calls, entries, webhookRequest } = fixture({ testMode: false });
-  for (const [slug, amount, name] of [
-    ['icp-lead-list', 1_400, 'ICP lead list'],
-    ['crm-dedupe-enrichment', 2_800, 'CRM dedupe + enrichment'],
-    ['competitor-teardown', 200, 'Competitor teardown'],
-    ['podcast-newsletter-placement', 200, 'Podcast & newsletter placement list'],
-    ['local-business-review-replies', 100, 'Local business review replies'],
-    ['agent-bill-audit', 100, 'AI agent API & hosting bill audit'],
-    ['scraper-parser', 200, 'Fixed-price scraper / parser job'],
+test('fixed-price services route to Tempo MPP and never open Stripe Checkout', async () => {
+  const { handlers, calls } = fixture({ testMode: false });
+  for (const [slug, amount] of [
+    ['icp-lead-list', 1_400],
+    ['crm-dedupe-enrichment', 2_800],
+    ['competitor-teardown', 200],
+    ['podcast-newsletter-placement', 200],
+    ['local-business-review-replies', 100],
+    ['agent-bill-audit', 100],
+    ['scraper-parser', 200],
   ]) {
     const tag = `v=svc-${slug}`;
     const opened = await handlers.page(new Request(`${to('/q', slug)}&${tag}&amount_cents=1`));
@@ -169,42 +173,30 @@ test('fixed-price services use signed Stripe Checkout quotes and service-specifi
     assert.equal(quote.service_slug, slug);
     assert.equal(quote.amount_cents, amount);
     const page = await handlers.page(new Request(`${to('/q', token)}&${tag}`));
-    assert.match(await page.text(), /Continue to Stripe Checkout/);
+    const body = await page.text();
+    assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}&amp;${tag}"`));
+    assert.ok(body.includes(`href="/quote/?${tag}"`));
+    assert.doesNotMatch(body, /Stripe Checkout|checkout\.stripe\.com/i);
     assert.equal((await handlers.pay(getPayment(token))).status, 422);
 
     const checkout = await handlers.checkout(new Request(`${to('/api/checkout', token)}&${tag}`, { method: 'POST' }));
     assert.equal(checkout.status, 303);
-    assert.equal(new URL(checkout.headers.get('Location')).origin, 'https://checkout.stripe.com');
-    const { params } = calls.checkout.at(-1);
-    const { unit_amount, currency, product_data } = params.line_items[0].price_data;
-    assert.equal(unit_amount, amount);
-    assert.equal(currency, 'usd');
-    assert.equal(product_data.name, name);
-    assert.equal(params.metadata.source, 'phantompipe-microservices');
-    assert.equal(params.metadata.service_slug, slug);
-    assert.deepEqual(params.payment_intent_data.metadata, params.metadata);
-    assert.equal(params.cancel_url, signed.href);
+    assert.equal(checkout.headers.get('Location'), `/q/${token}?${tag}`);
+    assert.equal(calls.checkout.length, 0);
+
     const isCrm = slug === 'crm-dedupe-enrichment';
     const quoteReference = isCrm ? `&quote_id=${quote.id}` : '';
-    assert.equal(params.success_url, `${origin}/payment/submitted?service=${slug}${quoteReference}&${tag}`);
-
-    const submitted = await handlers.page(new Request(params.success_url + '&result=submitted'));
+    const submitted = await handlers.page(new Request(`${origin}/payment/submitted?service=${slug}${quoteReference}&${tag}&result=submitted`));
     const intake = await submitted.text();
-    assert.match(intake, /Once Stripe confirms payment/);
+    assert.match(intake, /Tempo MPP payment receipt/);
     assert.match(intake, /mailto:dane@phantompipe.com/);
     assert.ok(intake.includes(`href="/quote?${tag}"`));
     if (isCrm) {
-      assert.equal(params.client_reference_id, quote.id);
       assert.match(intake, /Email your CSV or a share link/);
       assert.ok(intake.includes(`quote ID (<strong>${quote.id}</strong>) in the subject`));
     } else {
       assert.doesNotMatch(intake, /Email your CSV/);
     }
-    const session = { id: sessionId, mode: 'payment', payment_status: 'paid', amount_total: amount, currency, metadata: params.metadata };
-    assert.equal((await handlers.webhook(webhookRequest({ ...session, metadata: { ...params.metadata, service_slug: 'wrong-service' } }))).status, 200);
-    assert.equal(entries.has(`paid/${quote.id}`), false);
-    assert.equal((await handlers.webhook(webhookRequest(session))).status, 200);
-    assert.equal(entries.get(`paid/${quote.id}`).status, 'paid');
   }
 });
 
@@ -251,7 +243,7 @@ test('Netlify payment functions mint both durable links with the configured sign
   assert.equal(readQuote(mppToken, signingSecret).amount_cents, 100);
 });
 
-test('checkout displays an escaped quote, creates one session, and records a verified paid webhook once', async () => {
+test('quote page escapes descriptions, /api/checkout redirects back to /q without Stripe, and webhooks stay verified', async () => {
   const { quote, token } = quoteAt('<script>unsafe</script>');
   const { handlers, calls, entries, webhookRequest } = fixture();
   const page = await handlers.page(new Request(to('/q', token)));
@@ -260,30 +252,23 @@ test('checkout displays an escaped quote, creates one session, and records a ver
   const body = await page.text();
   assert.match(body, /&lt;script&gt;unsafe&lt;\/script&gt;/);
   assert.match(body, /<h1>Pay your Phantom Pipe quote<\/h1>/);
+  assert.doesNotMatch(body, /Stripe Checkout|checkout\.stripe\.com/i);
   const checkout = () => handlers.checkout(new Request(to('/api/checkout', token)));
   const first = await checkout();
   assert.equal(first.status, 303);
-  assert.equal((await checkout()).headers.get('Location'), first.headers.get('Location'));
-  assert.equal(calls.checkout.length, 1);
-  const [{ params, options }] = calls.checkout;
-  assert.equal(params.metadata.quote_id, quote.id);
-  assert.equal(params.metadata.source, 'pullrequested');
-  assert.equal(params.payment_intent_data.metadata.quote_id, quote.id);
-  assert.equal(params.payment_intent_data.metadata.source, 'pullrequested');
-  assert.equal(params.line_items[0].price_data.product_data.metadata.source, 'pullrequested');
-  assert.equal(params.expires_at, quote.expires_at);
-  assert.equal(params.allowed_payment_method_types, undefined);
-  assert.equal(params.line_items[0].price_data.unit_amount, quote.amount_cents);
-  assert.equal(params.success_url, origin + '/payment/submitted');
-  assert.equal(params.cancel_url, `${origin}/q/${token}`);
-  assert.equal(options.idempotencyKey, `quote-checkout-${quote.id}`);
+  assert.equal(first.headers.get('Location'), `/q/${token}`);
+  assert.equal(calls.checkout.length, 0);
+  const metadata = { quote_id: quote.id, quote_fingerprint: quote.fingerprint, source: 'pullrequested' };
+  entries.set(`reservation/${quote.id}`, {
+    channel: 'checkout',
+    source: 'pullrequested',
+    quote_fingerprint: quote.fingerprint,
+    amount: quote.amount_cents,
+    currency: 'usd',
+  });
   const session = {
-    id: sessionId, mode: 'payment', payment_status: 'paid', amount_total: quote.amount_cents, currency: 'usd', metadata: params.metadata,
+    id: sessionId, mode: 'payment', payment_status: 'paid', amount_total: quote.amount_cents, currency: 'usd', metadata,
   };
-  const { nonce } = await (await handlers.pay(getPayment(token))).json();
-  const agent = await handlers.pay(postPayment(token, { nonce, payment_method: 'pm_card_visa' }));
-  assert.equal(agent.status, 409);
-  assert.equal(calls.agent.length, 0);
   assert.equal((await handlers.webhook(webhookRequest(session, { secret: 'wrong' }))).status, 400);
   assert.equal((await handlers.webhook(webhookRequest({ ...session, metadata: { ...session.metadata, source: undefined } }))).status, 200);
   assert.equal((await handlers.webhook(webhookRequest({ ...session, payment_status: 'unpaid' }))).status, 200);
@@ -298,21 +283,11 @@ test('checkout displays an escaped quote, creates one session, and records a ver
   assert.equal((await checkout()).status, 409);
 });
 
-test('live $1 verification Checkout offers no delayed payment methods', async () => {
-  const { handlers, calls } = fixture({ testMode: false });
-  for (const [description, amount_cents] of [[checkoutVerificationDescription, 100], ['Consulting', 100], [checkoutVerificationDescription, 500]]) {
-    const { token } = makeQuote({ amount_cents, description }, signingSecret, testNow);
-    assert.equal((await handlers.checkout(new Request(to('/api/checkout', token)))).status, 303);
-  }
-  assert.deepEqual(calls.checkout.map(({ params }) => params.allowed_payment_method_types), [['card', 'link'], undefined, undefined]);
-});
-
-test('an expired quote cannot start a payment and near-expiry Checkout cannot outlive the quote', async () => {
+test('an expired quote cannot start a payment or redirect from checkout', async () => {
   const { handlers, calls, tick } = fixture();
   const { token } = quoteAt('Soon', 60);
-  const checkout = () => handlers.checkout(new Request(to('/api/checkout', token)));
-  assert.equal((await (await checkout()).json()).error, 'quote_too_close_to_expiry_for_checkout');
   tick(60);
+  assert.equal((await handlers.checkout(new Request(to('/api/checkout', token)))).status, 410);
   const expired = await handlers.pay(getPayment(token));
   assert.equal(expired.status, 410);
   assert.equal((await expired.json()).error, 'quote_expired');

@@ -307,7 +307,7 @@
       },
       "head": {"summary":"Read response headers", "responses":{"200":{"description":"Browser quote request form"}}},
       "post": {
-        "summary": "Submit a brief or request a free sample",
+        "summary": "Submit a brief or request a quote",
         "description": "JSON requests always get a JSON receipt. For URL-encoded form requests, send Accept: application/json to get a receipt; otherwise, the submission is forwarded as a browser form. This endpoint does not issue a signed quote or take payment.",
         "parameters": [{"$ref":"#/components/parameters/Variant"}],
         "requestBody": {
@@ -375,7 +375,7 @@
       },
       "head": {"summary":"Read response headers", "responses":{"200":{"description":"Browser quote request form"}}},
       "post": {
-        "summary": "Submit a brief or request a free sample",
+        "summary": "Submit a brief or request a quote",
         "description": "JSON requests always get a JSON receipt. For URL-encoded form requests, send Accept: application/json to get a receipt; otherwise, the submission is forwarded as a browser form. This endpoint does not issue a signed quote or take payment.",
         "parameters": [{"$ref":"#/components/parameters/Variant"}],
         "requestBody": {
@@ -553,7 +553,7 @@
     },
     "/payment/submitted": {
       "get": {
-        "summary": "Return page after Stripe Checkout",
+        "summary": "Return page after payment submission",
         "parameters": [
           {
             "name": "service",
@@ -584,11 +584,11 @@
     "/api/checkout": {
       "parameters": [{"$ref":"#/components/parameters/SignedQuote"}, {"$ref":"#/components/parameters/Variant"}],
       "get": {
-        "summary": "Open or resume a Stripe Checkout session",
-        "description": "Same operation as POST. Can create a Checkout session; does not itself charge.",
+        "summary": "Redirect legacy checkout link to the quote payment page",
+        "description": "Stripe Checkout is disabled. Redirects valid quotes to /q/{signed_quote_token}, which links to Tempo MPP and quote intake.",
         "responses": {
           "303": {
-            "description": "Stripe Checkout URL.",
+            "description": "Quote payment page URL.",
             "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
           },
           "400": {"$ref":"#/components/responses/InvalidQuote"},
@@ -606,11 +606,11 @@
         }
       },
       "post": {
-        "summary": "Create or resume a Stripe Checkout session",
-        "description": "Same operation as POST. Can create a Checkout session; does not itself charge.",
+        "summary": "Redirect legacy checkout link to the quote payment page",
+        "description": "Stripe Checkout is disabled. Redirects valid quotes to /q/{signed_quote_token}, which links to Tempo MPP and quote intake.",
         "responses": {
           "303": {
-            "description": "Stripe Checkout URL.",
+            "description": "Quote payment page URL.",
             "headers": {"Location":{"description":"Redirect target.", "schema":{"type":"string"}}}
           },
           "400": {"$ref":"#/components/responses/InvalidQuote"},
@@ -786,7 +786,7 @@
           },
           "410": {"$ref":"#/components/responses/ExpiredQuote"},
           "422": {
-            "description": "Fixed-price service quote requires Stripe Checkout instead.",
+            "description": "Fixed-price service quote requires Tempo MPP instead.",
             "content": {"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}
           },
           "502": {"$ref":"#/components/responses/PaymentUnavailable"},

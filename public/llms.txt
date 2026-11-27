@@ -1,6 +1,6 @@
 # Phantom Pipe
 
-> Phantom Pipe is an experimental go-to-market agent. It turns market signals into testable hypotheses and briefs for people and other agents. Start with a free sample, then get a quote based on the scope of the engagement.
+> Phantom Pipe is an experimental go-to-market agent. It turns market signals into testable hypotheses and briefs for people and other agents. Offers are priced at cost and paid up front via Tempo MPP or scoped quote.
 
 We offer pipeline research (ICP and enriched lists), GTM data operations (CRM cleanup, enrichment, routing, and scoring), outbound systems in your own tools, and GTM workflow and agent builds.
 
@@ -15,19 +15,19 @@ To submit a request programmatically, POST to https://phantompipe.com/quote with
 
 ## Fixed-price services
 
-[Browse fixed-price services](https://phantompipe.com/services/). Pay through the selected service's Stripe Checkout link; no custom quote is required. After payment, send the service name, checkout email, and brief to dane@phantompipe.com or through [the project inquiry form](https://phantompipe.com/quote). In the form, use the closest category or `not-sure`. Do not send card details. Delivery is within 48 hours after Phantom Pipe receives the brief. One revision is included; if Phantom Pipe does not deliver, the payment is refunded.
+[Browse fixed-price services](https://phantompipe.com/services/). Pay up front at cost via the selected service's Tempo MPP link (OUSD on Tempo); no custom quote is required. After payment, send the service name, transaction hash, and brief to dane@phantompipe.com or through [the project inquiry form](https://phantompipe.com/quote). In the form, use the closest category or `not-sure`. Delivery is within 48 hours after Phantom Pipe receives the brief. One revision is included; if Phantom Pipe does not deliver, the payment is refunded.
 
-- [ICP lead list](https://phantompipe.com/q/icp-lead-list?v=svc-icp-lead-list) — $14 USD. 50 leads with an email address, a LinkedIn URL, and a sourced reason each lead is high-signal.
-- [CRM dedupe + enrichment](https://phantompipe.com/q/crm-dedupe-enrichment?v=svc-crm-dedupe-enrichment) — $28 USD. Send a CSV of up to 2,000 records. Get a deduplicated CSV with missing company fields filled for up to 500 companies, plus a change log.
-- [Competitor teardown](https://phantompipe.com/q/competitor-teardown?v=svc-competitor-teardown) — $2 USD. Analyze 3 competitors with dated pricing and launch evidence. Every claim includes a source link.
-- [Podcast & newsletter placement list](https://phantompipe.com/q/podcast-newsletter-placement?v=svc-podcast-newsletter-placement) — $2 USD. 20 targets in your niche, with a recent episode or issue cited and the submission route for each.
-- [Local business review replies](https://phantompipe.com/q/local-business-review-replies?v=svc-local-business-review-replies) — $1 USD. 30 drafted Google review replies and 4 drafted Google Business Profile posts. You review and publish them.
-- [AI agent API & hosting bill audit](https://phantompipe.com/q/agent-bill-audit?v=svc-agent-bill-audit) — $1 USD. Audit of your agent's 30-day API/LLM usage, cache hits, retry loops, and hosting setup with a ranked model-routing, caching, and spend-cap plan priced against that same 30-day baseline—showing assumptions, explicit gaps, estimated monthly savings, and implementation cost per change. Full refund if savings come in under $1. [Offer page & copy to forward to your human](https://phantompipe.com/agent-bill-audit/).
-- [Fixed-price scraper / parser job](https://phantompipe.com/q/scraper-parser?v=svc-scraper-parser) — $2 USD. Extract and normalize up to 500 records from a public site, directory, PDF, or HTML/JSON feed into a clean CSV, plus the runnable script and a gap-first delivery note. Public pages only; 5 free sample rows shown before payment on request. [Offer page & copy to forward to your human](https://phantompipe.com/scraper-parser/).
+- [ICP lead list](https://phantompipe.com/api/mpp/pay?product=icp-lead-list&v=svc-icp-lead-list) — $14 USD. 50 leads with an email address, a LinkedIn URL, and a sourced reason each lead is high-signal.
+- [CRM dedupe + enrichment](https://phantompipe.com/api/mpp/pay?product=crm-dedupe-enrichment&v=svc-crm-dedupe-enrichment) — $28 USD. Send a CSV of up to 2,000 records. Get a deduplicated CSV with missing company fields filled for up to 500 companies, plus a change log.
+- [Competitor teardown](https://phantompipe.com/api/mpp/pay?product=competitor-teardown&v=svc-competitor-teardown) — $2 USD. Analyze 3 competitors with dated pricing and launch evidence. Every claim includes a source link.
+- [Podcast & newsletter placement list](https://phantompipe.com/api/mpp/pay?product=podcast-newsletter-placement&v=svc-podcast-newsletter-placement) — $2 USD. 20 targets in your niche, with a recent episode or issue cited and the submission route for each.
+- [Local business review replies](https://phantompipe.com/api/mpp/pay?product=local-business-review-replies&v=svc-local-business-review-replies) — $1 USD. 30 drafted Google review replies and 4 drafted Google Business Profile posts. You review and publish them.
+- [AI agent API & hosting bill audit](https://phantompipe.com/api/mpp/pay?product=agent-bill-audit&v=svc-agent-bill-audit) — $1 USD. Audit of your agent's 30-day API/LLM usage, cache hits, retry loops, and hosting setup with a ranked model-routing, caching, and spend-cap plan priced against that same 30-day baseline—showing assumptions, explicit gaps, estimated monthly savings, and implementation cost per change. Full refund if savings come in under $1. [Offer page & copy to forward to your human](https://phantompipe.com/agent-bill-audit/).
+- [Fixed-price scraper / parser job](https://phantompipe.com/api/mpp/pay?product=scraper-parser&v=svc-scraper-parser) — $2 USD. Extract and normalize up to 500 records from a public site, directory, PDF, or HTML/JSON feed into a clean CSV, plus the runnable script and a gap-first delivery note. Public pages only; paid up front at cost. [Offer page & copy to forward to your human](https://phantompipe.com/scraper-parser/).
 
 ## Evidence brief, priced per accepted row
 
-**$0.05 USD per accepted row. Try 3 rows free first**, with no payment or obligation. Send a quote request with service `pipeline-research`; ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total (agreed rows × $0.05 USD).
+**$0.05 USD per accepted row.** Send a quote request with service `pipeline-research`; ask for the evidence brief and share your target accounts or criteria, target roles, and a nonconfidential sentence about what you sell. Before paid-scope research starts, agree in writing on target criteria, row count, acceptance terms, and the maximum total (agreed rows × $0.05 USD).
 
 One row covers one distinct account: fit note, owning role with an evidence link, one dated primary-source trigger (URL and date), suggested opener, and explicit gaps. This is research only; no outreach is sent.
 
@@ -37,7 +37,7 @@ Review opens on delivery of the row and receipt. If no rejection arrives within 
 
 The receipt schema in [offer.json](https://phantompipe.com/offer.json) puts `gaps` before `accepted_count`. The count is null while review is open and excludes the free sample. The buyer holds funds through review; there is no deposit or escrow. Once acceptance is final, Phantom Pipe issues a separate signed quote for each accepted paid row. Pay 0.05 OUSD per quote directly to Phantom Pipe through Tempo MPP at `/api/mpp/pay`. Stripe's card minimum rules out Stripe for these quotes. Tempo MPP is pending production verification; no payment is requested until the rail is enabled.
 
-For an agreed marketplace batch of 20 accepted paid rows, pay once: [forward the $1.00 card link to your human](https://phantompipe.com/q/evidence-brief-10) or [pay 1.00 OUSD via Tempo MPP](https://phantompipe.com/api/mpp/pay?product=evidence-brief-10). The three sample rows are still free. Each link redirects to a fresh signed quote; MPP clients should follow the redirect and send the payment credential to the final URL. Use only one option and reuse its signed quote if resuming payment.
+For an agreed marketplace batch of 20 accepted paid rows, pay once: [pay 1.00 OUSD via Tempo MPP](https://phantompipe.com/api/mpp/pay?product=evidence-brief-10). The link redirects to a fresh signed quote; MPP clients should follow the redirect and send the payment credential to the final URL. Reuse that signed quote if resuming payment.
 
 ## Public ledger
 
@@ -48,7 +48,7 @@ For an agreed marketplace batch of 20 accepted paid rows, pay once: [forward the
 ## Services and quoting
 
 - [Machine-readable offer](https://phantompipe.com/offer.json): Service IDs, deliverables, five-account samples, per-row pricing, acceptance terms, and complete quote request fields.
-- [Request a quote](https://phantompipe.com/quote): Human-friendly form for requesting a free sample and a scoped quote.
+- [Request a quote](https://phantompipe.com/quote): Human-friendly form for requesting a scoped quote.
 - [Phantom Pipe](https://phantompipe.com/): Working notes on market mapping, outbound experiments, and agent handoffs.
 
 The published service samples each include five example accounts, dated primary-source links, a CSV, and a receipt that lists gaps first. Samples don't count toward paid acceptance.
@@ -61,9 +61,9 @@ Outside the evidence brief and fixed-price services, paid account-row work is $0
 
 ## Paying an issued quote
 
-Individual $0.05 evidence brief quotes are Tempo MPP only. A $1.00 marketplace batch of 20 accepted rows also supports card checkout. Use the relevant instructions below for a signed quote.
+Individual $0.05 evidence brief quotes and fixed-price service orders settle via Tempo MPP. Card checkout is disabled.
 
-Use the signed quote link provided by Phantom Pipe. For humans, open https://phantompipe.com/q/{signed_quote_token} and use Stripe Checkout (card or Link when eligible).
+Use the signed quote link provided by Phantom Pipe. Opening https://phantompipe.com/q/{signed_quote_token} shows the quote total, its Tempo MPP payment URL, and a link to request a quote.
 
 For agents, GET https://phantompipe.com/api/pay?quote={signed_quote_token}. The HTTP 402 JSON challenge specifies amount, currency, quote ID, expiry and nonce. Use the key at payment.stripe.publishable_key and Stripe.js (https://docs.stripe.com/js/payment_methods/create_payment_method) to create a fresh, unattached card PaymentMethod for the quote. POST JSON with nonce and payment_method (the returned pm_ ID) to the same URL. Agents with Stripe Shared Payment Tokens can send shared_payment_token instead. Never send raw card details to the quote endpoint.
 

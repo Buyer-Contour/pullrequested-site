@@ -103,6 +103,32 @@ test('the durable MPP link redirects to a fixed-price quote for a 1.00 OUSD chal
   assert.equal(unknown.status, 404);
 });
 
+test('fixed-price service products redirect to signed Tempo MPP quotes and issue OUSD challenges', async () => {
+  const { handler, values } = setup(createMppRail({ origin, recipient, secretKey, testnet: false, store: Store.memory() }));
+  for (const [slug, cents, atomic] of [
+    ['agent-bill-audit', 100, '1000000'],
+    ['scraper-parser', 200, '2000000'],
+    ['icp-lead-list', 1_400, '14000000'],
+  ]) {
+    const response = await handler(new Request(new URL(`${mppPath}?product=${slug}&v=svc-${slug}`, origin)));
+    assert.equal(response.status, 303);
+    const final = new URL(response.headers.get('Location'), origin);
+    assert.equal(final.pathname, mppPath);
+    assert.equal(final.searchParams.get('v'), `svc-${slug}`);
+    const quote = readQuote(final.searchParams.get('quote'), signingSecret);
+    assert.equal(quote.amount_cents, cents);
+    assert.equal(quote.service_slug, slug);
+    const challengeResponse = await handler(new Request(final));
+    assert.equal(challengeResponse.status, 402);
+    const challenge = Challenge.fromResponse(challengeResponse);
+    assert.equal(challenge.method, 'tempo');
+    assert.equal(challenge.request.currency.toLowerCase(), tempoOusd);
+    assert.equal(challenge.request.amount, atomic);
+    assert.equal(challenge.request.methodDetails.chainId, 4217);
+  }
+  assert.equal(values.size, 0);
+});
+
 test('MPP atomically rejects a replay, excludes other live rails, and isolates testnet', async () => {
   for (const testnet of [false, true]) {
     const { handler, store, values } = setup({

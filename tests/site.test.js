@@ -68,12 +68,13 @@ test('the receipts ledger is discoverable, dated, and reflects the anonymized sa
   assert.doesNotMatch(page, /cinnabar|plot 64|aethergrid|thecolony\.ai|clay/i);
 });
 
-test('the fixed-price catalog and agent discovery agree with the Stripe Checkout products', async () => {
+test('the fixed-price catalog and agent discovery agree with the Tempo MPP products', async () => {
   const { microserviceFor } = await import('../lib/payments/quotes.mjs');
   const { fixed_price_services: catalog } = JSON.parse(read('public/offer.json'));
   const services = read('public/services/index.html');
   const llms = read('public/llms.txt');
   assert.equal(catalog.url, 'https://phantompipe.com/services/');
+  assert.equal(catalog.payment_provider, 'Tempo MPP');
   assert.match(read('public/index.html'), /<nav[^>]*>.*href="\/services\/">Fixed-price services/);
   assert.ok(read('public/sitemap.xml').includes(`<loc>${catalog.url}</loc>`));
   assert.equal(catalog.services.length, 7);
@@ -85,18 +86,19 @@ test('the fixed-price catalog and agent discovery agree with the Stripe Checkout
     const displayPrice = '$' + price.amount_minor / 100;
     assert.deepEqual(microserviceFor(id), { amount_cents: price.amount_minor, description: name });
     assert.equal(price.currency, 'USD');
-    assert.equal(pay_url, `https://phantompipe.com/q/${id}?v=svc-${id}`);
+    assert.equal(pay_url, `https://phantompipe.com/api/mpp/pay?product=${id}&v=svc-${id}`);
     assert.ok(services.includes(`<h3>${displayName}</h3>`));
     assert.ok(services.includes(deliverable));
-    assert.ok(services.includes(`href="${pay_url}"`));
+    assert.ok(services.includes(`href="${pay_url.replaceAll('&', '&amp;')}"`));
     assert.ok(llms.includes(`[${name}](${pay_url}) — ${displayPrice} USD. ${deliverable}`));
     if (page_url) {
       const pagePath = new URL(page_url).pathname;
       const pageHtml = read(`public${pagePath}index.html`);
       assert.ok(read('public/sitemap.xml').includes(`<loc>${page_url}</loc>`));
       assert.ok(pageHtml.includes(`rel="canonical" href="${page_url}"`));
-      assert.ok(pageHtml.includes(`href="${pay_url}"`));
+      assert.ok(pageHtml.includes(`href="${pay_url.replaceAll('&', '&amp;')}"`));
       assert.ok(pageHtml.includes(forward_to_human.replaceAll('&', '&amp;')));
+      assert.doesNotMatch(pageHtml, /Stripe Checkout|checkout\.stripe\.com|5 free sample rows|free sample/i);
       assert.ok(llms.includes(`(${page_url})`));
     }
   }
@@ -214,7 +216,7 @@ test('the evidence brief publishes its sample, buyer checks and post-acceptance 
   assert.deepEqual(row.properties.trigger.required, ['summary', 'source_url', 'date']);
 
   for (const copy of [home, llms]) assert.ok(copy.includes('$0.05 USD per accepted row'));
-  for (const phrase of ['3 rows free', '90 calendar days', '48 hours', '24 hours', '/api/mpp/pay', 'a separate signed quote for each accepted paid row', "Stripe's card minimum"]) {
+  for (const phrase of ['90 calendar days', '48 hours', '24 hours', '/api/mpp/pay', 'a separate signed quote for each accepted paid row', "Stripe's card minimum"]) {
     assert.ok(llms.includes(phrase), phrase);
   }
 });
@@ -239,9 +241,9 @@ test('marketplace payment discovery publishes the durable routes and fixed batch
   assert.match(llms, /20 accepted paid rows/);
   assert.deepEqual(batch.price, { amount_minor: 100, currency: 'USD' });
   assert.equal(batch.price.amount_minor, batch.accepted_row_count * price.amount_minor_per_row);
-  assert.equal(batch.card_url, new URL(`/q/${batch.product_id}`, url).href);
+  assert.equal(batch.card_url, undefined);
   assert.equal(batch.mpp_url, new URL(`/api/mpp/pay?product=${batch.product_id}`, url).href);
-  for (const link of [batch.card_url, batch.mpp_url]) assert.ok(llms.includes(`(${link})`));
+  assert.ok(llms.includes(`(${batch.mpp_url})`));
 });
 
 test('site and agent docs expose the agency inbox and marketplace listings', () => {
@@ -271,8 +273,8 @@ test('lab notes are discoverable from the homepage and machine-readable indexes'
   assert.doesNotMatch(notes, /\bagent-run\b/i);
 });
 
-test('sample request link keeps a contrasting label on hover', () => {
-  assert.match(read('public/lab-notes/index.html'), /<a class="button"[^>]*>Request a free sample/);
+test('quote request link keeps a contrasting label on hover', () => {
+  assert.match(read('public/lab-notes/index.html'), /<a class="button"[^>]*>Request a quote/);
   assert.match(read('public/styles.css'), /\.button:hover\s*\{[^}]*background:\s*var\(--accent\);[^}]*color:\s*var\(--paper\);/);
 });
 
@@ -302,7 +304,7 @@ test('offer and llms document issued-quote payment rails without claiming live a
   assert.deepEqual(offer.quote_payment, quote_payment);
   assert.equal(offer.quote_payment.agent_mpp.status, 'pending');
   assert.ok(!('agent_usdc' in offer.quote_payment));
-  assert.match(llms, /Individual \$0\.05 evidence brief quotes are Tempo MPP only/);
+  assert.match(llms, /Individual \$0\.05 evidence brief quotes and fixed-price service orders settle via Tempo MPP/);
   assert.match(llms, /Tempo MPP is pending production verification/);
   for (const rail of ['human', 'agent', 'agent_mpp']) {
     assert.ok(llms.includes(quote_payment[rail].url_template));
