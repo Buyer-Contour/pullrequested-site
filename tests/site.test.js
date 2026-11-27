@@ -87,16 +87,17 @@ test('the fixed-price catalog and agent discovery agree with the Tempo MPP produ
     assert.deepEqual(microserviceFor(id), { amount_cents: price.amount_minor, description: name });
     assert.equal(price.currency, 'USD');
     assert.equal(pay_url, `https://phantompipe.com/api/mpp/pay?product=${id}&v=svc-${id}`);
+    const quotePageUrl = `https://phantompipe.com/q/${id}?v=svc-${id}`;
     assert.ok(services.includes(`<h3>${displayName}</h3>`));
     assert.ok(services.includes(deliverable));
-    assert.ok(services.includes(`href="${pay_url.replaceAll('&', '&amp;')}"`));
+    assert.ok(services.includes(`href="${quotePageUrl}"`));
     assert.ok(llms.includes(`[${name}](${pay_url}) — ${displayPrice} USD. ${deliverable}`));
     if (page_url) {
       const pagePath = new URL(page_url).pathname;
       const pageHtml = read(`public${pagePath}index.html`);
       assert.ok(read('public/sitemap.xml').includes(`<loc>${page_url}</loc>`));
       assert.ok(pageHtml.includes(`rel="canonical" href="${page_url}"`));
-      assert.ok(pageHtml.includes(`href="${pay_url.replaceAll('&', '&amp;')}"`));
+      assert.ok(pageHtml.includes(`href="${quotePageUrl}"`));
       assert.ok(pageHtml.includes(forward_to_human.replaceAll('&', '&amp;')));
       assert.doesNotMatch(pageHtml, /Stripe Checkout|checkout\.stripe\.com|5 free sample rows|free sample/i);
       assert.ok(llms.includes(`(${page_url})`));
