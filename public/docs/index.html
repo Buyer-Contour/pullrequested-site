@@ -83,16 +83,31 @@ curl -i 'https://phantompipe.com/api/mpp/pay?quote=SIGNED_QUOTE_TOKEN' \
     }
   }
 }</code></pre>
-        <p><strong>Generic HTTP client:</strong> send <code>initialize</code>, then <code>notifications/initialized</code>, and use the negotiated <code>MCP-Protocol-Version</code> header with <code>tools/list</code> and <code>tools/call</code>. Only protocol version <code>2025-03-26</code> supports JSON-RPC batches; newer versions accept one message per request. Use <code>Content-Type: application/json</code> and <code>Accept: application/json, text/event-stream</code> for POST. GET shows a short endpoint description, or returns <code>405</code> if the client requests an event stream.</p>
+        <p><strong>Generic HTTP client:</strong> initialize first. The following curl example discovers the tool schemas and reads an offer without submitting a brief or starting payment. Use <code>Content-Type: application/json</code> and <code>Accept: application/json, text/event-stream</code> for POST. GET shows a short endpoint description, or returns <code>405</code> if the client requests an event stream.</p>
         <pre><code>curl -fsS https://phantompipe.com/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"example","version":"1.0"}}}'</code></pre>
+        <p>Set <code>MCP_PROTOCOL_VERSION</code> to <code>result.protocolVersion</code> from the initialize response. The notification returns HTTP <code>202</code> with no body. Only version <code>2025-03-26</code> supports JSON-RPC batches; newer versions accept one message per request.</p>
+        <pre><code>MCP_PROTOCOL_VERSION=2025-11-25
+mcp_post() {
+  curl -fsS https://phantompipe.com/mcp \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    -H "MCP-Protocol-Version: $MCP_PROTOCOL_VERSION" \
+    -d "$1"
+}
+
+mcp_post '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+mcp_post '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+mcp_post '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_offers","arguments":{}}}'
+mcp_post '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_offer","arguments":{"id":"evidence-brief"}}}'</code></pre>
+        <p>Tool data is in <code>result.structuredContent</code>. Check <code>error</code> and <code>result.isError</code> before using it.</p>
         <ul>
-          <li><code>list_offers</code> and <code>get_offer</code>: read prices, samples, deliverables, and available payment links.</li>
-          <li><code>submit_brief</code>: with buyer permission, send the same inquiry as <code>POST /quote</code>. To request the free sample, choose <code>pipeline-research</code> and ask for the three free rows in the brief.</li>
-          <li><code>get_quote_request_status</code>: check whether an intake receipt is still available.</li>
-          <li><code>get_quote_payment_links</code>: build links for an already-issued quote token; does not issue or validate a token, initiate payment, or check settlement.</li>
+          <li><code>list_offers</code> takes no arguments. Pass a returned offer's <code>id</code> to <code>get_offer</code> for details. Fixed-price offers have a <code>pay_url</code>; they do not require a custom quote.</li>
+          <li><code>submit_brief</code>: with buyer permission, pass <code>name</code>, <code>email</code>, <code>service</code>, <code>brief</code>, and optionally <code>company</code>. The catalog's <code>quote_request</code> describes direct HTTP intake; MCP ignores its <code>form-name</code> field if supplied. For the free sample, choose <code>pipeline-research</code> and ask for the three free rows in <code>brief</code>.</li>
+          <li><code>get_quote_request_status</code>: pass the <code>request_id</code> from <code>submit_brief</code> to look up the intake receipt. It cannot tell you whether a quote was issued or paid.</li>
+          <li><code>get_quote_payment_links</code>: skip this for free samples or while waiting for a quote. If Phantom Pipe sends a signed quote to your reply-to email, pass its token as <code>signed_quote_token</code>, not the receipt's <code>request_id</code> or the full URL. The tool formats links without validating the token, initiating payment, or checking settlement. Keep signed links private and use only the rail specified for the quote.</li>
         </ul>
       </section>
 
