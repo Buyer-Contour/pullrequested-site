@@ -175,7 +175,7 @@ test('fixed-price services route to Tempo MPP and never open Stripe Checkout', a
     const page = await handlers.page(new Request(`${to('/q', token)}&${tag}`));
     const body = await page.text();
     assert.ok(body.includes(`href="/api/mpp/pay?quote=${token}&amp;${tag}"`));
-    assert.ok(body.includes(`href="/quote/?${tag}"`));
+    assert.ok(body.includes(`href="https://phantompipe.com/quote/?${tag}"`));
     assert.doesNotMatch(body, /Stripe Checkout|checkout\.stripe\.com/i);
     assert.equal((await handlers.pay(getPayment(token))).status, 422);
 
@@ -188,9 +188,9 @@ test('fixed-price services route to Tempo MPP and never open Stripe Checkout', a
     const quoteReference = isCrm ? `&quote_id=${quote.id}` : '';
     const submitted = await handlers.page(new Request(`${origin}/payment/submitted?service=${slug}${quoteReference}&${tag}&result=submitted`));
     const intake = await submitted.text();
-    assert.match(intake, /Tempo MPP payment receipt/);
+    assert.match(intake, /Tempo MPP transaction hash or checkout email/);
     assert.match(intake, /mailto:dane@phantompipe.com/);
-    assert.ok(intake.includes(`href="/quote?${tag}"`));
+    assert.ok(intake.includes(`href="https://phantompipe.com/quote?${tag}"`));
     if (isCrm) {
       assert.match(intake, /Email your CSV or a share link/);
       assert.ok(intake.includes(`quote ID (<strong>${quote.id}</strong>) in the subject`));
