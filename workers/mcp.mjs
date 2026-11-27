@@ -11,7 +11,7 @@ const readOnly = { readOnlyHint: true, openWorldHint: false };
 const tools = [
   {
     name: 'list_offers',
-    description: 'List Phantom Pipe services, published prices, and samples. Scoped work may need a quote.',
+    description: 'List Phantom Pipe services, published prices, and samples. Scoped work may need a quote. The quote_request details are for direct HTTP intake; use the submit_brief tool schema for MCP inquiries.',
     annotations: readOnly,
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   },
@@ -23,11 +23,18 @@ const tools = [
   },
   {
     name: 'submit_brief',
-    description: 'Send an inquiry with the buyer’s permission. To request the free evidence-brief sample, choose pipeline-research and explicitly ask for the three free rows in brief. Returns an intake receipt, not a signed quote; does not collect payment. Do not send confidential material or payment credentials.',
+    description: 'Send an inquiry with the buyer’s permission. The HTTP form-name field is optional and ignored. To request the free evidence-brief sample, choose pipeline-research and explicitly ask for the three free rows in brief. Returns an intake receipt, not a signed quote; does not collect payment. Do not send confidential material or payment credentials.',
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
-      properties: { name: string, email: { ...string, format: 'email' }, service: { type: 'string', enum: quoteServices }, brief: string, company: { type: 'string' } },
+      properties: {
+        name: string,
+        email: { ...string, format: 'email' },
+        service: { type: 'string', enum: quoteServices },
+        brief: string,
+        company: { type: 'string' },
+        'form-name': { description: 'Ignored; accepted for compatibility with the HTTP quote form.' },
+      },
       required: ['name', 'email', 'service', 'brief'],
       additionalProperties: false,
     },
@@ -247,6 +254,7 @@ async function dispatch(message, siteRequest) {
     const tool = tools.find(({ name }) => name === params?.name);
     if (!tool) return rpcFailure(id, -32602, 'Unknown tool.');
     const args = params.arguments === undefined ? {} : params.arguments;
+    if (tool.name === 'submit_brief' && object(args)) delete args['form-name'];
     if (!validArguments(args, tool.inputSchema)) return rpcFailure(id, -32602, 'Invalid tool arguments.');
     try {
       result = await callTool(tool.name, args, siteRequest);

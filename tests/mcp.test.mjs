@@ -50,6 +50,10 @@ test('MCP SDK discovers offers, reads payment URLs, and submits and reads an int
   assert.deepEqual(tools.map(({ name }) => name), [
     'list_offers', 'get_offer', 'submit_brief', 'get_quote_request_status', 'get_quote_payment_links',
   ]);
+  assert.match(tools.find(({ name }) => name === 'list_offers').description, /quote_request details are for direct HTTP intake/);
+  const { inputSchema: briefSchema } = tools.find(({ name }) => name === 'submit_brief');
+  assert.ok(Object.hasOwn(briefSchema.properties, 'form-name'));
+  assert.ok(!briefSchema.required.includes('form-name'));
   const call = (name, args) => client.callTool({ name, arguments: args });
   const list = await call('list_offers');
   assert.deepEqual(list.structuredContent.fixed_price_services, offer.fixed_price_services.services);
@@ -84,6 +88,41 @@ test('MCP SDK discovers offers, reads payment URLs, and submits and reads an int
   const missing = await call('get_quote_request_status', { request_id: crypto.randomUUID() });
   assert.equal(missing.isError, true);
   assert.equal(missing.structuredContent.http_status, 404);
+
+  const withFormName = await call('submit_brief', { ...args, 'form-name': 'not-the-intake-form' });
+  assert.equal(withFormName.structuredContent.status, 'received');
+  assert.equal(forwarded.length, 2);
+  assert.deepEqual(forwarded[1].getAll('form-name'), ['quote']);
+});
+
+test('the public MCP quickstart discovers tools and reads an offer without submitting anything', async () => {
+  const docs = await readFile(new URL('../public/docs/index.html', import.meta.url), 'utf8');
+  const messages = [...docs.matchAll(/^(?: {2}-d|mcp_post) '(\{"jsonrpc":.*\})'/gm)]
+    .map(([, body]) => JSON.parse(body));
+  assert.deepEqual(messages.map(({ method }) => method), [
+    'initialize', 'notifications/initialized', 'tools/list', 'tools/call', 'tools/call',
+  ]);
+  assert.deepEqual(messages.slice(3).map(({ params }) => params.name), ['list_offers', 'get_offer']);
+
+  const fetch = workerFetch();
+  const post = (message, version) => fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+      ...(version && { 'MCP-Protocol-Version': version }),
+    },
+    body: JSON.stringify(message),
+  });
+  const init = await (await post(messages[0])).json();
+  const { protocolVersion } = init.result;
+  assert.ok(docs.includes(`MCP_PROTOCOL_VERSION=${protocolVersion}`));
+  assert.equal((await post(messages[1], protocolVersion)).status, 202);
+  const tools = (await (await post(messages[2], protocolVersion)).json()).result.tools;
+  assert.ok(tools.some(({ name }) => name === 'get_offer'));
+  const catalogResult = (await (await post(messages[3], protocolVersion)).json()).result.structuredContent;
+  const offerResult = (await (await post(messages[4], protocolVersion)).json()).result.structuredContent;
+  assert.equal(offerResult.id, catalogResult.evidence_brief.id);
 });
 
 test('MCP enforces transport and JSON-RPC rules without executing notifications', async () => {
